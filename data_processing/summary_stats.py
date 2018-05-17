@@ -1,3 +1,8 @@
+"""
+Warning: Deprecated file (not in use anymore). 
+Just keeping it here in case I need it someday
+"""
+
 import pandas as pd
 import json
 import numpy as np

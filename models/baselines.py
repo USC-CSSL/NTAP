@@ -15,16 +15,16 @@ from nltk.stem.porter import PorterStemmer
 
 def tokenize(text):
     tokens = nltk_tokenizer.tokenize(text)
-    stems = []
-    for item in tokens:
-        stems.append(PorterStemmer().stem(item))
-    return stems
+    print(" ".join(tokens))
+    return tokens
 
 if len(sys.argv) != 2:
     print("Usage: python predict_mfq.py Path/To/DataDir/")
     exit(1)
 
 config_text = 'concat'
+text_version = "raw"  # options: ['raw', 'lemmatized']
+
 
 data_dir = sys.argv[1]
 if config_text == 'concat':
@@ -44,21 +44,27 @@ print("Dataframe has {} rows and {} columns".format(dataframe.shape[0], datafram
 mfq_cols = [col for col in dataframe.columns.tolist() if col.startswith("MFQ") and col.endswith("AVG")]
 
 table = str.maketrans(dict.fromkeys(string.punctuation))  # remove punctuation
-X_docs = [text.lower().translate(table) for text in dataframe["fb_status_msg"].values.tolist()[:100]]
-vect = TfidfVectorizer(tokenizer=tokenize, max_features=10000, stop_words='english', lowercase=True)
+
+if text_version == 'raw':
+    text_column = "fb_status_msg"
+else:
+    text_column = "lemmatized_posts"
+
+#X_docs = [text.translate(table) for text in dataframe[text_column].values.tolist()]
+X_docs = dataframe[text_column].values.tolist()
+vect = TfidfVectorizer(tokenizer=tokenize, min_df=10, stop_words='english', lowercase=True)
 print("Creating feature vectors")
 X = vect.fit_transform(X_docs)
 
 seed = 7
 for col in mfq_cols:
     print("Working on {}".format(col))
-    Y = dataframe[col].values.tolist()[:100]
+    Y = dataframe[col].values.tolist()
     en_model = SGDRegressor(penalty='elasticnet', verbose=0, max_iter=1000 )
     print("Cross-validating ElasticNet model")
 
     kfold = model_selection.KFold(n_splits=10, random_state=seed)
     scoring = 'r2'
     results = model_selection.cross_val_score(en_model, X, Y, cv=kfold, scoring=scoring)
-    print(results)
-    print("R^2: %.3f (%.3f)") % (results.mean(), results.std())
+    print("R^2: {0:.3f} ({1:.3f})".format(results.mean(), results.std()))
 
