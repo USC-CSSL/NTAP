@@ -17,45 +17,13 @@ from sklearn.linear_model import SGDRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import model_selection
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.pipeline import FeatureUnion, Pipeline
-from sklearn.preprocessing import StandardScaler
-from nltk.stem.porter import PorterStemmer
+from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
+from sklearn.impute import SimpleImputer as Imputer
+from sklearn_pandas import gen_features, DataFrameMapper, CategoricalImputer
 
 def tokenize(text):
     tokens = nltk_tokenizer.tokenize(text)
     return tokens
-
-
-class TextSelector(BaseEstimator, TransformerMixin):
-    """Select the column of text (raw or lemmatized) and transform/process it for Tfidf"""
-
-    def __init__(self, text_column, punc=False):
-        self.text_column = text_column
-        self.punc = punc
-
-    def fit(self, x, y=None):
-        return self
-
-    def transform(self, dataframe):
-        if not self.punc:
-            table = str.maketrans(dict.fromkeys(string.punctuation))  # remove punctuation
-            docs = [text.translate(table) for text in dataframe[self.text_column].values.tolist()]
-        else:
-            docs = dataframe[self.text_column].values.tolist()
-        return docs 
-
-
-class SubSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, keys):
-        self.keys = keys
-
-    def fit(self, x, y=None):
-        return self
-
-    def transform(self, dataframe):
-        return dataframe.loc[:, self.keys].to_dict('records')
 
 #-----------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------
@@ -70,61 +38,90 @@ scoring_dir = "../scoring/"
 #-----------------------------------------------------------------------------------
 
 data_dir = sys.argv[1]
-config_text = 'individual' # 'concat'
+config_text =  'indiv'  # 'concat'
 
 if config_text == 'concat':
     df = pd.read_pickle(data_dir + '/' + "concat_df.pkl")
 else:
     df = pd.read_pickle(data_dir + '/' + "full_dataframe.pkl")
 
+df = df.reindex()
 print("Dataframe has {} rows and {} columns".format(df.shape[0], df.shape[1]))
 
 #-----------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------
 
+# feature_versions format: {name: (text_col, punc, [ord_cols], [cat_cols]}
+feature_versions = {'tfidf_rawtext': ('fb_status_msg', 
+                                      False,
+                                      list(),
+                                      list()
+                                     ),
+                    'tfidf_rawtext_demog': ('fb_status_msg',
+                                            False,
+                                            ['age', 'gender'],
+                                            list()
+                                           )
+                   }
+                
+                # }   ,
+                #'lemmatized_nopunc': ('lemmatized_posts', False),
+                #'raw_text_punc': ('fb_status_msg', True),
+                #'lemmatized_punc': ('lemmatized_posts', True)}
 
-text_versions = {'raw_text_nopunc': ('fb_status_msg', False),
-                'lemmatized_nopunc': ('lemmatized_posts', False),
-                'raw_text_punc': ('fb_status_msg', True),
-                'lemmatized_punc': ('lemmatized_posts', True)}
+
 # models = ["bow_elasticnet", "bow_GBRT", "bom_elasticnet", "bom_GBRT", "infersent_elasticnet", "infersent_GBRT"]
-models = ["bow_elasticnet", "bow_GBRT"]
-mfq_cols = MFQ_AVG
+models = ["bow_elasticnet"]  # , "bow_GBRT"]
+targets = MFQ_AVG
 metrics = ['r2', 'neg_mean_absolute_error', 'neg_mean_squared_error']
-seed = 7
-
+seed = 51
+num_words = 10000
 
 #-----------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------
 
+alpha_re = re.compile(r"[^a-zA-Z\s]")
+length_re = re.compile(r'\w{3,}')
 
-for feat in text_versions:
-    text_column, punc_status = text_versions[feat]
+for feat in feature_versions:
+    text_column, punc_status, ordinal_cols, categorical_cols = feature_versions[feat]
+    text = df[text_column].values.tolist() 
+    text = [" ".join(length_re.findall(alpha_re.sub('', doc))) for doc in text]
+    #if not punc_status:
+    #    table = str.maketrans(dict.fromkeys(string.punctuation))  # remove punctuation
+    #    text = [doc.translate(table) for doc in text]
+    df[feat] = pd.Series(text, index=df.index)
+    transformer_list=[
+            (feat, TfidfVectorizer(min_df=10, 
+                                          stop_words='english', 
+                                          tokenizer=tokenize)
+            )
+    ]
+    if len(categorical_cols) > 0: 
+        transformer_list += gen_features(
+                columns=[ [col] for col in categorical_cols],
+                classes=[CategoricalImputer,
+                         {'class': CategoricalEncoder
+                         }
+                        ])
+    if len(ordinal_cols) > 0:
+        transformer_list += gen_features(
+                columns=[ [col] for col in ordinal_cols],
+                classes=[{'class': Imputer, 'missing_values':-1},
+                         {'class': MinMaxScaler}
+                        ])
+    
+    print("Performing data transform for {} text features, and \n[{}] categorical columns, and \n[{}] ordinal columns".format(
+            feat, ",".join(categorical_cols), ",".join(ordinal_cols)))
 
-    features = FeatureUnion(
-            transformer_list=[
-                ('text', Pipeline([
-                    ('selector', TextSelector(text_column, punc=punc_status)),
-                    ('tfidf', TfidfVectorizer(min_df=10, 
-                                              stop_words='english', 
-                                              lowercase=True, 
-                                              tokenizer=tokenize)
-                                              ),
-                ])),
-                ('demographics', Pipeline([
-                    ('selector', SubSelector(keys=demographics)),
-                    ('demo_feat', DictVectorizer()),
-                    ('scaled_demo', StandardScaler(with_mean=False)),
-                ])),
-            ],
-           )
-    X = features.fit_transform(df)
-    lookup_dict = {i:feat for i, feat in enumerate(features.get_feature_names())}
+    mapper = DataFrameMapper(transformer_list, sparse=True)
+    X = mapper.fit_transform(df)
+    lookup_dict = {i:feat for i, feat in enumerate(mapper.transformed_names_)}
     
     scoring_dict = dict()
 
-    for col in mfq_cols:
-        print("Working on {}".format(col))
+    for col in targets:
+        print("Working on predicting {}".format(col))
         scoring_dict[col] = dict()
         Y = df[col].values.tolist()
         kfold = model_selection.KFold(n_splits=3, random_state=seed)
@@ -133,14 +130,14 @@ for feat in text_versions:
                 scoring_dict[col][model] = dict()
                 regressor = SGDRegressor(loss='squared_loss',  # default
                                         penalty='elasticnet',
-                                        tol=1e-4,
+                                        max_iter=50,
                                         shuffle=True,
                                         random_state=seed,
-                                        verbose=1
+                                        verbose=0
                                         )
-                choose_regressor = GridSearchCV(regressor, cv=kfold, 
+                choose_regressor = GridSearchCV(regressor, cv=kfold, iid=True, 
                                                 param_grid={"alpha": 10.0**-np.arange(1,7), 
-                                                            "l1_ratio": np.arange(0.0,1.0,0.2)
+                                                            "l1_ratio": np.arange(0.15,0.25,0.05)
                                                         }
                                                )
 
@@ -153,14 +150,14 @@ for feat in text_versions:
                 top_features = sorted(abs_val_coefs.items(), key=operator.itemgetter(1), reverse=True)[:100]
                 real_weights = [[word, word_coefs[word]] for word, _ in top_features]
                 scoring_dict[col][model]['top_features'] = real_weights
-            for metric in metrics:
-                results = model_selection.cross_val_score(best_model, X, Y, cv=kfold, scoring=metric)
+            for metric in ['r2']:
+                results = best_model.score(X, Y)
                 scoring_dict[col][model][metric + "_mean"] = "{0:.3f}".format(results.mean())
                 scoring_dict[col][model][metric + "_std"] = "{0:.3f}".format(results.std())
 
-    scoring_output = os.path.join(scoring_dir, text_version, config_text)
+    scoring_output = os.path.join(scoring_dir, config_text, feat)
     if not os.path.exists(scoring_output):
         os.makedirs(scoring_output)
-    scoring_output = os.path.join(scoring_output, "scores.json")
+    scoring_output = os.path.join(scoring_output, "scores_full" + ".json")
     with open(scoring_output, 'w') as fo:
         json.dump(scoring_dict, fo, indent=4)

@@ -7,4 +7,4 @@ demo_race = ["race_" + col for col in ["black", "eastasian", "latino", "middleea
 
 demographics = ["age", "gender"]  # geo_cols + demographics + demo_race
 
-MFQ_AVG = ['MFQ_INGROUP_AVG', 'MFQ_AUTHORITY_AVG', 'MFQ_HARM_AVG', 'MFQ_PURITY_AVG', 'MFQ_FAIRNESS']
+MFQ_AVG = ['MFQ_INGROUP_AVG', 'MFQ_AUTHORITY_AVG', 'MFQ_HARM_AVG', 'MFQ_PURITY_AVG', 'MFQ_FAIRNESS_AVG']
