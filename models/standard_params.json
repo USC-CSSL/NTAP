@@ -2,7 +2,7 @@
     "dataframe_name": "full_dataframe.pkl",
     "text_col": "fb_status_msg",
     "dictionary": "liwc",
-    "feature_method": "tfidf",
+    "feature_method": ["tfidf"],
     "models": [
         "elasticnet",
         "GBRT"
@@ -14,15 +14,17 @@
         "MFQ_AUTHORITY_AVG",
         "MFQ_HARM_AVG"
     ],
+    "feature_col" : [],
     "categorical_features": [],
     "embedding_method": "skipgram",
     "config_text": "indiv",
-    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "data_dir": "/home/aida/neural_profiles_datadir",
     "ordinal_features": [],
     "random_seed": 51,
     "metrics": [
         "r2"
     ],
     "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
-    "training_corpus": "GoogleNews3B"
+    "training_corpus": "GoogleNews3B",
+    "preprocessing": []
 }

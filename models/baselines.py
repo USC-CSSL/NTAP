@@ -1,23 +1,16 @@
 import pandas as pd
-import numpy as np
-import sys 
-import json
-import re
-import operator
-import os
+import sys, os, json
 
 from columns import demographics, MFQ_AVG
-from make_features import get_text_transformer, add_categorical
+from make_features import get_text_transformer
+from preprocess import preprocess_text
+from evaluate import evaluate_models
 
-from sklearn.linear_model import SGDRegressor
-from sklearn.model_selection import GridSearchCV
-from sklearn import model_selection
 from sklearn_pandas import DataFrameMapper
 
-#-----------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------
+
 if __name__ == '__main__':
-    
+
     if len(sys.argv) != 2:
         print("Usage: python baselines.py params.json")
         exit(1)
@@ -36,10 +29,12 @@ if __name__ == '__main__':
         targets = params["targets"]
         metrics = params["metrics"]
         seed = params["random_seed"]
+        preprocess_methods = params["preprocessing"]
 
-        feature_method = params["feature_method"]  # options: bag-of-means, load_features, ddr, fasttext, infersent
-        text_col = params["text_col"]  # if feature_method == 'load_features' then type(text_col) is list
-        ordinal_cols = params["ordinal_features"]  
+        feature_methods = params["feature_method"]  # a list of methods. options: bag-of-means, ddr, fasttext, infersent
+        text_col = params["text_col"]  # the column that contains the raw text
+        feature_col = params["feature_col"] # name of the columns that are considered as features. These features are already extracted and exist in the dataframe
+        ordinal_cols = params["ordinal_features"]
         categorical_cols = params["categorical_features"]
 
         # for doing DDR or BoM feature generation
@@ -50,70 +45,27 @@ if __name__ == '__main__':
         print("Could not load all parameters; if you're not using a parameter, set it to None")
         exit(1)
 
-    #-----------------------------------------------------------------------------------
-    #-----------------------------------------------------------------------------------
-
+    # Reading the dataset
     df = pd.read_pickle(data_dir + '/' + dataframe_fname)
     print("Dataframe has {} rows and {} columns".format(df.shape[0], df.shape[1]))
 
-    #-----------------------------------------------------------------------------------
-    #-----------------------------------------------------------------------------------
+    #Preprocessing the data
+    preprocess_text = preprocess_text(df, text_col, preprocess_methods ,data_dir)
 
     # Transform features
-    transformer_list = get_text_transformer(df,text_col, feature_method, bom_method=word2vec_method,
-                                            training_corpus=corpus, dictionary=dictionary)
-    transformer_list = add_categorical(transformer_list, ordinal_cols, categorical_cols)
+    transformer_list = get_text_transformer(df, text_col, feature_methods, feature_col, ordinal_cols, categorical_cols,
+                                            bom_method=word2vec_method, training_corpus=corpus, dictionary=dictionary)
 
     print(transformer_list)
+
     mapper = DataFrameMapper(transformer_list, sparse=True, input_df=True)
     X = mapper.fit_transform(df)
-    lookup_dict = {i:feat for i, feat in enumerate(mapper.transformed_names_)}
-    scoring_dict = dict()
+    lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
 
-    for col in targets:
-        print("Working on predicting {}".format(col))
-        scoring_dict[col] = dict()
-        Y = df[col].values.tolist()
-        kfold = model_selection.KFold(n_splits=3, random_state=seed)
-        for model in models:
-            if model == 'elasticnet':
-                scoring_dict[col][model] = dict()
-                regressor = SGDRegressor(loss='squared_loss',  # default
-                                        penalty='elasticnet',
-                                        max_iter=50,
-                                        shuffle=True,
-                                        random_state=seed,
-                                        verbose=0
-                                        )
-                choose_regressor = GridSearchCV(regressor, cv=kfold, iid=True, 
-                                                param_grid={"alpha": 10.0**-np.arange(1,7), 
-                                                            "l1_ratio": np.arange(0.15,0.25,0.05)
-                                                        }
-                                               )
+    # Performing classification
+    scoring_dict = evaluate_models(df, X, targets, lookup_dict, models, seed)
 
-                choose_regressor.fit(X,Y)
-                best_model = choose_regressor.best_estimator_
-                scoring_dict[col][model]['params'] = choose_regressor.best_params_
-                coef_dict = {i:val for i,val in enumerate(best_model.coef_)}
-                word_coefs = {lookup_dict[i]:val for i, val in coef_dict.items()}
-                abs_val_coefs = {word:abs(val) for word, val in word_coefs.items()}
-                top_features = sorted(abs_val_coefs.items(), key=operator.itemgetter(1), reverse=True)[:100]
-                real_weights = [[word, word_coefs[word]] for word, _ in top_features]
-                scoring_dict[col][model]['top_features'] = real_weights
-            
-            if model == 'GBRT':
-                print("GBRT Model")
-                continue
-                # Do GBRT shit
-                # Post conditions: best_model is the best model (by CV); scoring_dict[col][model] is updated
-
-            
-            for metric in ['r2']:
-                results = best_model.score(X, Y)
-                scoring_dict[col][model][metric + "_mean"] = "{0:.3f}".format(results.mean())
-                scoring_dict[col][model][metric + "_std"] = "{0:.3f}".format(results.std())
-            
-    scoring_output = os.path.join(scoring_dir, config_text, feature_method)
+    scoring_output = os.path.join(scoring_dir, config_text, "-".join(f for f in feature_methods))
     if not os.path.exists(scoring_output):
         os.makedirs(scoring_output)
     scoring_output = os.path.join(scoring_output, "scores_full" + ".json")
