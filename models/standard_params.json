@@ -2,7 +2,7 @@
     "dataframe_name": "full_dataframe.pkl",
     "text_col": "fb_status_msg",
     "dictionary": "liwc",
-    "feature_method": ["tfidf"],
+    "feature_methods": ["tfidf"],
     "models": [
         "elasticnet",
         "GBRT"
@@ -15,11 +15,11 @@
         "MFQ_HARM_AVG"
     ],
     "feature_col" : [],
-    "categorical_features": [],
+    "categorical_cols": [],
     "embedding_method": "skipgram",
     "config_text": "indiv",
     "data_dir": "/home/aida/neural_profiles_datadir",
-    "ordinal_features": [],
+    "ordinal_cols": [],
     "random_seed": 51,
     "metrics": [
         "r2"

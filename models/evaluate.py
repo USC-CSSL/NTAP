@@ -2,12 +2,12 @@ from sklearn.linear_model import SGDRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import model_selection
 import numpy as np
-import operator
+import operator, os, json
 
 
 
 
-def evaluate_models(df, X, targets, lookup_dict, models, seed):
+def evaluate_models(df, X, targets, lookup_dict, models, seed, feature_methods, scoring_dir, config_text):
 
     scoring_dict = dict()
 
@@ -24,7 +24,8 @@ def evaluate_models(df, X, targets, lookup_dict, models, seed):
             scoring_dict[col][model][metric + "_mean"] = "{0:.3f}".format(results.mean())
             scoring_dict[col][model][metric + "_std"] = "{0:.3f}".format(results.std())
 
-    return scoring_dict
+    scoring_output = os.path.join(scoring_dir, config_text, "-".join(f for f in feature_methods))
+    write_evaluations(scoring_dict, scoring_output)
 
 
 def elasticnet(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
@@ -60,3 +61,12 @@ def GBRT(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
     print("GBRT model")
     # Do GBRT shit
     # Post conditions: best_model is the best model (by CV); scoring_dict[col][model] is updated
+
+
+def write_evaluations(scoring_dict, scoring_output):
+
+    if not os.path.exists(scoring_output):
+        os.makedirs(scoring_output)
+    scoring_output = os.path.join(scoring_output, "scores_full" + ".json")
+    with open(scoring_output, 'w') as fo:
+        json.dump(scoring_dict, fo, indent=4)
