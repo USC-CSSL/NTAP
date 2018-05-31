@@ -23,8 +23,8 @@ def load_glove_from_file(fname, vocab=None):
             if vocab is not None:
                 if tokens[0] not in vocab:
                     continue
-            if tokens > 0:
-                embeddings[str(tokens[0])] = np.array(tokens[1:])
+            if len(tokens) > 0:
+                embeddings[str(tokens[0])] = np.array(tokens[1:], dtype=np.float32)
     return embeddings
 
 class BoMVectorizer(BaseEstimator, TransformerMixin):
@@ -60,6 +60,8 @@ class BoMVectorizer(BaseEstimator, TransformerMixin):
                     count += 1
                 except KeyError as error:
                     oov.append(token)
+            else:
+                raise ValueError("Incorrect embedding_type specified; only possibilities are 'skipgram and 'GloVe'")
         if count <= min_threshold:
             return np.zeros(embed_size), oov
         sentence = np.array(arrays)

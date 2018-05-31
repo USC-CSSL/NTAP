@@ -87,10 +87,12 @@ def get_text_transformer(dataframe,
             print("Specify bom_method and training_corpus")
             exit(1)
         transformers.append((text_col, BoMVectorizer(training_corpus,
-                                                     embedding_type='skipgram',
+                                                     embedding_type=bom_method,
                                                      remove_stopwords=True,
                                                      preprocessor=prep_text,
-                                                     tokenizer=tokenize, data_path=data_dir)))
+                                                     tokenizer=tokenize, data_path=data_dir)
+                                     , {'alias': "_".join([method, bom_method])}
+                                                     ))
     elif method == 'ddr':
         if dictionary is None or training_corpus is None or bom_method is None:
             print("Specify dictionary, bom_method, and training_corpus")

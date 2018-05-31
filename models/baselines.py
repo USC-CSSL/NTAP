@@ -65,7 +65,6 @@ if __name__ == '__main__':
                                             training_corpus=corpus, dictionary=dictionary)
     transformer_list = add_categorical(transformer_list, ordinal_cols, categorical_cols)
 
-    print(transformer_list)
     mapper = DataFrameMapper(transformer_list, sparse=True, input_df=True)
     X = mapper.fit_transform(df)
     lookup_dict = {i:feat for i, feat in enumerate(mapper.transformed_names_)}
@@ -81,10 +80,10 @@ if __name__ == '__main__':
                 scoring_dict[col][model] = dict()
                 regressor = SGDRegressor(loss='squared_loss',  # default
                                         penalty='elasticnet',
-                                        max_iter=50,
+                                        max_iter=1,
                                         shuffle=True,
                                         random_state=seed,
-                                        verbose=0
+                                        verbose=1
                                         )
                 choose_regressor = GridSearchCV(regressor, cv=kfold, iid=True, 
                                                 param_grid={"alpha": 10.0**-np.arange(1,7), 
