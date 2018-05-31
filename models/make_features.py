@@ -6,6 +6,8 @@ from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
 from sklearn_pandas import gen_features, CategoricalImputer
 from sklearn.impute import SimpleImputer as Imputer
 
+
+from vectorizers import BoMVectorizer
 from nltk import tokenize as nltk_token
 nltk_tokenizer = nltk_token.TreebankWordTokenizer()
 alpha_re = re.compile(r"[^a-zA-Z\s]")
@@ -37,6 +39,7 @@ def add_categorical(transformer_list, ordinal_cols, categorical_cols):
 
 # returns transformer list, one per generated/loaded text feature
 def get_text_transformer(dataframe,
+                         data_dir,
                          text_col,  # can be list (if loading features) or string (if generating)
                          method,  # type of features to load/generate
                          punc=False,  # remove punctuation in preprocessing
@@ -84,9 +87,10 @@ def get_text_transformer(dataframe,
             print("Specify bom_method and training_corpus")
             exit(1)
         transformers.append((text_col, BoMVectorizer(training_corpus,
+                                                     embedding_type='skipgram',
                                                      remove_stopwords=True,
-                                                     preprocessor=process_text,
-                                                     tokenizer=tokenize)))
+                                                     preprocessor=prep_text,
+                                                     tokenizer=tokenize, data_path=data_dir)))
     elif method == 'ddr':
         if dictionary is None or training_corpus is None or bom_method is None:
             print("Specify dictionary, bom_method, and training_corpus")
