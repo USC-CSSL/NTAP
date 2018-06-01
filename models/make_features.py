@@ -6,13 +6,17 @@ from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
 from sklearn_pandas import gen_features, CategoricalImputer
 from sklearn.impute import SimpleImputer as Imputer
 
+from scipy import spatial
 
-from vectorizers import BoMVectorizer
+from vectorizers import BoMVectorizer, DDRVectorizer
 from nltk import tokenize as nltk_token
 nltk_tokenizer = nltk_token.TreebankWordTokenizer()
 alpha_re = re.compile(r"[^a-zA-Z\s]")
 length_re = re.compile(r'\w{3,}')
 
+
+def cosine_similarity(x, y):
+    return 1 - spatial.distance.cosine(x, y)
 
 def tokenize(text):
     tokens = nltk_tokenizer.tokenize(text)
@@ -46,7 +50,8 @@ def get_text_transformer(dataframe,
                          clean_type='alpha',  # valid characters for a 'word'
                          bom_method=None,  # options: 'skipgram', 'glove'
                          training_corpus=None,  # options: 'google-news', 'wiki', 'common-crawl'
-                         dictionary=None  # options: 'liwc', 'mfd'
+                         dictionary=None,  # options: 'liwc', 'mfd'
+                         comp_measure=None # options: cosine_similarity
                          ):
     # Either generates features from text (tfidf, skipgram, etc.) or load from file
 
@@ -97,14 +102,16 @@ def get_text_transformer(dataframe,
         if dictionary is None or training_corpus is None or bom_method is None:
             print("Specify dictionary, bom_method, and training_corpus")
             exit(1)
-        transformers.append((text_col, [BoMVectorizer(training_corpus,
+        sim = cosine_similarity if comp_measure == 'cosine-sim' else None
+        transformers.append((text_col, [DDRVectorizer(training_corpus,
+                                                      embedding_type=bom_method,
                                                       remove_stopwords=True,
-                                                      preprocessor=process_text,
-                                                      tokenizer=tokenize),
-                                        DDRVectorizer(dictionary=dictionary,
-                                                      similarity='cosine-sim'),
-                                        StandardScaler
-                                   ]))
+                                                      preprocessor=prep_text,
+                                                      tokenizer=tokenize, 
+                                                      data_path=data_dir,
+                                                      dictionary=dictionary,
+                                                      similarity=sim)
+                                                      ], {'alias': "_".join([method, dictionary])}))
         # chain skipgram-bom with liwc transformer
     elif method == 'fasttext':  # exceeds at syntactic tasks
         print("FastText")

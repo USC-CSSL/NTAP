@@ -6,7 +6,6 @@ import re
 import operator
 import os
 
-from columns import demographics, MFQ_AVG
 from make_features import get_text_transformer, add_categorical
 
 from sklearn.linear_model import SGDRegressor
@@ -62,7 +61,8 @@ if __name__ == '__main__':
     # Transform features
     transformer_list = get_text_transformer(df, data_dir, text_col, feature_method, 
                                             bom_method=word2vec_method,
-                                            training_corpus=corpus, dictionary=dictionary)
+                                            training_corpus=corpus, dictionary=dictionary,
+                                            comp_measure='cosine-sim')
     transformer_list = add_categorical(transformer_list, ordinal_cols, categorical_cols)
 
     mapper = DataFrameMapper(transformer_list, sparse=True, input_df=True)
@@ -116,6 +116,6 @@ if __name__ == '__main__':
     scoring_output = os.path.join(scoring_dir, config_text, feature_method)
     if not os.path.exists(scoring_output):
         os.makedirs(scoring_output)
-    scoring_output = os.path.join(scoring_output, "scores_full" + ".json")
+    scoring_output = os.path.join(scoring_output, sys.argv[1]) 
     with open(scoring_output, 'w') as fo:
         json.dump(scoring_dict, fo, indent=4)
