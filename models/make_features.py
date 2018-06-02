@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer as Imputer
 
 from scipy import spatial
 
-from vectorizers import BoMVectorizer, DDRVectorizer
+from vectorizers import BoMVectorizer, DDRVectorizer, LDAVectorizer
 from nltk import tokenize as nltk_token
 nltk_tokenizer = nltk_token.TreebankWordTokenizer()
 alpha_re = re.compile(r"[^a-zA-Z\s]")
@@ -51,12 +51,13 @@ def get_text_transformer(dataframe,
                          bom_method=None,  # options: 'skipgram', 'glove'
                          training_corpus=None,  # options: 'google-news', 'wiki', 'common-crawl'
                          dictionary=None,  # options: 'liwc', 'mfd'
-                         comp_measure=None # options: cosine_similarity
+                         comp_measure=None, # options: cosine-sim
+                         random_seed=-1
                          ):
     # Either generates features from text (tfidf, skipgram, etc.) or load from file
 
     already_features = type(text_col) == list
-    gen_list = ['tfidf', 'bag-of-means', 'ddr', 'fasttext', 'infersent']
+    gen_list = ['tfidf', 'bag-of-means', 'ddr', 'lda', 'fasttext', 'infersent']
 
     if not already_features:
         if method not in gen_list:
@@ -87,6 +88,13 @@ def get_text_transformer(dataframe,
                     columns=[ [col] for col in text_col],
                     classes=[StandardScaler])
 
+    elif method == 'lda':
+        num_topics = 100
+        transformers.append((text_col, LDAVectorizer(seed=random_seed,
+                                                     tokenizer=tokenize,
+                                                     preprocessor=prep_text,
+                                                     num_topics=num_topics),
+                             {'alias': method + "_" + str(num_topics) + "topics"}))
     elif method == 'bag-of-means':
         if training_corpus is None or bom_method is None:
             print("Specify bom_method and training_corpus")

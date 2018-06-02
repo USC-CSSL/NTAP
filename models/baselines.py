@@ -62,7 +62,7 @@ if __name__ == '__main__':
     transformer_list = get_text_transformer(df, data_dir, text_col, feature_method, 
                                             bom_method=word2vec_method,
                                             training_corpus=corpus, dictionary=dictionary,
-                                            comp_measure='cosine-sim')
+                                            comp_measure='cosine-sim', random_seed=seed)
     transformer_list = add_categorical(transformer_list, ordinal_cols, categorical_cols)
 
     mapper = DataFrameMapper(transformer_list, sparse=True, input_df=True)
