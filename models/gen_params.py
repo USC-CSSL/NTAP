@@ -7,7 +7,7 @@ if __name__ == '__main__':
     params['config_text'] = 'indiv'
     params['dataframe_name'] = 'full_dataframe.pkl'
 
-    params['feature_methods'] = 'lda'
+    params['feature_methods'] = ['lda']
     params['feature_cols'] = []
     params['text_col'] = 'fb_status_msg'
     params['ordinal_cols'] = list()  # ['age']
@@ -22,6 +22,6 @@ if __name__ == '__main__':
     params['preprocessing'] = []
 
 
-    with open("test_lda.json", 'w') as fo:
+    with open("test_merge.json", 'w') as fo:
         json.dump(params, fo, indent=4)
 

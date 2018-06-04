@@ -3,7 +3,7 @@ import sys, os, json
 
 from preprocess import preprocess_text
 from evaluate import evaluate_models
-from make_features import get_text_transformer
+from make_features import get_transformer_list
 
 from sklearn_pandas import DataFrameMapper
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     preprocess_text = preprocess_text(df, text_col, preprocessing ,data_dir)
 
     # Transform features
-    transformer_list = get_transformer_list(df, data_dir, text_col, feature_method, feature_cols,
+    transformer_list = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,
                                             ordinal_cols, categorical_cols, bom_method=embedding_method,
                                             training_corpus=training_corpus, dictionary=dictionary,
                                             comp_measure='cosine-sim', random_seed=random_seed)

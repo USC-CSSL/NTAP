@@ -31,7 +31,7 @@ def get_transformer_list(dataframe,
     transformers = list()
 
     for method in methods:
-        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary)
+        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed)
         transformers.append((text_col, ) + transformation) if type(transformation) == tuple else (text_col, transformation)
 
     if len(feature_col) > 0:
@@ -81,33 +81,33 @@ def validate_arguments(dataframe, text_col, feature_col, methods):
             print("{} is not an existing method".format(method))
             exit(1)
 
-def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary):
+def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed):
     return TfidfVectorizer(min_df=10, stop_words='english',
             tokenizer=tokenize), {'alias': 'tfidf'}
 
 def bagofmeans(dataframe, text_col, bom_method, training_corpus):
     if training_corpus is None or bom_method is None:
         print("Specify bom_method and training_corpus")
-    return BoMVectorizer(training_corpus,
+    return (BoMVectorizer(training_corpus,
                          embedding_type=bom_method,
                          tokenizer=tokenize, data_path=data_dir)
-                         , {'alias': "_".join([bom_method, training_corpus])}
+                         , {'alias': "_".join([bom_method, training_corpus])})
 
-def ddr(dataframe, text_col, bom_method, training_corpus, dictionary):
+def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed):
     if dictionary is None or training_corpus is None or bom_method is None:
         print("Specify dictionary, bom_method, and training_corpus")
         exit(1)
     sim = cosine_similarity if comp_measure == 'cosine-sim' else None
-    return DDRVectorizer(training_corpus,
+    return (DDRVectorizer(training_corpus,
                          embedding_type=bom_method,
                          tokenizer=tokenize, 
                          data_path=data_dir,
                          dictionary=dictionary,
-                         similarity=sim), {'alias': "_".join([bom_method, training_corpus, dictionary])}
+                         similarity=sim), {'alias': "_".join([bom_method, training_corpus, dictionary])})
 
-def lda(dataframe, text_col, bom_method, training_corpus, dictionary):
+def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed):
     num_topics = 100
-    return LDAVectorizer(seed=random_seed,
+    return (LDAVectorizer(seed=random_seed,
                          tokenizer=tokenize,
                          num_topics=num_topics),
-           {'alias': method + "_" + str(num_topics) + "topics"}
+           {'alias': "LDA_" + str(num_topics) + "topics"})
