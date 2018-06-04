@@ -1,10 +1,9 @@
 import pandas as pd
 import sys, os, json
 
-from columns import demographics, MFQ_AVG
-from make_features import get_text_transformer
 from preprocess import preprocess_text
 from evaluate import evaluate_models
+from make_features import get_text_transformer
 
 from sklearn_pandas import DataFrameMapper
 
@@ -36,15 +35,14 @@ if __name__ == '__main__':
     preprocess_text = preprocess_text(df, text_col, preprocessing ,data_dir)
 
     # Transform features
-    transformer_list = get_text_transformer(df, text_col, feature_methods, feature_col, ordinal_cols, categorical_cols,
-                                            bom_method=embedding_method, training_corpus=training_corpus, dictionary=dictionary)
-
-    print(transformer_list)
+    transformer_list = get_transformer_list(df, data_dir, text_col, feature_method, feature_cols,
+                                            ordinal_cols, categorical_cols, bom_method=embedding_method,
+                                            training_corpus=training_corpus, dictionary=dictionary,
+                                            comp_measure='cosine-sim', random_seed=random_seed)
 
     mapper = DataFrameMapper(transformer_list, sparse=True, input_df=True)
     X = mapper.fit_transform(df)
-    lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
-
+    lookup_dict = {i:feat for i, feat in enumerate(mapper.transformed_names_)}
     # Performing classification
     evaluate_models(df, X, targets, lookup_dict, models, random_seed)
 

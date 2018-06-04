@@ -7,21 +7,13 @@ from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
 from sklearn_pandas import gen_features, CategoricalImputer
 from sklearn.impute import SimpleImputer as Imputer
 
-from vectorizers import *
-
-from nltk import tokenize as nltk_token
-nltk_tokenizer = nltk_token.TreebankWordTokenizer()
-alpha_re = re.compile(r"[^a-zA-Z\s]")
-length_re = re.compile(r'\w{3,}')
-
-
-def tokenize(text):
-    tokens = nltk_tokenizer.tokenize(text)
-    return tokens
+from vectorizers import BoMVectorizer, DDRVectorizer, LDAVectorizer
+from utils import cosine_similarity, tokenize
 
 
 # returns transformer list, one per generated/loaded text feature
-def get_text_transformer(dataframe,
+def get_transformer_list(dataframe,
+                         data_dir, 
                          text_col,  # name of the col that contains the document texta
                          methods,  # type of features to load/generate. Can be a name or list of names
                          feature_col= [], # list of columns that are considered as features
@@ -29,7 +21,9 @@ def get_text_transformer(dataframe,
                          categorical_cols = [],
                          bom_method=None,  # options: 'skipgram', 'glove'
                          training_corpus=None,  # options: 'google-news', 'wiki', 'common-crawl'
-                         dictionary=None  # options: 'liwc', 'mfd'
+                         dictionary=None,  # options: 'liwc', 'mfd'
+                         comp_measure='cosine-sim',
+                         random_seed=0
                          ):
     # Either generates features from text (tfidf, skipgram, etc.) or load from file
     validate_arguments(dataframe, text_col, feature_col, methods)
@@ -60,7 +54,6 @@ def get_text_transformer(dataframe,
 
     return transformers
 
-
 def validate_arguments(dataframe, text_col, feature_col, methods):
 
     # text_col
@@ -81,38 +74,40 @@ def validate_arguments(dataframe, text_col, feature_col, methods):
     if type(methods) != list:
         methods = [methods]
 
-    gen_list = ['tfidf', 'bagofmeans', 'ddr', 'fasttext', 'infersent']
+    gen_list = ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent']
 
     for method in methods:
         if method not in gen_list:
             print("{} is not an existing method".format(method))
             exit(1)
 
-
-
-
 def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary):
     return TfidfVectorizer(min_df=10, stop_words='english',
             tokenizer=tokenize), {'alias': 'tfidf'}
 
-
-def bagofmeans(dataframe, text_col, bom_method, training_corpus, dictionary):
+def bagofmeans(dataframe, text_col, bom_method, training_corpus):
     if training_corpus is None or bom_method is None:
         print("Specify bom_method and training_corpus")
-        exit(1)
-    return BoMVectorizer(training_corpus,tokenizer=tokenize)
-
+    return BoMVectorizer(training_corpus,
+                         embedding_type=bom_method,
+                         tokenizer=tokenize, data_path=data_dir)
+                         , {'alias': "_".join([bom_method, training_corpus])}
 
 def ddr(dataframe, text_col, bom_method, training_corpus, dictionary):
     if dictionary is None or training_corpus is None or bom_method is None:
         print("Specify dictionary, bom_method, and training_corpus")
         exit(1)
-    return [BoMVectorizer(training_corpus,
-                              tokenizer=tokenize),
-                DDRVectorizer(dictionary=dictionary,
-                              similarity='cosine-sim'),
-                StandardScaler
-                ]
+    sim = cosine_similarity if comp_measure == 'cosine-sim' else None
+    return DDRVectorizer(training_corpus,
+                         embedding_type=bom_method,
+                         tokenizer=tokenize, 
+                         data_path=data_dir,
+                         dictionary=dictionary,
+                         similarity=sim), {'alias': "_".join([bom_method, training_corpus, dictionary])}
 
 def lda(dataframe, text_col, bom_method, training_corpus, dictionary):
-    return LDAVectorizer(dataframe, text_col)
+    num_topics = 100
+    return LDAVectorizer(seed=random_seed,
+                         tokenizer=tokenize,
+                         num_topics=num_topics),
+           {'alias': method + "_" + str(num_topics) + "topics"}

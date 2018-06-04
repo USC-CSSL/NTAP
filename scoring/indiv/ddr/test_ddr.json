@@ -1,0 +1,262 @@
+{
+    "MFQ_AUTHORITY_AVG": {
+        "elasticnet": {
+            "r2_mean": "-0.000",
+            "r2_std": "0.000",
+            "params": {
+                "l1_ratio": 0.15,
+                "alpha": 0.1
+            },
+            "top_features": [
+                [
+                    "ddr_moral_foundations_theory_sanctity_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_sanctity_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_virtue",
+                    0.0
+                ]
+            ]
+        }
+    },
+    "MFQ_FAIRNESS_AVG": {
+        "elasticnet": {
+            "r2_mean": "-0.000",
+            "r2_std": "0.000",
+            "params": {
+                "l1_ratio": 0.2,
+                "alpha": 0.01
+            },
+            "top_features": [
+                [
+                    "ddr_moral_foundations_theory_sanctity_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_sanctity_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_virtue",
+                    0.0
+                ]
+            ]
+        }
+    },
+    "MFQ_HARM_AVG": {
+        "elasticnet": {
+            "r2_mean": "0.002",
+            "r2_std": "0.000",
+            "params": {
+                "l1_ratio": 0.15,
+                "alpha": 1e-06
+            },
+            "top_features": [
+                [
+                    "ddr_moral_foundations_theory_sanctity_virtue",
+                    0.18665085341174456
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_virtue",
+                    0.1478463140225931
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_vice",
+                    -0.12325144297045526
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_vice",
+                    0.1125618635634252
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_virtue",
+                    -0.10962319839071924
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_vice",
+                    -0.08207106446119138
+                ],
+                [
+                    "ddr_moral_foundations_theory_sanctity_vice",
+                    -0.07183709994267086
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_virtue",
+                    -0.050525811587456816
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_vice",
+                    -0.03205819947228389
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_virtue",
+                    -0.009451789002211539
+                ]
+            ]
+        }
+    },
+    "MFQ_PURITY_AVG": {
+        "elasticnet": {
+            "r2_mean": "0.002",
+            "r2_std": "0.000",
+            "params": {
+                "l1_ratio": 0.15,
+                "alpha": 1e-06
+            },
+            "top_features": [
+                [
+                    "ddr_moral_foundations_theory_care_virtue",
+                    0.22964298673693073
+                ],
+                [
+                    "ddr_moral_foundations_theory_sanctity_vice",
+                    -0.22247273798689907
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_vice",
+                    0.16051054030017778
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_vice",
+                    -0.11318935071138646
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_vice",
+                    -0.11197390322149849
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_virtue",
+                    0.11067444914079096
+                ],
+                [
+                    "ddr_moral_foundations_theory_sanctity_virtue",
+                    0.09358615712720772
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_virtue",
+                    -0.0814275585176642
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_virtue",
+                    -0.011901542411210378
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_vice",
+                    0.011578129496501601
+                ]
+            ]
+        }
+    },
+    "MFQ_INGROUP_AVG": {
+        "elasticnet": {
+            "r2_mean": "0.002",
+            "r2_std": "0.000",
+            "params": {
+                "l1_ratio": 0.2,
+                "alpha": 0.001
+            },
+            "top_features": [
+                [
+                    "ddr_moral_foundations_theory_sanctity_vice",
+                    -0.20066536899101559
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_vice",
+                    -0.10010175988938605
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_virtue",
+                    -0.09078271633971562
+                ],
+                [
+                    "ddr_moral_foundations_theory_fairness_vice",
+                    -0.06628976377839521
+                ],
+                [
+                    "ddr_moral_foundations_theory_authority_virtue",
+                    -0.030651624958935947
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_virtue",
+                    0.02051377051971372
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_virtue",
+                    0.006870692953094295
+                ],
+                [
+                    "ddr_moral_foundations_theory_sanctity_virtue",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_loyalty_vice",
+                    0.0
+                ],
+                [
+                    "ddr_moral_foundations_theory_care_vice",
+                    0.0
+                ]
+            ]
+        }
+    }
+}

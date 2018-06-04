@@ -6,6 +6,8 @@ from nltk import word_tokenize
 from unidecode import unidecode
 from textblob import TextBlob
 
+# alpha_re = re.compile(r"[^a-zA-Z\s]")
+# length_re = re.compile(r'\w{3,}')
 
 def preprocess_text(df,
                     col,
