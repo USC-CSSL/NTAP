@@ -1,7 +1,10 @@
 import re, os, json, nltk
 from nltk.stem import WordNetLemmatizer
 import pandas as pd
-from nltk.corpus import wordnet
+from nltk.corpus import wordnet, stopwords
+from nltk import word_tokenize
+from unidecode import unidecode
+from textblob import TextBlob
 
 
 def preprocess_text(df,
@@ -64,7 +67,6 @@ def lemmatize(df, col, dir):
         new_text = " ".join(words)
         lemmatized_posts.append(new_text)
     df[col] = pd.Series(lemmatized_posts, index=df.index)
-    print("Lemmatized the {} columns of the dataframe".format(col))
     return df
 
 
@@ -79,3 +81,35 @@ def get_wordnet_pos(treebank_tag):
         return wordnet.ADV
     else:
         return ''
+
+def english(df, col, data_dir):
+    print("Cleaning text (transliterate all unicode to ascii-approx) and removing non-English posts")
+    delete_indices = list()  # for non-English documents
+    c = 0
+
+    for i, row in df.iterrows():
+        c += 1
+        if c % 1000 == 0:
+            print("Processed {} rows".format(c))
+            print("{0:.3f}% done".format(100 * float(c) / df.shape[0]))
+        text = row[col]
+        decoded_text = unidecode(text).lower()
+        collapsed_whitespace = re.sub(r"[\s]+", " ", decoded_text)
+        if len(collapsed_whitespace) < 3:
+            delete_indices.append(i)  # text is too short
+            continue
+        detected_language = TextBlob(collapsed_whitespace).detect_language()
+        if detected_language != 'en':
+            delete_indices.append(i)
+        df.at[i, col] = collapsed_whitespace
+
+    old_rows = df.shape[0]
+    df = df.drop(delete_indices)
+    print("Dropped {} rows; new dataframe has {} rows".format(old_rows - df.shape[0], df.shape[0]))
+    return df
+
+def stop_words(df, col, data_dir):
+    stop_words = set(stopwords.words('english'))
+    for i, row in df.iterrows():
+        df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if not word in stop_words)
+    return df
