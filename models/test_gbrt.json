@@ -1,0 +1,31 @@
+{
+    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "text_col": "fb_status_msg",
+    "targets": [
+        "MFQ_FAIRNESS_AVG",
+        "MFQ_INGROUP_AVG",
+        "MFQ_PURITY_AVG",
+        "MFQ_AUTHORITY_AVG",
+        "MFQ_HARM_AVG"
+    ],
+    "preprocessing": [],
+    "feature_cols": [],
+    "dictionary": "moral_foundations_theory",
+    "embedding_method": "GloVe",
+    "ordinal_cols": [],
+    "categorical_cols": [],
+    "dataframe_name": "full_dataframe.pkl",
+    "random_seed": 51,
+    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "feature_methods": [
+        "bagofmeans"
+    ],
+    "metrics": [
+        "r2"
+    ],
+    "training_corpus": "wiki_gigaword",
+    "models": [
+        "GBRT"
+    ],
+    "config_text": "indiv"
+}

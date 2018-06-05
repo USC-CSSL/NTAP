@@ -1,4 +1,6 @@
 from sklearn.linear_model import SGDRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+
 from sklearn.model_selection import GridSearchCV
 from sklearn import model_selection
 import numpy as np
@@ -59,7 +61,21 @@ def elasticnet(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
 
 def GBRT(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
     print("GBRT model")
-    # Do GBRT shit
+    model = 'gbrt'
+    scoring_dict[col][model] = dict()
+    gbrt = GradientBoostingRegressor(verbose=2, random_state=seed)
+    choose_gbrt = GridSearchCV(gbrt, cv=kfold, 
+                    param_grid={"learning_rate": np.arange(.1,1.0,.3),
+                                "n_estimators": np.arange(50, 250, 50),
+                                "max_depth": np.arange(3,10)})
+    choose_gbrt.fit(X, Y)
+    best_model = choose_gbrt.best_estimator_
+    scoring_dict[col][model]['params'] = choose_gbrt.best_params_
+    feature_importance = best_model.feature_importances_
+    print(feature_importance)
+    return scoring_dict, best_model
+
+                                                
     # Post conditions: best_model is the best model (by CV); scoring_dict[col][model] is updated
 
 

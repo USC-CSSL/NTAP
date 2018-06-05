@@ -66,7 +66,7 @@ class BoMVectorizer(BaseEstimator, TransformerMixin):
             else:
                 raise ValueError("Incorrect embedding_type specified; only possibilities are 'skipgram and 'GloVe'")
         if count <= min_threshold:
-            return np.rand(embed_size), oov
+            return np.random.rand(embed_size), oov
         sentence = np.array(arrays)
         mean = np.mean(sentence, axis=0)
         return mean, oov

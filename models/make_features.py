@@ -31,7 +31,7 @@ def get_transformer_list(dataframe,
     transformers = list()
 
     for method in methods:
-        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed)
+        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir)
         transformers.append((text_col, ) + transformation) if type(transformation) == tuple else (text_col, transformation)
 
     if len(feature_col) > 0:
@@ -81,11 +81,11 @@ def validate_arguments(dataframe, text_col, feature_col, methods):
             print("{} is not an existing method".format(method))
             exit(1)
 
-def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed):
+def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir):
     return TfidfVectorizer(min_df=10, stop_words='english',
             tokenizer=tokenize), {'alias': 'tfidf'}
 
-def bagofmeans(dataframe, text_col, bom_method, training_corpus):
+def bagofmeans(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir):
     if training_corpus is None or bom_method is None:
         print("Specify bom_method and training_corpus")
     return (BoMVectorizer(training_corpus,
@@ -93,7 +93,7 @@ def bagofmeans(dataframe, text_col, bom_method, training_corpus):
                          tokenizer=tokenize, data_path=data_dir)
                          , {'alias': "_".join([bom_method, training_corpus])})
 
-def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed):
+def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir):
     if dictionary is None or training_corpus is None or bom_method is None:
         print("Specify dictionary, bom_method, and training_corpus")
         exit(1)
@@ -105,7 +105,7 @@ def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
                          dictionary=dictionary,
                          similarity=sim), {'alias': "_".join([bom_method, training_corpus, dictionary])})
 
-def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed):
+def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir):
     num_topics = 100
     return (LDAVectorizer(seed=random_seed,
                          tokenizer=tokenize,

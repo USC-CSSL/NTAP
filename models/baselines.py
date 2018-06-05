@@ -44,5 +44,5 @@ if __name__ == '__main__':
     X = mapper.fit_transform(df)
     lookup_dict = {i:feat for i, feat in enumerate(mapper.transformed_names_)}
     # Performing classification
-    evaluate_models(df, X, targets, lookup_dict, models, random_seed)
+    evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text)
 
