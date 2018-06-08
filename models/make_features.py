@@ -7,7 +7,7 @@ from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
 from sklearn_pandas import gen_features, CategoricalImputer
 from sklearn.impute import SimpleImputer as Imputer
 
-from vectorizers import BoMVectorizer, DDRVectorizer, LDAVectorizer
+from vectorizers import *
 from utils import cosine_similarity, tokenize
 
 
@@ -74,7 +74,7 @@ def validate_arguments(dataframe, text_col, feature_col, methods):
     if type(methods) != list:
         methods = [methods]
 
-    gen_list = ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent']
+    gen_list = ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
 
     for method in methods:
         if method not in gen_list:
@@ -111,3 +111,6 @@ def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
                          tokenizer=tokenize,
                          num_topics=num_topics),
            {'alias': "LDA_" + str(num_topics) + "topics"})
+
+def dictionary(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir):
+    return (DictionaryVectorizer(data_path= data_dir, dictionary_name= dictionary), {"alias": "Dictionary_" + dictionary})
