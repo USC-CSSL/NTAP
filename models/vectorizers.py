@@ -6,7 +6,7 @@ Purpose: Implement various data transformers (custom vectorizers as in TfidfVect
 """
 from sklearn.feature_extraction.text import CountVectorizer
 
-import os
+import os, re
 import numpy as np
 import json
 
@@ -188,6 +188,81 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
         X = np.array(ddr_vectors)
         X = np.nan_to_num(X)
         return X
+
+
+class DictionaryVectorizer(BaseEstimator, TransformerMixin):
+    def __init__(self, dictionary_name, data_path):
+        self.dictionary_name = dictionary_name
+        dictionary_path = os.path.join(data_path, 'dictionaries', dictionary_name)
+        self.dictionary = dict()
+        self.feature_names = dict()
+        try:
+            with open(dictionary_path, 'r') as dic:
+                c = 1
+                dic_part = False
+                for line in dic:
+                    line = line.replace("\n", "").lstrip().rstrip()
+                    tokens = line.split()
+                    if len(tokens) == 0:
+                        continue
+                    if c == 1:
+                        if line != "%":
+                            print("Dictionary format incorrect. Expecting % in the first line.")
+                        else:
+                            dic_part = True
+                    elif dic_part:
+                        if line == "%":
+                            dic_part = False
+                        else:
+                            self.feature_names[tokens[0]] = tokens[1]
+                    else:
+                        num_start = 0
+                        key = ""
+                        for token in tokens:
+                            if not token.isdigit():
+                                key += " " + token
+                                num_start += 1
+                        for token in tokens[num_start:]:
+                            self.dictionary.setdefault(self.feature_names[token], []).append(key)
+                    c += 1
+
+        except FileNotFoundError:
+            print("Could not load dictionary %s from %s" % (self.dictionary_name, dictionary_path))
+            exit(1)
+
+    def fit(self, X, y=None):
+        self.dictionary_re = dict()
+        for cat, words in self.dictionary.items():
+            self.dictionary_re[cat] = list()
+            for word in words:
+                word = word.replace(")", "\\)").replace("(", "\\(").replace(":", "\\:").replace(";", "\\;").replace("/", "\\/")
+                if word[-1] == "*":
+                    self.dictionary_re[cat].append(re.compile("(" + word + "\w*)"))
+                else:
+                    self.dictionary_re[cat].append(re.compile("(" + word + ")"))
+        return self
+
+    def transform(self, X, y=None):
+        vectors = list()
+        for sentence in X:
+            vectors.append(self.count_sentence(sentence))
+        return np.array(vectors)
+
+
+    def count_sentence(self, sentence):
+        vector = []
+        for cat in sorted(self.dictionary_re.keys()):
+            count = 0
+            for reg in self.dictionary_re[cat]:
+                x = len(re.findall(reg, sentence))
+                if x > 0:
+                    count += x
+            vector.append(float(count) / float(len(sentence.split())))
+        return vector
+
+    def get_feature_names(self):
+        return sorted(self.dictionary)
+
 
 class LDAVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, seed, tokenizer, num_topics=100, 
