@@ -7,7 +7,7 @@ from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
 from sklearn_pandas import gen_features, CategoricalImputer
 from sklearn.impute import SimpleImputer as Imputer
 
-from vectorizers import BoMVectorizer, DDRVectorizer, LDAVectorizer
+from vectorizers import BoMVectorizer, DDRVectorizer, LDAVectorizer, InfersentVectorizer, FastTextVectorizer
 from utils import cosine_similarity, tokenize
 
 
@@ -111,3 +111,11 @@ def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
                          tokenizer=tokenize,
                          num_topics=num_topics),
            {'alias': "LDA_" + str(num_topics) + "topics"})
+
+def infersent(dataframe, text_col, bom_method, training_corpus, dictionary,
+                random_seed, data_dir):
+    return (InfersentVectorizer(data_dir, tokenizer=tokenize), {'alias': "InferSent4096"})
+
+def fasttext(dataframe, text_col, bom_method, training_corpus, dictionary,
+                random_seed, data_dir):
+    return (FastTextVectorizer(data_dir), {'alias': "FastText_wiki"})
