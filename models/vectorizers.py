@@ -9,14 +9,17 @@ from sklearn.feature_extraction.text import CountVectorizer
 import os, re
 import numpy as np
 import json
+import subprocess
+from sys import stdout
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.model_selection import GridSearchCV
 
-
 from gensim.models import KeyedVectors as kv
+import torch
+import fastText
 
 def load_glove_from_file(fname, vocab=None):
     # vocab is possibly a set of words in the raw text corpus
@@ -300,3 +303,83 @@ class LDAVectorizer(BaseEstimator, TransformerMixin):
 
     def get_feature_names(self):
         return ["topic" + str(i) for i in range(self.num_topics)]
+
+
+class InfersentVectorizer(BaseEstimator, TransformerMixin):
+    def __init__(self, data_dir, tokenizer=None, glove_file="glove.840B.300d.txt",
+                        model_file="infersent.allnli.pickle"):
+        self.data_dir = data_dir
+        self.model_path = os.path.join(data_dir, "sent_embeddings", "infersent", model_file)
+        self.glove_path = os.path.join(data_dir, "word_embeddings", "GloVe", glove_file)
+        if not os.path.isfile(self.glove_path):
+            print("Couldn't find GloVe file in %s. Exiting" % self.glove_path)
+            exit(1)
+        if not os.path.isfile(self.model_path):
+            print("Couldn't find infersent model file in %s. Exiting" % self.model_path)
+            exit(1)
+        self.tokenizer = tokenizer
+
+    def fit(self, X, y=None):
+        self.model = torch.load(self.model_path, map_location=lambda storage, loc: storage)
+        if self.tokenizer is None:
+            self.sentences = X
+            self.model.set_glove_path(self.glove_path, tokenize=True)
+        else:
+            self.sentences = [" ".join(self.tokenizer(sent)) for sent in X]
+            self.model.set_glove_path(self.glove_path)
+            self.model.build_vocab(self.sentences)
+        return self
+
+    def transform(self, X, y=None):
+        return self.model.encode(self.sentences)
+
+class FastTextVectorizer(BaseEstimator, TransformerMixin):
+    def __init__(self, data_dir, tokenizer=None, model_file="wiki.en.bin"):
+        self.data_dir = data_dir
+        self.tokenizer = tokenizer
+        self.model_path = os.path.join(data_dir, "sent_embeddings", "fasttext", model_file)
+        if not os.path.isfile(self.model_path):
+            print("Couldn't find fasttext .bin file in %s. Exiting" % self.model_path)
+            exit(1)
+        self.temp_data = os.path.join(data_dir, "store_fasttext")
+        if not os.path.exists(self.temp_data):
+            os.makedirs(self.temp_data)
+
+    def fit(self, X, y=None):
+        """
+        self.input_text = os.path.join(self.temp_data, "input.txt")
+        self.output_text = os.path.join(self.temp_data, "output.txt")
+        with open(self.input_text, 'w', encoding='utf-8') as fo:
+            fo.write('\n'.join(X))
+        """
+        print("Loading fasttext model")
+        self.trained_model = fastText.load_model(self.model_path)
+        return self
+
+    def transform(self, X, y=None):
+        """
+        input_file = open(self.input_text, 'r', encoding='utf-8')
+        output_file = open(self.output_text, 'w', encoding='utf-8')
+        bash_command = "fasttext print-sentence-vectors {0} < {1} > {2}".format(self.model_path,
+                    self.input_text, self.output_text)
+        #bash_command = "fasttext print-sentence-vectors"
+        subprocess.call(bash_command, executable="/bin/bash", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        with open(self.output_text, 'r', encoding='utf-8') as fo:
+            lines = fo.readlines()
+            print(len(lines), len(X))
+            if len(lines) != len(X):
+                raise ValueError("Incorrect file format")
+            embeddings = list()
+            for i in range(len(lines)):
+                line_tokens = lines[i].split()
+                embeddings.append(line_tokens[len(X[i].split())-1:])
+            sentences = np.array(embeddings, dtype='float32')
+        print(sentences.shape)
+        """
+        sentences = list()
+        print("Encoding sentences with FastText")
+        for i, sent in enumerate(X):
+            stdout.write("\r{:.2%} done".format(float(i) / len(X)))
+            stdout.flush()
+            sentences.append(list(self.trained_model.get_sentence_vector(sent)))
+        return np.array(sentences, dtype='float32')
