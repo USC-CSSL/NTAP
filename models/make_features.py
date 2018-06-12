@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
 from sklearn_pandas import gen_features, CategoricalImputer, DataFrameMapper
 from sklearn.impute import SimpleImputer as Imputer
+from scipy import sparse
 
 from vectorizers import *
 from utils import cosine_similarity, tokenize, happiertokenize
@@ -108,8 +109,22 @@ def reduce_features(X, feature_reduce, lookup):
         print("Dropping columns " + lookup[col])
         lookup.pop(col)
 
-    X = np.delete(X, drop_columns, 1)
+    #X = np.delete(X, drop_columns, 1)
+    #X1 = sparse.csr_matrix(np.array(X))
+    X = dropcols_coo(X, drop_columns)
     return X, lookup
+
+def dropcols_coo(M, idx_to_drop):
+    idx_to_drop = np.unique(idx_to_drop)
+    C = M.tocoo()
+    keep = ~np.in1d(C.col, idx_to_drop)
+    C.data, C.row, C.col = C.data[keep], C.row[keep], C.col[keep]
+    C.col -= idx_to_drop.searchsorted(C.col)    # decrement column indices
+    C._shape = (C.shape[0], C.shape[1] - len(idx_to_drop))
+    return C.tocsr()
+
+
+
 
 def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir,ngrams,sent_tokenizer):
     return TfidfVectorizer(min_df=10, stop_words='english',

@@ -27,6 +27,7 @@ if __name__ == '__main__':
 
     # Reading the dataset
     df = pd.read_pickle(data_dir + '/' + dataframe_name)
+
     print("Dataframe has {} rows and {} columns".format(df.shape[0], df.shape[1]))
 
     #Preprocessing the data
