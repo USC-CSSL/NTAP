@@ -157,9 +157,19 @@ def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
                          num_topics=num_topics),
            {'alias': "LDA_" + str(num_topics) + "topics"})
 
+
 def dictionary(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer):
     return (DictionaryVectorizer(data_path= data_dir, dictionary_name= dictionary), {"alias": "Dictionary_" + dictionary})
 """
 def ngram(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams):
     return (NgramVectorizer(n = ngrams, tokenizer= tokenize), {"alias": "Ngram"})
 """
+
+def infersent(dataframe, text_col, bom_method, training_corpus, dictionary,
+                random_seed, data_dir):
+    return (InfersentVectorizer(data_dir, tokenizer=tokenize), {'alias': "InferSent4096"})
+
+def fasttext(dataframe, text_col, bom_method, training_corpus, dictionary,
+                random_seed, data_dir):
+    return (FastTextVectorizer(data_dir), {'alias': "FastText_wiki"})
+
