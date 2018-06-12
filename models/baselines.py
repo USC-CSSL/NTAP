@@ -5,11 +5,9 @@ from preprocess import preprocess_text
 from evaluate import evaluate_models
 from make_features import get_transformer_list
 
-from sklearn_pandas import DataFrameMapper
-
 
 if __name__ == '__main__':
-
+    """
     if len(sys.argv) != 2:
         print("Usage: python baselines.py params.json")
         exit(1)
@@ -17,8 +15,8 @@ if __name__ == '__main__':
     # load parameters from (generated) json file. See 'gen_params.py' 
     with open(sys.argv[1], 'r') as fo:
         params = json.load(fo)
-
-    #params = json.load(open("standard_params.json", "r"))
+"""
+    params = json.load(open("params/standard_params.json", "r"))
     try:
         for par in params.keys():
             locals()[par] = params[par]
@@ -32,17 +30,15 @@ if __name__ == '__main__':
     print("Dataframe has {} rows and {} columns".format(df.shape[0], df.shape[1]))
 
     #Preprocessing the data
-    preprocess_text = preprocess_text(df, text_col, preprocessing ,data_dir)
+    df = preprocess_text(df, text_col, preprocessing ,data_dir)
 
     # Transform features
-    transformer_list = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,
-                                            ordinal_cols, categorical_cols, bom_method=embedding_method,
+    X, lookup_dict = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,
+                                            ordinal_cols, categorical_cols, ngrams=ngrams, bom_method=embedding_method,
                                             training_corpus=training_corpus, dictionary=dictionary,
-                                            comp_measure='cosine-sim', random_seed=random_seed)
+                                            comp_measure='cosine-sim', random_seed=random_seed, feature_reduce=feature_reduce)
 
-    mapper = DataFrameMapper(transformer_list, sparse=True, input_df=True)
-    X = mapper.fit_transform(df)
-    lookup_dict = {i:feat for i, feat in enumerate(mapper.transformed_names_)}
+
     # Performing classification
     evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text)
 

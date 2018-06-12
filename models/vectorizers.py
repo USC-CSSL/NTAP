@@ -10,6 +10,7 @@ import os, re
 import numpy as np
 import json
 
+from nltk import ngrams
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
@@ -262,23 +263,48 @@ class DictionaryVectorizer(BaseEstimator, TransformerMixin):
 
     def get_feature_names(self):
         return sorted(self.dictionary)
+"""
+class NgramVectorizer(BaseEstimator, TransformerMixin):
+    def __init__(self, n, tokenizer, num_words=10000, stop_words='english'):
+        self.n = n
+        self.tokenizer = tokenizer
+        self.num_words = num_words
+        self.stop_words = stop_words
 
+    def fit(self, X, y=None):
+        self.count = CountVectorizer(min_df=10,tokenizer=self.tokenizer,
+                                        stop_words=self.stop_words,
+                                        max_features=10000,
+                                        ngram_range=self.n
+                                        ).fit(X)
+        return self
+
+    def transform(self, X, y=None):
+        return np.array(self.count.transform(X).todense())
+
+    def get_feature_names(self):
+        ngram_features = list()
+        for i in self.n:
+            ngram_features.append(self.count.get_feature_names())
+        return ngram_features
+"""
 
 class LDAVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, seed, tokenizer, num_topics=100, 
-                    num_iter=10, num_words=10000, stop_words='english'):
+                    num_iter=10, num_words=10000, stop_words='english', ngram=1):
         self.num_topics = num_topics
         self.num_iter = num_iter
         self.random_seed = seed
         self.tokenizer = tokenizer
         self.num_words = num_words
         self.stop_words = stop_words
+        self.ngram = ngram
     
     def fit(self, X, y=None):
         # find best model by cross-validation (grid-search params)
         self.dt_matrix = CountVectorizer(tokenizer=self.tokenizer,
                                          stop_words=self.stop_words,
-                                         max_features=self.num_words).fit_transform(X)
+                                         max_features=self.num_words, ngram_range=self.ngram).fit_transform(X)
 
         lda_model = LatentDirichletAllocation(n_components=self.num_topics, learning_method='online',
                                              max_iter=self.num_iter, verbose=1,

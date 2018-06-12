@@ -1,11 +1,10 @@
 {
     "dataframe_name": "full_dataframe.pkl",
     "text_col": "fb_status_msg",
-    "dictionary": "liwc",
+    "dictionary": "moral.dic",
     "feature_methods": ["tfidf"],
     "models": [
-        "elasticnet",
-        "GBRT"
+        "elasticnet"
     ],
     "targets": [
         "MFQ_FAIRNESS_AVG",
@@ -14,17 +13,19 @@
         "MFQ_AUTHORITY_AVG",
         "MFQ_HARM_AVG"
     ],
-    "feature_col" : [],
+    "feature_cols" : [],
     "categorical_cols": [],
     "embedding_method": "skipgram",
     "config_text": "indiv",
     "data_dir": "/home/aida/neural_profiles_datadir",
     "ordinal_cols": [],
     "random_seed": 51,
+    "feature_reduce": 0.01,
     "metrics": [
         "r2"
     ],
-    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "scoring_dir": "/home/aida/neural_profiles_datadir/scoring/",
     "training_corpus": "GoogleNews3B",
-    "preprocessing": []
+    "preprocessing": ["lemmatize", "all_alpha", "link", "hashtag", "stop_words", "emojis", "partofspeech", "stem", "mentions"],
+    "ngrams": [1, 2]
 }

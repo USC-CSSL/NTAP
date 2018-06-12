@@ -1,5 +1,5 @@
-import re, os, json, nltk
-from nltk.stem import WordNetLemmatizer
+import re, os, json, nltk, string, emot, emoji
+from nltk.stem import WordNetLemmatizer, PorterStemmer
 import pandas as pd
 from nltk.corpus import wordnet, stopwords
 from nltk import word_tokenize
@@ -13,7 +13,7 @@ def preprocess_text(df,
                     col,
                     methods,
                     data_dir ):
-    pre_list = ["lemmatize", "link", "hashtag", "stopwords", ]
+    pre_list = ["lemmatize", "all_alpha", "link", "hashtag", "stop_words", "emojis", "partofspeech", "stem", "mentions", "ascii"]
 
     if not set(methods).issubset(pre_list):
         print("Some preprocessing methods are not available")
@@ -25,6 +25,18 @@ def preprocess_text(df,
 
     for method in methods:
         df = globals()[method](df, col, data_dir)
+
+    df = remove_whitespaces(df, col)
+    return df
+
+
+
+def remove_whitespaces(df, col):
+    for i, row in df.iterrows():
+        text = row[col]
+        collapsed_whitespace = re.sub(r"[\s]+", " ", text)
+        df.at[i, col] = collapsed_whitespace
+    return df
 
 
 def link(df, col, data_dir):
@@ -42,6 +54,16 @@ def link(df, col, data_dir):
             json.dump(link_dict, fo, ensure_ascii=False, indent=4)
     return df
 
+def hashtag(df, col, data_dir):
+    print("Extracting hashtags")
+    hashtags = list()
+    for index, row in df.iterrows():
+        text = row[col]
+        post_hashtags = [word[1:] for word in text.split() if word[0] == "#"]
+        hashtags.append(post_hashtags)
+    df['hashtags'] = pd.Series(hashtags, index=df.index)
+    return df
+
 
 def sub_link(string, links, counter=0):
     http_pattern = re.compile(r"http(s)?[^\s]+")
@@ -52,13 +74,51 @@ def sub_link(string, links, counter=0):
     counter += num_matches
     return string, counter
 
+def emojis(df, col, dir):
+    emojis_col = list()
+    for i, row in df.iterrows():
+        text = row[col]
 
+        emojis_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
+        emoji_pattern = '|'.join(re.escape(p) for p in emojis_list)
+        r = re.compile(emoji_pattern)
+        this_emojis = r.findall(text)
+        text = re.sub(emoji_pattern, "", text)
+
+        for emo in emot.emoticons(text):
+            if len(emo['value']) > 1:
+                this_emojis.append(emo['value'])
+                text = text.replace(emo['value'], "")
+        emojis_col.append(this_emojis)
+        df.at[i, col] = text
+    print("Removed all emojis from the text.")
+    print("Added emojis as a new column to the dataframe")
+    df["emojis"] = pd.Series(emojis_col, index=df.index)
+    return df
+
+def partofspeech(df, col, dir):
+    useless_parts = []
+    for i, row in df.iterrows():
+        tags = nltk.pos_tag(row[col].split())
+        new_text = list()
+        for tag in tags:
+            if tag[1] not in useless_parts:
+                new_text.append(tag[0])
+        df.at[i, col] = " ".join(word for word in new_text)
+    return df
+
+def stem(df, col, dir):
+    stemmer = PorterStemmer()
+    for i, row in df.iterrows():
+        new_text = " ".join([stemmer.stem(w) for w in row[col].split()])
+        df.at[i, col] = new_text
+    return df
 
 def lemmatize(df, col, dir):
     lemmatizer = WordNetLemmatizer()
-    lemmatized_posts = list()
-    for i, row in df.iterrows():
-        text = row[col].split()
+    #lemmatized_posts = list()
+    for ind, row in df.iterrows():
+        text = word_tokenize(row[col])
         tags = nltk.pos_tag(text)
         words = list()
         for i in range(len(tags)):
@@ -67,8 +127,9 @@ def lemmatize(df, col, dir):
             else:
                 words.append(lemmatizer.lemmatize(text[i]))
         new_text = " ".join(words)
-        lemmatized_posts.append(new_text)
-    df[col] = pd.Series(lemmatized_posts, index=df.index)
+        #lemmatized_posts.append(new_text)
+        df.at[ind, col] = new_text
+    #df[col] = pd.Series(lemmatized_posts, index=df.index)
     return df
 
 
@@ -85,7 +146,7 @@ def get_wordnet_pos(treebank_tag):
         return ''
 
 def english(df, col, data_dir):
-    print("Cleaning text (transliterate all unicode to ascii-approx) and removing non-English posts")
+    print("Removing non-English posts")
     delete_indices = list()  # for non-English documents
     c = 0
 
@@ -95,23 +156,43 @@ def english(df, col, data_dir):
             print("Processed {} rows".format(c))
             print("{0:.3f}% done".format(100 * float(c) / df.shape[0]))
         text = row[col]
-        decoded_text = unidecode(text).lower()
-        collapsed_whitespace = re.sub(r"[\s]+", " ", decoded_text)
-        if len(collapsed_whitespace) < 3:
+        detected_language = TextBlob(text).detect_language()
+        if len(text) < 3:
             delete_indices.append(i)  # text is too short
             continue
-        detected_language = TextBlob(collapsed_whitespace).detect_language()
         if detected_language != 'en':
             delete_indices.append(i)
-        df.at[i, col] = collapsed_whitespace
-
     old_rows = df.shape[0]
     df = df.drop(delete_indices)
     print("Dropped {} rows; new dataframe has {} rows".format(old_rows - df.shape[0], df.shape[0]))
     return df
 
+def ascii(df, col, data_dir):
+    print("Transliterate all unicode to ascii-approx")
+    for i, row in df.iterrows():
+        text = row[col]
+        decoded_text = unidecode(text).lower()
+        collapsed_whitespace = re.sub(r"[\s]+", " ", decoded_text)
+        df.at[i, col] = collapsed_whitespace
+    return df
+
+
 def stop_words(df, col, data_dir):
     stop_words = set(stopwords.words('english'))
     for i, row in df.iterrows():
         df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if not word in stop_words)
+    return df
+
+
+def mentions(df, col, data_dir):
+    for i, row in df.iterrows():
+        df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if word[0] != "@")
+    return df
+
+
+def all_alpha(df, col, data_dir):
+    r = re.compile('[^a-zA-Z]')
+    for i, row in df.iterrows():
+        new_text = " ".join(r.sub("", word) for word in word_tokenize(row[col]))
+        df.at[i, col] = new_text
     return df

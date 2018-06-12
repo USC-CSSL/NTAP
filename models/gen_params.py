@@ -20,7 +20,8 @@ if __name__ == '__main__':
     params['metrics'] = ['r2']
     params['random_seed'] = 51
     params['preprocessing'] = []
-
+    params['feature_reduce'] = 0.001
+    params['ngrams'] = [1]
 
     with open("test_gbrt.json", 'w') as fo:
         json.dump(params, fo, indent=4)
