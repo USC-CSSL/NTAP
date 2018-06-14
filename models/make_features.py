@@ -37,7 +37,7 @@ def get_transformer_list(dataframe,
     transformers = list()
 
     for method in methods:
-        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer)
+        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer,"cosine-sim")
         transformers.append((text_col, ) + transformation) if type(transformation) == tuple else (text_col, transformation)
 
     if len(feature_col) > 0:
@@ -108,10 +108,11 @@ def reduce_features(X, feature_reduce, lookup):
     for col in drop_columns:
         print("Dropping columns " + lookup[col])
         lookup.pop(col)
-
-    #X = np.delete(X, drop_columns, 1)
+    if type(X) == np.ndarray:
+        X = np.delete(X, drop_columns, 1)
     #X1 = sparse.csr_matrix(np.array(X))
-    X = dropcols_coo(X, drop_columns)
+    else:
+        X = dropcols_coo(X, drop_columns)
     return X, lookup
 
 def dropcols_coo(M, idx_to_drop):
@@ -126,11 +127,11 @@ def dropcols_coo(M, idx_to_drop):
 
 
 
-def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir,ngrams,sent_tokenizer):
+def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir,ngrams,sent_tokenizer, comp_measure = "cosine-sim"):
     return TfidfVectorizer(min_df=10, stop_words='english',
             tokenizer=sent_tokenizer, ngram_range=ngrams), {'alias': 'tfidf'}
 
-def bagofmeans(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer):
+def bagofmeans(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     if training_corpus is None or bom_method is None:
         print("Specify bom_method and training_corpus")
     return (BoMVectorizer(training_corpus,
@@ -138,7 +139,7 @@ def bagofmeans(dataframe, text_col, bom_method, training_corpus, dictionary, ran
                          tokenizer=sent_tokenizer, data_path=data_dir)
                          , {'alias': "_".join([bom_method, training_corpus])})
 
-def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer):
+def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     if dictionary is None or training_corpus is None or bom_method is None:
         print("Specify dictionary, bom_method, and training_corpus")
         exit(1)
@@ -150,7 +151,7 @@ def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
                          dictionary=dictionary,
                          similarity=sim), {'alias': "_".join([bom_method, training_corpus, dictionary])})
 
-def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer):
+def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     num_topics = 100
     return (LDAVectorizer(seed=random_seed,
                          tokenizer=sent_tokenizer,
@@ -158,7 +159,7 @@ def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
            {'alias': "LDA_" + str(num_topics) + "topics"})
 
 
-def dictionary(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer):
+def dictionary(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     return (DictionaryVectorizer(data_path= data_dir, dictionary_name= dictionary), {"alias": "Dictionary_" + dictionary})
 """
 def ngram(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams):
@@ -166,10 +167,10 @@ def ngram(dataframe, text_col, bom_method, training_corpus, dictionary, random_s
 """
 
 def infersent(dataframe, text_col, bom_method, training_corpus, dictionary,
-                random_seed, data_dir):
+                random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     return (InfersentVectorizer(data_dir, tokenizer=tokenize), {'alias': "InferSent4096"})
 
 def fasttext(dataframe, text_col, bom_method, training_corpus, dictionary,
-                random_seed, data_dir):
+                random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     return (FastTextVectorizer(data_dir), {'alias': "FastText_wiki"})
 

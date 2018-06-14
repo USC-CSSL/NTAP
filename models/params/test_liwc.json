@@ -1,6 +1,6 @@
 {
     "random_seed": 51,
-    "dictionary": "moral_foundations_theory",
+    "dictionary": "liwc.txt",
     "dataframe_name": "full_dataframe.pkl",
     "scoring_dir": "/home/aida/neural_profiles_datadir/scoring/",
     "categorical_cols": [],
@@ -23,9 +23,9 @@
         "elasticnet"
     ],
     "feature_reduce": 0.01,
-    "preprocessing": ["lemmatize", "all_alpha", "stop_words", "stem"],
+    "preprocessing": ["lemmatize", "all_alpha"],
     "ngrams" : [0, 1],
-    "feature_methods": ["lda"],
+    "feature_methods": ["dictionary"],
     "data_dir": "/home/aida/neural_profiles_datadir/",
     "training_corpus": "wiki_gigaword"
 

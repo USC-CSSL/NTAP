@@ -24,8 +24,10 @@
     "metrics": [
         "r2"
     ],
-    "data_dir": "/home/brendan/neural_profiles_datadir/",
-    "preprocessing": [],
+    "data_dir": "/home/aida/neural_profiles_datadir/",
+    "preprocessing": ["lemmatize"],
     "embedding_method": "GloVe",
-    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/"
+    "scoring_dir": "/home/aida/neural_profiles_datadir/scoring/",
+    "ngrams" : [0, 1],
+    "feature_reduce": 0.01
 }

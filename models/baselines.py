@@ -7,7 +7,7 @@ from make_features import get_transformer_list
 
 
 if __name__ == '__main__':
-    """
+
     if len(sys.argv) != 2:
         print("Usage: python baselines.py params.json")
         exit(1)
@@ -15,8 +15,8 @@ if __name__ == '__main__':
     # load parameters from (generated) json file. See 'gen_params.py' 
     with open(sys.argv[1], 'r') as fo:
         params = json.load(fo)
-"""
-    params = json.load(open("params/standard_params.json", "r"))
+
+    #params = json.load(open("params/test_fasttext.json", "r"))
     try:
         for par in params.keys():
             locals()[par] = params[par]

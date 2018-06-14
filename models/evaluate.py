@@ -28,6 +28,7 @@ def evaluate_models(df, X, targets, lookup_dict, models, seed, feature_methods, 
 
     scoring_output = os.path.join(scoring_dir, config_text, "-".join(f for f in feature_methods))
     write_evaluations(scoring_dict, scoring_output)
+    print("Results written to " + str((scoring_output)))
 
 
 def elasticnet(X, Y, lookup_dict, scoring_dict, col, kfold, seed):

@@ -1,12 +1,14 @@
 {
     "config_text": "indiv",
-    "training_corpus": "wiki_gigaword",
-    "categorical_features": [],
+    "training_corpus": "common_crawl",
+    "categorical_cols": [],
     "text_col": "fb_status_msg",
     "embedding_method": "GloVe",
     "dataframe_name": "full_dataframe.pkl",
-    "feature_method": "ddr",
-    "ordinal_features": [],
+    "feature_methods": ["ddr"],
+    "ordinal_cols": [],
+    "feature_cols" : [],
+    "preprocessing": ["lemmatize"],
     "targets": [
         "MFQ_FAIRNESS_AVG",
         "MFQ_INGROUP_AVG",
@@ -14,14 +16,16 @@
         "MFQ_AUTHORITY_AVG",
         "MFQ_HARM_AVG"
     ],
-    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "scoring_dir": "/home/aida/neural_profiles_datadir/scoring/",
+    "ngrams" : [0, 1],
+    "feature_reduce": 0.01,
     "metrics": [
         "r2"
     ],
     "models": [
         "elasticnet"
     ],
-    "dictionary": "moral_foundations_theory",
-    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "dictionary": "mfd",
+    "data_dir": "/home/aida/neural_profiles_datadir/",
     "random_seed": 51
 }

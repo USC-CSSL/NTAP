@@ -1,6 +1,6 @@
 {
     "random_seed": 51,
-    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "scoring_dir": "/home/aida/neural_profiles_datadir/scoring/",
     "metrics": [
         "r2"
     ],
@@ -16,7 +16,7 @@
         "MFQ_HARM_AVG"
     ],
     "config_text": "indiv",
-    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "data_dir": "/home/aida/neural_profiles_datadir/",
     "feature_methods": [
         "infersent"
     ],
@@ -27,5 +27,7 @@
     "categorical_cols": [],
     "dictionary": "moral_foundations_theory",
     "text_col": "fb_status_msg",
-    "embedding_method": "GloVe"
+    "embedding_method": "GloVe",
+    "ngrams" : [0, 1],
+    "feature_reduce": 0.01
 }

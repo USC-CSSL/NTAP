@@ -261,7 +261,10 @@ class DictionaryVectorizer(BaseEstimator, TransformerMixin):
                 x = len(re.findall(reg, sentence))
                 if x > 0:
                     count += x
-            vector.append(float(count) / float(len(sentence.split())))
+            if len(sentence.split()) == 0:
+                vector.append(0)
+            else:
+                vector.append(float(count) / float(len(sentence.split())))
         return vector
 
     def get_feature_names(self):
@@ -294,7 +297,7 @@ class NgramVectorizer(BaseEstimator, TransformerMixin):
 
 class LDAVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, seed, tokenizer, num_topics=100, 
-                    num_iter=10, num_words=10000, stop_words='english', ngram=1):
+                    num_iter=100, num_words=10000, stop_words='english', ngram=[0, 1]):
         self.num_topics = num_topics
         self.num_iter = num_iter
         self.random_seed = seed

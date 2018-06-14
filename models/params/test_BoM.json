@@ -10,18 +10,22 @@
     "random_seed": 51,
     "embedding_method": "skipgram",
     "text_col": "fb_status_msg",
-    "data_dir": "/home/brendan/neural_profiles_datadir/",
-    "categorical_features": [],
+    "data_dir": "/home/aida/neural_profiles_datadir/",
+    "categorical_cols": [],
     "config_text": "indiv",
     "training_corpus": "GoogleNews",
     "dictionary": "liwc",
     "models": [
         "elasticnet"
     ],
-    "ordinal_features": [],
-    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
-    "feature_method": "bag-of-means",
+    "ordinal_cols": [],
+    "scoring_dir": "/home/aida/neural_profiles_datadir/scoring/",
+    "feature_methods": ["bagofmeans"],
     "metrics": [
         "r2"
-    ]
+    ],
+    "preprocessing": [],
+    "ngrams": [0, 1],
+    "feature_reduce": 0.01
+
 }
