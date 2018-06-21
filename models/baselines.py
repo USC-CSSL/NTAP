@@ -1,8 +1,18 @@
+"""
+file: baselines.py
+last edited: 06/18/2018
+purpose: 
+    - load processed data
+    - structure according to specification (indiv, concat, re-bagged)
+    - generate or load document features
+    - perform supervised learning on specified labels ('targets'), one at a time
+"""
+
 import pandas as pd
 import sys, os, json
 
 from preprocess import preprocess_text
-from evaluate import evaluate_models
+from evaluate_baselines import evaluate_models
 from make_features import get_transformer_list
 
 
@@ -26,12 +36,13 @@ if __name__ == '__main__':
         exit(1)
 
     # Reading the dataset
-    df = pd.read_pickle(data_dir + '/' + dataframe_name)
-
+    df = pd.read_pickle(data_dir + '/' + dataframe_name) 
     print("Dataframe has {} rows and {} columns".format(df.shape[0], df.shape[1]))
 
+    
+
     #Preprocessing the data
-    df = preprocess_text(df, text_col, preprocessing ,data_dir)
+    df = preprocess_text(df, text_col, preprocessing, data_dir, config_text)
 
     # Transform features
     X, lookup_dict = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,

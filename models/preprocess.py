@@ -5,14 +5,61 @@ from nltk.corpus import wordnet, stopwords
 from nltk import word_tokenize
 from unidecode import unidecode
 from textblob import TextBlob
+import copy
 
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
+
+def split_indiv(df, col):
+    new_rows = list()
+    for index, row in df.iterrows():
+        texts = row[col]
+        template = row.to_dict()
+        for text in texts:
+            temp = {k:v for k,v in template.items()}
+            temp[col] = text
+            new_rows.append(temp)
+    return pd.DataFrame(new_rows)
+
+def split_bags(df, col, size_):
+    new_rows = list()
+    for index, row in df.iterrows():
+        texts = row[col]
+        template = row.to_dict()
+        idx = len(texts)
+        while idx >=0:
+            new_doc = " ".join(texts[idx - size_: idx])
+            idx = max(0, idx - size_)
+            template[col] = new_doc
+            new_rows.append(template)
+    return pd.DataFrame(new_rows)
+
+def restructure(df, col, config_text, data_dir, size_=10):
+    if config_text == 'indiv':
+        p = os.path.join(data_dir, config_text + ".pkl")
+        if os.path.isfile(p):
+            return pd.read_pickle(p)
+        else:
+            df = split_indiv(df, col)
+            df.to_pickle(p)
+            return df
+    elif config_text == 'concat':
+        print("Not done")
+        exit(1)
+    elif config_text == 'rebagged':
+        return split_bags(df, col, size_)
+    else:
+        print("config_text has improper value; exiting")
+        return
+
 def preprocess_text(df,
                     col,
                     methods,
-                    data_dir ):
+                    data_dir,
+                    config_text):
+    print("restructuring...")
+    df = restructure(df, col, config_text, data_dir)
     pre_list = ["lemmatize", "all_alpha", "link", "hashtag", "stop_words", "emojis", "partofspeech", "stem", "mentions", "ascii"]
 
     if not set(methods).issubset(pre_list):
@@ -24,6 +71,7 @@ def preprocess_text(df,
         exit(1)
 
     for method in methods:
+        print(method)
         df = globals()[method](df, col, data_dir)
 
     df = remove_whitespaces(df, col)

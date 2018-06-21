@@ -1,11 +1,15 @@
 import json
+import sys
+import os
 
-if __name__ == '__main__':
+import pandas as pd
+
+def get_params():
     params = dict()
     params['data_dir'] = '/home/brendan/neural_profiles_datadir/'
     params['scoring_dir'] = '/home/brendan/NeuralLanguageProfiles/scoring/'
     params['config_text'] = 'indiv'
-    params['dataframe_name'] = 'full_dataframe.pkl'
+    params['dataframe_name'] = 'yourmorals_df.pkl'
 
     params['feature_methods'] = ['fasttext']
     params['feature_cols'] = []
@@ -23,6 +27,24 @@ if __name__ == '__main__':
     params['feature_reduce'] = 0.001
     params['ngrams'] = [1]
 
-    with open("test_fasttext.json", 'w') as fo:
+    # added params for neural methods
+    params["models"] = ["lstm"]  # other options: nested_lstm, attention_lstm, ...
+    params["num_layers"] = 1
+    params["hidden_size"] = 1028
+    params["vocab_size"] = 10000
+    params["embedding_size"] = 300
+    params["batch_size"] = 100
+    params["learning_rate"] = 1e-4
+    params["pretrain"] = "glove-800"
+    params["dropout_ratio"] = 0.5
+
+    return params
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print("Usage: python gen_params.py output_name.json")
+        exit(1)
+    params = get_params()
+    with open(os.path.join("params", sys.argv[1]), 'w') as fo:
         json.dump(params, fo, indent=4)
 

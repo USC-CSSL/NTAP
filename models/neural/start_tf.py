@@ -1,5 +1,4 @@
-# get started with implementing TF LSTM, Attention, etc.
-
+# get started with implementing TF LSTM, Attention, etc.  
 import numpy as np
 import tensorflow as tf  # version==1.8.0
 from tensorflow.contrib.layers import fully_connected
