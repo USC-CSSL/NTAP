@@ -44,7 +44,7 @@ def elasticnet(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
                              )
     choose_regressor = GridSearchCV(regressor, cv=kfold, iid=True,
                                     param_grid={"alpha": 10.0 ** -np.arange(3, 7),
-                                                "l1_ratio": np.arange(0.15, 0.20, 0.03)
+                                                "l1_ratio": np.arange(0.15, 0.20, 0.3)
                                                 }
                                     )
 

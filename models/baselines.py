@@ -3,7 +3,7 @@ import sys, os, json
 
 from preprocess import preprocess_text
 from evaluate import evaluate_models
-from make_features import get_transformer_list
+from make_features import get_transformer_list, validate_arguments
 
 
 if __name__ == '__main__':
@@ -30,6 +30,7 @@ if __name__ == '__main__':
 
     print("Dataframe has {} rows and {} columns".format(df.shape[0], df.shape[1]))
 
+    validate_arguments(df, text_col, feature_cols, feature_methods)
     #Preprocessing the data
     df = preprocess_text(df, text_col, preprocessing ,data_dir)
 

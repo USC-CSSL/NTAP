@@ -188,3 +188,4 @@ for userid in users:
 concat_df = pd.DataFrame(new_df)
 concat_df.to_pickle(source_data_dir + '/' + "concat_df.pkl")
 
+

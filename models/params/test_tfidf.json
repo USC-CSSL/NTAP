@@ -4,7 +4,7 @@
     "config_text": "indiv",
     "dataframe_name": "full_dataframe.pkl",
     "feature_methods": [
-        "lda"
+        "tfidf"
     ],
     "feature_cols": [],
     "text_col": "fb_status_msg",
@@ -31,7 +31,9 @@
         "link",
         "emojis",
         "mentions",
-        "lemmatize"
+        "lemmatize",
+        "stop_words",
+        "all_alpha"
     ],
     "feature_reduce": 0,
     "ngrams": [

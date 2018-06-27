@@ -1,0 +1,2062 @@
+{
+    "MFQ_HARM_AVG": {
+        "bow_elasticnet": {
+            "params": {
+                "alpha": 0.001,
+                "l1_ratio": 0.2
+            },
+            "top_features": [
+                [
+                    "['day', 'today', 'great', 'happy', 'make', 'birthday', 'thank', 'thanks', 'god', 'fun']",
+                    0.13612840429127776
+                ],
+                [
+                    "['love', 'time', 'year', 'life', 'youre', 'old', 'christmas', 'dd', 'end', 'play']",
+                    0.0891208330532554
+                ],
+                [
+                    "['want', 'new', 'post', 'night', 'know', 'place', 'favorite', 'person', 'oh', 'hear']",
+                    0.046351830091010994
+                ],
+                [
+                    "['im', 'trump', 'right', 'let', 'ive', 'vote', 'try', 'president', 'way', 'kid']",
+                    -0.0447966270137551
+                ],
+                [
+                    "['people', 'say', 'think', 'dont', 'really', 'thing', 'know', 'watch', 'just', 'start']",
+                    -0.029841842570033653
+                ],
+                [
+                    "['work', 'friend', 'best', 'leave', 'share', 'check', 'family', 'far', 'power', 'class']",
+                    0.00027305845505107556
+                ],
+                [
+                    "['churchill', 'ummmm', 'paint', 'warriorinitiative', 'navy', 'rapidly', 'chosen', 'grown', 'haiku', 'shameless']",
+                    0.0
+                ],
+                [
+                    "['elbow', 'debut', 'neo', 'bestfriend', 'annoyed', 'aussie', 'destiny', 'rocket', 'bitches', '____']",
+                    0.0
+                ],
+                [
+                    "['tread', '10th', 'able', 'weakness', 'aila', 'trainer', 'mitchell', 'contagious', 'deleted', 'acre']",
+                    0.0
+                ],
+                [
+                    "['heel', 'dda', 'shipping', 'crap', 'gymnastics', 'grandparent', 'bleach', 'commit', 'house', 'negotiate']",
+                    0.0
+                ],
+                [
+                    "['tomatoes', 'thief', 'original', 'philip', 'fees', 'pandora', 'capital', 'gilbert', 'gina', 'walter']",
+                    0.0
+                ],
+                [
+                    "['shocked', 'climatechange', 'lands', 'pump', '2007', 'blast', 'alligator', 'suggestions', 'maintenance', 'classified']",
+                    0.0
+                ],
+                [
+                    "['hanson', 'retail', 'cube', 'physical', 'mass', '1999', '2011', 'stupidity', 'qualified', 'ginger']",
+                    0.0
+                ],
+                [
+                    "['seriously', 'integrity', 'cyber', 'voters', 'clothes', 'tough', 'gardner', 'depress', 'sooooo', 'prospect']",
+                    0.0
+                ],
+                [
+                    "['mickey', 'socially', 'bar', 'rowe', 'disrupt', 'ridiculously', 'stuck', 'ottawa', 'carter', '100']",
+                    0.0
+                ],
+                [
+                    "['belong', 'flash', 'jon', 'internal', 'activist', 'fleet', 'complaint', 'tampa', 'exhaust', 'icecream']",
+                    0.0
+                ],
+                [
+                    "['legislator', 'tomorrow', 'preach', 'solid', 'music', 'shake', 'hes', 'liked', 'finals', '93']",
+                    0.0
+                ],
+                [
+                    "['connected', 'peru', 'sites', 'tally', 'terms', 'drown', 'installment', 'confidence', 'analyst', 'shower']",
+                    0.0
+                ],
+                [
+                    "['drank', 'mars', 'nh', 'pod', 'telephone', 'walmart', 'vegetables', 'caucus', 'sexual', 'hustle']",
+                    0.0
+                ],
+                [
+                    "['cauliflower', 'savage', 'famous', 'lobster', 'prosperous', 'fu', 'bind', 'higher', 'sister', 'civilization']",
+                    0.0
+                ],
+                [
+                    "['bbq', 'dddddddd', 'professor', 'xxxxa', 'blessed', 'forum', 'hammer', 'monica', 'palestine', '65']",
+                    0.0
+                ],
+                [
+                    "['solstice', 'eyes', 'jessica', 'kindergarten', 'briefly', 'susan', 'rewrite', 'wishes', 'illegals', 'wise']",
+                    0.0
+                ],
+                [
+                    "['coleman', 'medication', 'suicidal', 'cards', 'ex', 'dunno', 'tx', 'strategic', 'alphabet', 'nh']",
+                    0.0
+                ],
+                [
+                    "['2008', 'rejection', 'fox', 'dogs', 'flood', 'authority', 'nasty', 'difference', 'technical', 'roy']",
+                    0.0
+                ],
+                [
+                    "['arrest', 'sway', 'sayin', 'nerd', 'breaks', 'kent', 'kjv', 'swimming', 'sisters', 'shy']",
+                    0.0
+                ],
+                [
+                    "['tomi', 'butterfly', 'restore', 'sloth', 'reserve', 'scenario', 'ahhhh', 'practice', 'nah', 'intolerance']",
+                    0.0
+                ],
+                [
+                    "['extended', 'artwork', 'cathy', 'morals', 'keen', 'strategic', 'firmly', 'artist', 'hideous', 'shallow']",
+                    0.0
+                ],
+                [
+                    "['saturday', 'onion', 'fearless', 'prevail', 'mall', 'blonde', 'capacity', 'warrant', 'climate', 'needle']",
+                    0.0
+                ],
+                [
+                    "['lol', 'kesem', 'useless', 'superior', 'oral', 'classic', 'misunderstand', 'apologize', 'gods', '1999']",
+                    0.0
+                ],
+                [
+                    "['quantity', 'malice', 'resonate', 'deserving', 'gum', 'blatantly', 'motto', 'esp', 'rental', 'lookout']",
+                    0.0
+                ],
+                [
+                    "['20', 'families', 'study', 'german', 'nn', 'happiest', 'summit', 'chair', 'wit', 'task']",
+                    0.0
+                ],
+                [
+                    "['whip', 'john', 'porch', 'donate', 'lakers', 'dilemma', 'colors', 'besties', 'scripture', 'ye']",
+                    0.0
+                ],
+                [
+                    "['ng', 'grammy', 'wisely', 'threat', 'todayas', 'invite', 'relentless', 'positive', 'mlk', 'miller']",
+                    0.0
+                ],
+                [
+                    "['gas', 'ashlee', 'blah', 'promptly', 'pee', 'mellow', 'camera', 'kerry', 'cracker', 'lit']",
+                    0.0
+                ],
+                [
+                    "['unconditionally', 'waters', 'giving', 'argentina', 'notinthislifetime', 'aleppo', 'partially', 'closely', 'boxing', 'tequila']",
+                    0.0
+                ],
+                [
+                    "['recording', 'snorkel', 'unconstitutional', 'framework', 'parrot', 'lego', 'papa', 'concede', 'carolina', 'heavenly']",
+                    0.0
+                ],
+                [
+                    "['tropical', 'granted', 'gotten', 'river', 'civil', '98', 'logo', 'tomorrow', 'estimate', 'affect']",
+                    0.0
+                ],
+                [
+                    "['article', 'convinced', 'trying', 'media', 'reviews', 'noon', 'cow', 'greatly', 'meditate', 'animate']",
+                    0.0
+                ],
+                [
+                    "['decline', 'fingers', 'leading', 'ceo', 'festive', 'army', 'sublime', 'boris', 'lunatic', 'oldie']",
+                    0.0
+                ],
+                [
+                    "['bones', 'folly', 'sir', 'genius', 'earth', 'completion', 'developer', 'mobile', 'bark', 'wilderness']",
+                    0.0
+                ],
+                [
+                    "['meals', 'birthdays', 'study', 'insert', 'pick', 'visa', 'substantive', 'images', 'clarification', 'ditch']",
+                    0.0
+                ],
+                [
+                    "['torch', 'friendship', 'buzz', 'arctic', 'pull', 'blonde', 'applause', '9pm', 'reasonably', 'chronic']",
+                    0.0
+                ],
+                [
+                    "['fitness', 'published', 'dear', 'approach', 'lama', 'decrease', 'worthy', 'wonder', 'appalling', 'beings']",
+                    0.0
+                ],
+                [
+                    "['liquid', 'bw', 'course', 'pronounce', 'ranger', 'bias', 'fears', 'yale', 'meetings', 'dapl']",
+                    0.0
+                ],
+                [
+                    "['bull', 'ricky', 'able', 'opinions', 'patriotism', 'wolf', 'nixon', 'americans', 'reed', 'soooooo']",
+                    0.0
+                ],
+                [
+                    "['washed', 'issue', 'jay', 'ok', 'pile', 'morning', 'meredith', 'liberal', 'technical', 'spring']",
+                    0.0
+                ],
+                [
+                    "['mcconnell', 'sure', 'gentlemen', 'sunrise', 'rapidly', 'productivity', '81', 'documentary', 'bern', 'black']",
+                    0.0
+                ],
+                [
+                    "['iconic', 'rehearsal', 'rot', 'apprentice', 'sublime', 'trey', '62', 'armor', 'shouldve', 'weave']",
+                    0.0
+                ],
+                [
+                    "['ang', 'yea', 'oregon', 'attend', 'video', 'wrote', 'disappoint', 'discover', 'evangelicals', 'garlic']",
+                    0.0
+                ],
+                [
+                    "['26th', 'aaa', 'hollow', 'boil', 'cam', 'numbers', 'paragraph', 'worried', 'horribly', 'tyler']",
+                    0.0
+                ],
+                [
+                    "['morally', 'enforce', 'fed', 'assumption', 'deadly', 'diminish', 'activate', 'camel', 'exceed', 'phd']",
+                    0.0
+                ],
+                [
+                    "['obvious', 'graham', 'london', 'cake', 'cool', 'bruh', 'arrange', 'subway', 'classes', 'sincerely']",
+                    0.0
+                ],
+                [
+                    "['spy', 'equation', 'prosecute', 'feather', 'glen', 'held', 'gross', 'calc', 'rivera', 'deborah']",
+                    0.0
+                ],
+                [
+                    "['51', 'older', 'org', 'millionaire', 'blanket', 'recipient', 'reproductive', 'old', 'sandra', 'friend']",
+                    0.0
+                ],
+                [
+                    "['preach', 'involvement', 'musk', 'student', 'penis', 'limits', 'hella', 'tape', 'jimmy', 'sen']",
+                    0.0
+                ],
+                [
+                    "['labour', 'cynthia', 'thinks', 'bunny', 'unwilling', 'warriorinitiative', 'effectively', 'hilarious', 'trek', 'language']",
+                    0.0
+                ],
+                [
+                    "['sweeping', 'holt', 'institutions', 'town', 'treatment', 'yang', 'shampoo', 'noun', 'physiology', 'tumble']",
+                    0.0
+                ],
+                [
+                    "['ravenclaw', 'budget', 'equal', 'russias', 'kate', 'mention', 'thief', 'segregation', 'animal', 'reflection']",
+                    0.0
+                ],
+                [
+                    "['houston', 'nasa', 'aaaa', '3a', 'dega', 'holmes', 'aai', 'prioritize', 'stronger', 'african']",
+                    0.0
+                ],
+                [
+                    "['encourage', 'czech', 'backwards', 'lame', 'zen', 'committee', 'disability', 'abortions', 'brenda', 'temper']",
+                    0.0
+                ],
+                [
+                    "['01', 'september', 'supremacy', 'couch', 'dai', 'utter', 'cucumber', 'aunt', 'common', 'mac']",
+                    0.0
+                ],
+                [
+                    "['wwii', 'entrepreneur', 'wrestling', 'precise', 'voter', 'unbelievably', 'log', 'russia', 'outsider', 'crime']",
+                    0.0
+                ],
+                [
+                    "['benjamin', 'athletes', 'cyber', 'october', 'rescue', 'ethan', 'easier', 'mess', 'scalia', 'teaching']",
+                    0.0
+                ],
+                [
+                    "['ski', 'nations', 'labor', 'wireless', 'adhd', 'sharma', 'products', 'justin', 'oakland', 'foreigner']",
+                    0.0
+                ],
+                [
+                    "['association', 'jackie', 'doggy', 'butterfly', '81', 'austin', 'knees', 'timeless', 'fav', 'evidently']",
+                    0.0
+                ],
+                [
+                    "['supermarket', 'wreck', 'whitehouse', 'judy', '25th', 'mistaken', 'terminal', 'minion', 'elephant', 'peterson']",
+                    0.0
+                ],
+                [
+                    "['average', 'rely', 'recital', 'isaac', 'target', '1996', 'prohibit', 'terribly', 'terror', 'immigration']",
+                    0.0
+                ],
+                [
+                    "['outrage', 'medication', 'enable', 'singer', 'unconstitutional', 'champs', 'er', 'yikes', 'delay', 'vocabulary']",
+                    0.0
+                ],
+                [
+                    "['strongly', 'perspective', 'ladder', 'year', 'watched', 'blanket', 'word', 'consist', 'priorities', 'electronic']",
+                    0.0
+                ],
+                [
+                    "['intro', 'temporary', 'disappoint', 'buddha', 'soo', 'democrat', 'human', 'charge', 'knows', 'varsity']",
+                    0.0
+                ],
+                [
+                    "['regardless', 'decade', 'commercial', 'perez', 'businesses', 'horribly', 'receive', 'hour', 'ravenclaw', 'morgan']",
+                    0.0
+                ],
+                [
+                    "['cops', 'initiative', 'leadership', 'hammer', 'reef', 'pose', 'sioux', 'oh', 'removal', '85']",
+                    0.0
+                ],
+                [
+                    "['label', 'emphasize', 'reveal', 'troll', 'stevie', 'asu', 'fighting', 'typically', 'didnt', 'ellison']",
+                    0.0
+                ],
+                [
+                    "['distant', 'grasp', 'greece', 'wes', 'summer', 'churches', 'addiction', 'understand', 'theory', 'motor']",
+                    0.0
+                ],
+                [
+                    "['rethink', 'isi', 'globally', 'laughs', 'lil', 'anthem', 'audrey', 'crank', 'lilli', 'bs']",
+                    0.0
+                ],
+                [
+                    "['cancer', 'backyard', 'ay', 'survive', 'veggie', 'lester', 'hiding', 'notion', 'new', 'vegas']",
+                    0.0
+                ],
+                [
+                    "['foil', 'sooo', 'perkins', 'backdrop', 'ii', 'ua', 'listing', 'peaceful', 'rule', 'sad']",
+                    0.0
+                ],
+                [
+                    "['robb', 'adoption', 'deliberately', 'leo', 'fresh', '273', 'luggage', 'edition', 'gladly', 'wtf']",
+                    0.0
+                ],
+                [
+                    "['kung', 'fireworks', 'getaway', 'involvement', 'sep', 'il', 'german', 'sloth', 'housemate', 'dawgs']",
+                    0.0
+                ],
+                [
+                    "['awake', 'donor', 'lawmaker', 'stink', 'treasure', 'driven', 'kasey', 'lightly', 'payment', 'shakespeare']",
+                    0.0
+                ],
+                [
+                    "['separation', 'delusion', 'desirable', '360', 'tillerson', 'jay', 'asleep', 'assistant', 'pickup', 'bush']",
+                    0.0
+                ],
+                [
+                    "['internal', 'rumor', 'recount', 'tattoo', 'adversity', 'quiet', 'confederate', 'diy', 'avenger', 'forth']",
+                    0.0
+                ],
+                [
+                    "['showing', 'left', 'philly', 'allergic', 'cnn', 'significantly', 'satisfaction', 'vine', 'tow', 'disciple']",
+                    0.0
+                ],
+                [
+                    "['verse', 'presidency', 'freakin', 'vitamin', 'documents', 'mint', 'journalist', 'harvey', 'pedestrian', 'folks']",
+                    0.0
+                ],
+                [
+                    "['gamers', 'provided', 'gatlinburg', 'problems', 'logo', 'equality', 'mate', 'olive', 'mr', 'weekend']",
+                    0.0
+                ],
+                [
+                    "['thou', 'stoked', 'fighting', 'mint', 'celtic', 'brilliantly', 'lonely', 'cc', 'material', 'east']",
+                    0.0
+                ],
+                [
+                    "['exposure', 'having', 'pessimistic', 'passport', 'betrayal', 'spread', 'dark', 'abbey', 'argument', 'counselor']",
+                    0.0
+                ],
+                [
+                    "['loans', 'motivation', '57', 'yup', '5am', 'summarize', 'sophomore', 'anatomy', 'shows', 'tire']",
+                    0.0
+                ],
+                [
+                    "['memorable', 'nazi', 'metal', 'energy', 'wat', 'melania', 'pissed', 'blacklivesmatter', 'shy', 'badge']",
+                    0.0
+                ],
+                [
+                    "['extend', 'reasonable', 'adversity', 'taking', 'editor', 'affirm', '98', 'benefit', 'tennessee', 'plays']",
+                    0.0
+                ],
+                [
+                    "['delegate', 'findyourbliss', 'kesem', 'msg', 'partial', 'likes', 'happens', 'anytime', 'winning', '83']",
+                    0.0
+                ],
+                [
+                    "['essential', 'neal', 'instructions', 'paint', 'dose', 'contradiction', 'forces', '365', 'rooms', 'matter']",
+                    0.0
+                ],
+                [
+                    "['unfortunate', 'setting', 'kickstarter', 'serve', 'omg', 'interpret', 'penguin', 'comin', 'fuck', 'generations']",
+                    0.0
+                ],
+                [
+                    "['victory', 'library', 'absurdity', 'heather', 'specially', 'newsfeed', 'meltdown', 'soooo', 'heat', 'explicitly']",
+                    0.0
+                ],
+                [
+                    "['push', 'opportunity', 'lax', 'tracks', 'educated', 'east', 'arc', 'banking', 'workshop', 'trace']",
+                    0.0
+                ],
+                [
+                    "['peach', 'confusion', 'mechanism', 'external', 'worthwhile', 'rn', 'fired', 'mildly', '22', 'label']",
+                    0.0
+                ],
+                [
+                    "['checker', 'resentment', 'july', 'intelligent', 'addiction', 'core', 'incapable', 'heas', 'roar', 'calculus']",
+                    0.0
+                ],
+                [
+                    "['aclu', 'fargo', 'refresh', 'si', 'frost', 'dorm', 'opposite', 'nnd', 'topics', 'essay']",
+                    0.0
+                ],
+                [
+                    "['rhythm', 'creativity', 'karen', 'jeez', 'trace', 'rosie', 'pragmatic', 'era', 'sheriff', 'vega']",
+                    0.0
+                ],
+                [
+                    "['biological', 'tire', 'birth', 'promising', 'otter', 'minded', 'priest', 'chalk', 'relevant', 'grin']",
+                    0.0
+                ]
+            ],
+            "r2_mean": "0.001",
+            "r2_std": "0.000"
+        }
+    },
+    "MFQ_FAIRNESS_AVG": {
+        "bow_elasticnet": {
+            "params": {
+                "alpha": 0.001,
+                "l1_ratio": 0.2
+            },
+            "top_features": [
+                [
+                    "['news', 'political', 'kind', 'man', 'human', 'order', 'world', 'list', 'speak', 'medium']",
+                    0.11224575498263459
+                ],
+                [
+                    "['want', 'new', 'post', 'night', 'know', 'place', 'favorite', 'person', 'oh', 'hear']",
+                    0.04372608367453226
+                ],
+                [
+                    "['like', 'good', 'just', 'look', 'make', 'little', 'come', 'feel', 'big', 'morning']",
+                    -0.020908179651453744
+                ],
+                [
+                    "['day', 'today', 'great', 'happy', 'make', 'birthday', 'thank', 'thanks', 'god', 'fun']",
+                    -0.0038163234716412056
+                ],
+                [
+                    "['people', 'say', 'think', 'dont', 'really', 'thing', 'know', 'watch', 'just', 'start']",
+                    0.001897397935668008
+                ],
+                [
+                    "['churchill', 'ummmm', 'paint', 'warriorinitiative', 'navy', 'rapidly', 'chosen', 'grown', 'haiku', 'shameless']",
+                    0.0
+                ],
+                [
+                    "['elbow', 'debut', 'neo', 'bestfriend', 'annoyed', 'aussie', 'destiny', 'rocket', 'bitches', '____']",
+                    0.0
+                ],
+                [
+                    "['tread', '10th', 'able', 'weakness', 'aila', 'trainer', 'mitchell', 'contagious', 'deleted', 'acre']",
+                    0.0
+                ],
+                [
+                    "['heel', 'dda', 'shipping', 'crap', 'gymnastics', 'grandparent', 'bleach', 'commit', 'house', 'negotiate']",
+                    0.0
+                ],
+                [
+                    "['tomatoes', 'thief', 'original', 'philip', 'fees', 'pandora', 'capital', 'gilbert', 'gina', 'walter']",
+                    0.0
+                ],
+                [
+                    "['shocked', 'climatechange', 'lands', 'pump', '2007', 'blast', 'alligator', 'suggestions', 'maintenance', 'classified']",
+                    0.0
+                ],
+                [
+                    "['hanson', 'retail', 'cube', 'physical', 'mass', '1999', '2011', 'stupidity', 'qualified', 'ginger']",
+                    0.0
+                ],
+                [
+                    "['seriously', 'integrity', 'cyber', 'voters', 'clothes', 'tough', 'gardner', 'depress', 'sooooo', 'prospect']",
+                    0.0
+                ],
+                [
+                    "['mickey', 'socially', 'bar', 'rowe', 'disrupt', 'ridiculously', 'stuck', 'ottawa', 'carter', '100']",
+                    0.0
+                ],
+                [
+                    "['belong', 'flash', 'jon', 'internal', 'activist', 'fleet', 'complaint', 'tampa', 'exhaust', 'icecream']",
+                    0.0
+                ],
+                [
+                    "['legislator', 'tomorrow', 'preach', 'solid', 'music', 'shake', 'hes', 'liked', 'finals', '93']",
+                    0.0
+                ],
+                [
+                    "['connected', 'peru', 'sites', 'tally', 'terms', 'drown', 'installment', 'confidence', 'analyst', 'shower']",
+                    0.0
+                ],
+                [
+                    "['drank', 'mars', 'nh', 'pod', 'telephone', 'walmart', 'vegetables', 'caucus', 'sexual', 'hustle']",
+                    0.0
+                ],
+                [
+                    "['cauliflower', 'savage', 'famous', 'lobster', 'prosperous', 'fu', 'bind', 'higher', 'sister', 'civilization']",
+                    0.0
+                ],
+                [
+                    "['bbq', 'dddddddd', 'professor', 'xxxxa', 'blessed', 'forum', 'hammer', 'monica', 'palestine', '65']",
+                    0.0
+                ],
+                [
+                    "['solstice', 'eyes', 'jessica', 'kindergarten', 'briefly', 'susan', 'rewrite', 'wishes', 'illegals', 'wise']",
+                    0.0
+                ],
+                [
+                    "['coleman', 'medication', 'suicidal', 'cards', 'ex', 'dunno', 'tx', 'strategic', 'alphabet', 'nh']",
+                    0.0
+                ],
+                [
+                    "['2008', 'rejection', 'fox', 'dogs', 'flood', 'authority', 'nasty', 'difference', 'technical', 'roy']",
+                    0.0
+                ],
+                [
+                    "['arrest', 'sway', 'sayin', 'nerd', 'breaks', 'kent', 'kjv', 'swimming', 'sisters', 'shy']",
+                    0.0
+                ],
+                [
+                    "['tomi', 'butterfly', 'restore', 'sloth', 'reserve', 'scenario', 'ahhhh', 'practice', 'nah', 'intolerance']",
+                    0.0
+                ],
+                [
+                    "['extended', 'artwork', 'cathy', 'morals', 'keen', 'strategic', 'firmly', 'artist', 'hideous', 'shallow']",
+                    0.0
+                ],
+                [
+                    "['saturday', 'onion', 'fearless', 'prevail', 'mall', 'blonde', 'capacity', 'warrant', 'climate', 'needle']",
+                    0.0
+                ],
+                [
+                    "['lol', 'kesem', 'useless', 'superior', 'oral', 'classic', 'misunderstand', 'apologize', 'gods', '1999']",
+                    0.0
+                ],
+                [
+                    "['quantity', 'malice', 'resonate', 'deserving', 'gum', 'blatantly', 'motto', 'esp', 'rental', 'lookout']",
+                    0.0
+                ],
+                [
+                    "['20', 'families', 'study', 'german', 'nn', 'happiest', 'summit', 'chair', 'wit', 'task']",
+                    0.0
+                ],
+                [
+                    "['whip', 'john', 'porch', 'donate', 'lakers', 'dilemma', 'colors', 'besties', 'scripture', 'ye']",
+                    0.0
+                ],
+                [
+                    "['ng', 'grammy', 'wisely', 'threat', 'todayas', 'invite', 'relentless', 'positive', 'mlk', 'miller']",
+                    0.0
+                ],
+                [
+                    "['gas', 'ashlee', 'blah', 'promptly', 'pee', 'mellow', 'camera', 'kerry', 'cracker', 'lit']",
+                    0.0
+                ],
+                [
+                    "['unconditionally', 'waters', 'giving', 'argentina', 'notinthislifetime', 'aleppo', 'partially', 'closely', 'boxing', 'tequila']",
+                    0.0
+                ],
+                [
+                    "['recording', 'snorkel', 'unconstitutional', 'framework', 'parrot', 'lego', 'papa', 'concede', 'carolina', 'heavenly']",
+                    0.0
+                ],
+                [
+                    "['tropical', 'granted', 'gotten', 'river', 'civil', '98', 'logo', 'tomorrow', 'estimate', 'affect']",
+                    0.0
+                ],
+                [
+                    "['article', 'convinced', 'trying', 'media', 'reviews', 'noon', 'cow', 'greatly', 'meditate', 'animate']",
+                    0.0
+                ],
+                [
+                    "['decline', 'fingers', 'leading', 'ceo', 'festive', 'army', 'sublime', 'boris', 'lunatic', 'oldie']",
+                    0.0
+                ],
+                [
+                    "['bones', 'folly', 'sir', 'genius', 'earth', 'completion', 'developer', 'mobile', 'bark', 'wilderness']",
+                    0.0
+                ],
+                [
+                    "['meals', 'birthdays', 'study', 'insert', 'pick', 'visa', 'substantive', 'images', 'clarification', 'ditch']",
+                    0.0
+                ],
+                [
+                    "['torch', 'friendship', 'buzz', 'arctic', 'pull', 'blonde', 'applause', '9pm', 'reasonably', 'chronic']",
+                    0.0
+                ],
+                [
+                    "['fitness', 'published', 'dear', 'approach', 'lama', 'decrease', 'worthy', 'wonder', 'appalling', 'beings']",
+                    0.0
+                ],
+                [
+                    "['liquid', 'bw', 'course', 'pronounce', 'ranger', 'bias', 'fears', 'yale', 'meetings', 'dapl']",
+                    0.0
+                ],
+                [
+                    "['bull', 'ricky', 'able', 'opinions', 'patriotism', 'wolf', 'nixon', 'americans', 'reed', 'soooooo']",
+                    0.0
+                ],
+                [
+                    "['washed', 'issue', 'jay', 'ok', 'pile', 'morning', 'meredith', 'liberal', 'technical', 'spring']",
+                    0.0
+                ],
+                [
+                    "['mcconnell', 'sure', 'gentlemen', 'sunrise', 'rapidly', 'productivity', '81', 'documentary', 'bern', 'black']",
+                    0.0
+                ],
+                [
+                    "['iconic', 'rehearsal', 'rot', 'apprentice', 'sublime', 'trey', '62', 'armor', 'shouldve', 'weave']",
+                    0.0
+                ],
+                [
+                    "['ang', 'yea', 'oregon', 'attend', 'video', 'wrote', 'disappoint', 'discover', 'evangelicals', 'garlic']",
+                    0.0
+                ],
+                [
+                    "['26th', 'aaa', 'hollow', 'boil', 'cam', 'numbers', 'paragraph', 'worried', 'horribly', 'tyler']",
+                    0.0
+                ],
+                [
+                    "['morally', 'enforce', 'fed', 'assumption', 'deadly', 'diminish', 'activate', 'camel', 'exceed', 'phd']",
+                    0.0
+                ],
+                [
+                    "['obvious', 'graham', 'london', 'cake', 'cool', 'bruh', 'arrange', 'subway', 'classes', 'sincerely']",
+                    0.0
+                ],
+                [
+                    "['spy', 'equation', 'prosecute', 'feather', 'glen', 'held', 'gross', 'calc', 'rivera', 'deborah']",
+                    0.0
+                ],
+                [
+                    "['51', 'older', 'org', 'millionaire', 'blanket', 'recipient', 'reproductive', 'old', 'sandra', 'friend']",
+                    0.0
+                ],
+                [
+                    "['preach', 'involvement', 'musk', 'student', 'penis', 'limits', 'hella', 'tape', 'jimmy', 'sen']",
+                    0.0
+                ],
+                [
+                    "['labour', 'cynthia', 'thinks', 'bunny', 'unwilling', 'warriorinitiative', 'effectively', 'hilarious', 'trek', 'language']",
+                    0.0
+                ],
+                [
+                    "['sweeping', 'holt', 'institutions', 'town', 'treatment', 'yang', 'shampoo', 'noun', 'physiology', 'tumble']",
+                    0.0
+                ],
+                [
+                    "['ravenclaw', 'budget', 'equal', 'russias', 'kate', 'mention', 'thief', 'segregation', 'animal', 'reflection']",
+                    0.0
+                ],
+                [
+                    "['houston', 'nasa', 'aaaa', '3a', 'dega', 'holmes', 'aai', 'prioritize', 'stronger', 'african']",
+                    0.0
+                ],
+                [
+                    "['encourage', 'czech', 'backwards', 'lame', 'zen', 'committee', 'disability', 'abortions', 'brenda', 'temper']",
+                    0.0
+                ],
+                [
+                    "['01', 'september', 'supremacy', 'couch', 'dai', 'utter', 'cucumber', 'aunt', 'common', 'mac']",
+                    0.0
+                ],
+                [
+                    "['wwii', 'entrepreneur', 'wrestling', 'precise', 'voter', 'unbelievably', 'log', 'russia', 'outsider', 'crime']",
+                    0.0
+                ],
+                [
+                    "['benjamin', 'athletes', 'cyber', 'october', 'rescue', 'ethan', 'easier', 'mess', 'scalia', 'teaching']",
+                    0.0
+                ],
+                [
+                    "['ski', 'nations', 'labor', 'wireless', 'adhd', 'sharma', 'products', 'justin', 'oakland', 'foreigner']",
+                    0.0
+                ],
+                [
+                    "['association', 'jackie', 'doggy', 'butterfly', '81', 'austin', 'knees', 'timeless', 'fav', 'evidently']",
+                    0.0
+                ],
+                [
+                    "['supermarket', 'wreck', 'whitehouse', 'judy', '25th', 'mistaken', 'terminal', 'minion', 'elephant', 'peterson']",
+                    0.0
+                ],
+                [
+                    "['average', 'rely', 'recital', 'isaac', 'target', '1996', 'prohibit', 'terribly', 'terror', 'immigration']",
+                    0.0
+                ],
+                [
+                    "['outrage', 'medication', 'enable', 'singer', 'unconstitutional', 'champs', 'er', 'yikes', 'delay', 'vocabulary']",
+                    0.0
+                ],
+                [
+                    "['strongly', 'perspective', 'ladder', 'year', 'watched', 'blanket', 'word', 'consist', 'priorities', 'electronic']",
+                    0.0
+                ],
+                [
+                    "['intro', 'temporary', 'disappoint', 'buddha', 'soo', 'democrat', 'human', 'charge', 'knows', 'varsity']",
+                    0.0
+                ],
+                [
+                    "['regardless', 'decade', 'commercial', 'perez', 'businesses', 'horribly', 'receive', 'hour', 'ravenclaw', 'morgan']",
+                    0.0
+                ],
+                [
+                    "['cops', 'initiative', 'leadership', 'hammer', 'reef', 'pose', 'sioux', 'oh', 'removal', '85']",
+                    0.0
+                ],
+                [
+                    "['label', 'emphasize', 'reveal', 'troll', 'stevie', 'asu', 'fighting', 'typically', 'didnt', 'ellison']",
+                    0.0
+                ],
+                [
+                    "['distant', 'grasp', 'greece', 'wes', 'summer', 'churches', 'addiction', 'understand', 'theory', 'motor']",
+                    0.0
+                ],
+                [
+                    "['rethink', 'isi', 'globally', 'laughs', 'lil', 'anthem', 'audrey', 'crank', 'lilli', 'bs']",
+                    0.0
+                ],
+                [
+                    "['cancer', 'backyard', 'ay', 'survive', 'veggie', 'lester', 'hiding', 'notion', 'new', 'vegas']",
+                    0.0
+                ],
+                [
+                    "['foil', 'sooo', 'perkins', 'backdrop', 'ii', 'ua', 'listing', 'peaceful', 'rule', 'sad']",
+                    0.0
+                ],
+                [
+                    "['robb', 'adoption', 'deliberately', 'leo', 'fresh', '273', 'luggage', 'edition', 'gladly', 'wtf']",
+                    0.0
+                ],
+                [
+                    "['kung', 'fireworks', 'getaway', 'involvement', 'sep', 'il', 'german', 'sloth', 'housemate', 'dawgs']",
+                    0.0
+                ],
+                [
+                    "['awake', 'donor', 'lawmaker', 'stink', 'treasure', 'driven', 'kasey', 'lightly', 'payment', 'shakespeare']",
+                    0.0
+                ],
+                [
+                    "['separation', 'delusion', 'desirable', '360', 'tillerson', 'jay', 'asleep', 'assistant', 'pickup', 'bush']",
+                    0.0
+                ],
+                [
+                    "['internal', 'rumor', 'recount', 'tattoo', 'adversity', 'quiet', 'confederate', 'diy', 'avenger', 'forth']",
+                    0.0
+                ],
+                [
+                    "['showing', 'left', 'philly', 'allergic', 'cnn', 'significantly', 'satisfaction', 'vine', 'tow', 'disciple']",
+                    0.0
+                ],
+                [
+                    "['verse', 'presidency', 'freakin', 'vitamin', 'documents', 'mint', 'journalist', 'harvey', 'pedestrian', 'folks']",
+                    0.0
+                ],
+                [
+                    "['gamers', 'provided', 'gatlinburg', 'problems', 'logo', 'equality', 'mate', 'olive', 'mr', 'weekend']",
+                    0.0
+                ],
+                [
+                    "['thou', 'stoked', 'fighting', 'mint', 'celtic', 'brilliantly', 'lonely', 'cc', 'material', 'east']",
+                    0.0
+                ],
+                [
+                    "['exposure', 'having', 'pessimistic', 'passport', 'betrayal', 'spread', 'dark', 'abbey', 'argument', 'counselor']",
+                    0.0
+                ],
+                [
+                    "['loans', 'motivation', '57', 'yup', '5am', 'summarize', 'sophomore', 'anatomy', 'shows', 'tire']",
+                    0.0
+                ],
+                [
+                    "['memorable', 'nazi', 'metal', 'energy', 'wat', 'melania', 'pissed', 'blacklivesmatter', 'shy', 'badge']",
+                    0.0
+                ],
+                [
+                    "['extend', 'reasonable', 'adversity', 'taking', 'editor', 'affirm', '98', 'benefit', 'tennessee', 'plays']",
+                    0.0
+                ],
+                [
+                    "['delegate', 'findyourbliss', 'kesem', 'msg', 'partial', 'likes', 'happens', 'anytime', 'winning', '83']",
+                    0.0
+                ],
+                [
+                    "['essential', 'neal', 'instructions', 'paint', 'dose', 'contradiction', 'forces', '365', 'rooms', 'matter']",
+                    0.0
+                ],
+                [
+                    "['unfortunate', 'setting', 'kickstarter', 'serve', 'omg', 'interpret', 'penguin', 'comin', 'fuck', 'generations']",
+                    0.0
+                ],
+                [
+                    "['victory', 'library', 'absurdity', 'heather', 'specially', 'newsfeed', 'meltdown', 'soooo', 'heat', 'explicitly']",
+                    0.0
+                ],
+                [
+                    "['push', 'opportunity', 'lax', 'tracks', 'educated', 'east', 'arc', 'banking', 'workshop', 'trace']",
+                    0.0
+                ],
+                [
+                    "['peach', 'confusion', 'mechanism', 'external', 'worthwhile', 'rn', 'fired', 'mildly', '22', 'label']",
+                    0.0
+                ],
+                [
+                    "['checker', 'resentment', 'july', 'intelligent', 'addiction', 'core', 'incapable', 'heas', 'roar', 'calculus']",
+                    0.0
+                ],
+                [
+                    "['aclu', 'fargo', 'refresh', 'si', 'frost', 'dorm', 'opposite', 'nnd', 'topics', 'essay']",
+                    0.0
+                ],
+                [
+                    "['rhythm', 'creativity', 'karen', 'jeez', 'trace', 'rosie', 'pragmatic', 'era', 'sheriff', 'vega']",
+                    0.0
+                ],
+                [
+                    "['biological', 'tire', 'birth', 'promising', 'otter', 'minded', 'priest', 'chalk', 'relevant', 'grin']",
+                    0.0
+                ],
+                [
+                    "['duh', 'handmade', 'peacefully', 'calculus', 'peter', 'arrived', 'annoy', 'maps', 'adventurous', 'athe']",
+                    0.0
+                ]
+            ],
+            "r2_mean": "0.000",
+            "r2_std": "0.000"
+        }
+    },
+    "MFQ_INGROUP_AVG": {
+        "bow_elasticnet": {
+            "params": {
+                "alpha": 0.001,
+                "l1_ratio": 0.15
+            },
+            "top_features": [
+                [
+                    "['news', 'political', 'kind', 'man', 'human', 'order', 'world', 'list', 'speak', 'medium']",
+                    -0.19660746979700308
+                ],
+                [
+                    "['people', 'say', 'think', 'dont', 'really', 'thing', 'know', 'watch', 'just', 'start']",
+                    -0.17523573468526457
+                ],
+                [
+                    "['day', 'today', 'great', 'happy', 'make', 'birthday', 'thank', 'thanks', 'god', 'fun']",
+                    0.1572298595879304
+                ],
+                [
+                    "['use', 'woman', 'facebook', 'book', 'pay', 'fight', 'dog', 'movie', 'sign', 'number']",
+                    -0.14187816422951605
+                ],
+                [
+                    "['a1a', 'lands', 'forgot', 'wed', 'ohhh', 'emails', 'xc', 'drinking', 'sand', 'rant']",
+                    0.14092304750716103
+                ],
+                [
+                    "['love', 'time', 'year', 'life', 'youre', 'old', 'christmas', 'dd', 'end', 'play']",
+                    0.11818862614901812
+                ],
+                [
+                    "['im', 'trump', 'right', 'let', 'ive', 'vote', 'try', 'president', 'way', 'kid']",
+                    -0.08516773561083188
+                ],
+                [
+                    "['like', 'good', 'just', 'look', 'make', 'little', 'come', 'feel', 'big', 'morning']",
+                    -0.08029966816539842
+                ],
+                [
+                    "['want', 'new', 'post', 'night', 'know', 'place', 'favorite', 'person', 'oh', 'hear']",
+                    -0.05682056024743829
+                ],
+                [
+                    "['work', 'friend', 'best', 'leave', 'share', 'check', 'family', 'far', 'power', 'class']",
+                    -0.05002561887216388
+                ],
+                [
+                    "['need', 'help', 'country', 'happen', 'win', 'video', 'high', 'spend', 'open', 'month']",
+                    -0.014849286438473741
+                ],
+                [
+                    "['state', 'enjoy', 'article', 'easy', 'church', 'retweeted', 'page', 'heres', 'excite', 'town']",
+                    -0.014513949485612288
+                ],
+                [
+                    "['week', 'didnt', 'remember', 'ill', 'miss', 'true', 'story', 'cool', 'nice', 'make']",
+                    0.009508017895915306
+                ],
+                [
+                    "['churchill', 'ummmm', 'paint', 'warriorinitiative', 'navy', 'rapidly', 'chosen', 'grown', 'haiku', 'shameless']",
+                    0.0
+                ],
+                [
+                    "['elbow', 'debut', 'neo', 'bestfriend', 'annoyed', 'aussie', 'destiny', 'rocket', 'bitches', '____']",
+                    0.0
+                ],
+                [
+                    "['tread', '10th', 'able', 'weakness', 'aila', 'trainer', 'mitchell', 'contagious', 'deleted', 'acre']",
+                    0.0
+                ],
+                [
+                    "['heel', 'dda', 'shipping', 'crap', 'gymnastics', 'grandparent', 'bleach', 'commit', 'house', 'negotiate']",
+                    0.0
+                ],
+                [
+                    "['tomatoes', 'thief', 'original', 'philip', 'fees', 'pandora', 'capital', 'gilbert', 'gina', 'walter']",
+                    0.0
+                ],
+                [
+                    "['shocked', 'climatechange', 'lands', 'pump', '2007', 'blast', 'alligator', 'suggestions', 'maintenance', 'classified']",
+                    0.0
+                ],
+                [
+                    "['hanson', 'retail', 'cube', 'physical', 'mass', '1999', '2011', 'stupidity', 'qualified', 'ginger']",
+                    0.0
+                ],
+                [
+                    "['seriously', 'integrity', 'cyber', 'voters', 'clothes', 'tough', 'gardner', 'depress', 'sooooo', 'prospect']",
+                    0.0
+                ],
+                [
+                    "['mickey', 'socially', 'bar', 'rowe', 'disrupt', 'ridiculously', 'stuck', 'ottawa', 'carter', '100']",
+                    0.0
+                ],
+                [
+                    "['belong', 'flash', 'jon', 'internal', 'activist', 'fleet', 'complaint', 'tampa', 'exhaust', 'icecream']",
+                    0.0
+                ],
+                [
+                    "['legislator', 'tomorrow', 'preach', 'solid', 'music', 'shake', 'hes', 'liked', 'finals', '93']",
+                    0.0
+                ],
+                [
+                    "['connected', 'peru', 'sites', 'tally', 'terms', 'drown', 'installment', 'confidence', 'analyst', 'shower']",
+                    0.0
+                ],
+                [
+                    "['drank', 'mars', 'nh', 'pod', 'telephone', 'walmart', 'vegetables', 'caucus', 'sexual', 'hustle']",
+                    0.0
+                ],
+                [
+                    "['cauliflower', 'savage', 'famous', 'lobster', 'prosperous', 'fu', 'bind', 'higher', 'sister', 'civilization']",
+                    0.0
+                ],
+                [
+                    "['bbq', 'dddddddd', 'professor', 'xxxxa', 'blessed', 'forum', 'hammer', 'monica', 'palestine', '65']",
+                    0.0
+                ],
+                [
+                    "['solstice', 'eyes', 'jessica', 'kindergarten', 'briefly', 'susan', 'rewrite', 'wishes', 'illegals', 'wise']",
+                    0.0
+                ],
+                [
+                    "['coleman', 'medication', 'suicidal', 'cards', 'ex', 'dunno', 'tx', 'strategic', 'alphabet', 'nh']",
+                    0.0
+                ],
+                [
+                    "['2008', 'rejection', 'fox', 'dogs', 'flood', 'authority', 'nasty', 'difference', 'technical', 'roy']",
+                    0.0
+                ],
+                [
+                    "['arrest', 'sway', 'sayin', 'nerd', 'breaks', 'kent', 'kjv', 'swimming', 'sisters', 'shy']",
+                    0.0
+                ],
+                [
+                    "['tomi', 'butterfly', 'restore', 'sloth', 'reserve', 'scenario', 'ahhhh', 'practice', 'nah', 'intolerance']",
+                    0.0
+                ],
+                [
+                    "['extended', 'artwork', 'cathy', 'morals', 'keen', 'strategic', 'firmly', 'artist', 'hideous', 'shallow']",
+                    0.0
+                ],
+                [
+                    "['saturday', 'onion', 'fearless', 'prevail', 'mall', 'blonde', 'capacity', 'warrant', 'climate', 'needle']",
+                    0.0
+                ],
+                [
+                    "['lol', 'kesem', 'useless', 'superior', 'oral', 'classic', 'misunderstand', 'apologize', 'gods', '1999']",
+                    0.0
+                ],
+                [
+                    "['quantity', 'malice', 'resonate', 'deserving', 'gum', 'blatantly', 'motto', 'esp', 'rental', 'lookout']",
+                    0.0
+                ],
+                [
+                    "['20', 'families', 'study', 'german', 'nn', 'happiest', 'summit', 'chair', 'wit', 'task']",
+                    0.0
+                ],
+                [
+                    "['whip', 'john', 'porch', 'donate', 'lakers', 'dilemma', 'colors', 'besties', 'scripture', 'ye']",
+                    0.0
+                ],
+                [
+                    "['ng', 'grammy', 'wisely', 'threat', 'todayas', 'invite', 'relentless', 'positive', 'mlk', 'miller']",
+                    0.0
+                ],
+                [
+                    "['gas', 'ashlee', 'blah', 'promptly', 'pee', 'mellow', 'camera', 'kerry', 'cracker', 'lit']",
+                    0.0
+                ],
+                [
+                    "['unconditionally', 'waters', 'giving', 'argentina', 'notinthislifetime', 'aleppo', 'partially', 'closely', 'boxing', 'tequila']",
+                    0.0
+                ],
+                [
+                    "['recording', 'snorkel', 'unconstitutional', 'framework', 'parrot', 'lego', 'papa', 'concede', 'carolina', 'heavenly']",
+                    0.0
+                ],
+                [
+                    "['tropical', 'granted', 'gotten', 'river', 'civil', '98', 'logo', 'tomorrow', 'estimate', 'affect']",
+                    0.0
+                ],
+                [
+                    "['article', 'convinced', 'trying', 'media', 'reviews', 'noon', 'cow', 'greatly', 'meditate', 'animate']",
+                    0.0
+                ],
+                [
+                    "['decline', 'fingers', 'leading', 'ceo', 'festive', 'army', 'sublime', 'boris', 'lunatic', 'oldie']",
+                    0.0
+                ],
+                [
+                    "['bones', 'folly', 'sir', 'genius', 'earth', 'completion', 'developer', 'mobile', 'bark', 'wilderness']",
+                    0.0
+                ],
+                [
+                    "['meals', 'birthdays', 'study', 'insert', 'pick', 'visa', 'substantive', 'images', 'clarification', 'ditch']",
+                    0.0
+                ],
+                [
+                    "['torch', 'friendship', 'buzz', 'arctic', 'pull', 'blonde', 'applause', '9pm', 'reasonably', 'chronic']",
+                    0.0
+                ],
+                [
+                    "['fitness', 'published', 'dear', 'approach', 'lama', 'decrease', 'worthy', 'wonder', 'appalling', 'beings']",
+                    0.0
+                ],
+                [
+                    "['liquid', 'bw', 'course', 'pronounce', 'ranger', 'bias', 'fears', 'yale', 'meetings', 'dapl']",
+                    0.0
+                ],
+                [
+                    "['bull', 'ricky', 'able', 'opinions', 'patriotism', 'wolf', 'nixon', 'americans', 'reed', 'soooooo']",
+                    0.0
+                ],
+                [
+                    "['washed', 'issue', 'jay', 'ok', 'pile', 'morning', 'meredith', 'liberal', 'technical', 'spring']",
+                    0.0
+                ],
+                [
+                    "['mcconnell', 'sure', 'gentlemen', 'sunrise', 'rapidly', 'productivity', '81', 'documentary', 'bern', 'black']",
+                    0.0
+                ],
+                [
+                    "['iconic', 'rehearsal', 'rot', 'apprentice', 'sublime', 'trey', '62', 'armor', 'shouldve', 'weave']",
+                    0.0
+                ],
+                [
+                    "['ang', 'yea', 'oregon', 'attend', 'video', 'wrote', 'disappoint', 'discover', 'evangelicals', 'garlic']",
+                    0.0
+                ],
+                [
+                    "['26th', 'aaa', 'hollow', 'boil', 'cam', 'numbers', 'paragraph', 'worried', 'horribly', 'tyler']",
+                    0.0
+                ],
+                [
+                    "['morally', 'enforce', 'fed', 'assumption', 'deadly', 'diminish', 'activate', 'camel', 'exceed', 'phd']",
+                    0.0
+                ],
+                [
+                    "['obvious', 'graham', 'london', 'cake', 'cool', 'bruh', 'arrange', 'subway', 'classes', 'sincerely']",
+                    0.0
+                ],
+                [
+                    "['spy', 'equation', 'prosecute', 'feather', 'glen', 'held', 'gross', 'calc', 'rivera', 'deborah']",
+                    0.0
+                ],
+                [
+                    "['51', 'older', 'org', 'millionaire', 'blanket', 'recipient', 'reproductive', 'old', 'sandra', 'friend']",
+                    0.0
+                ],
+                [
+                    "['preach', 'involvement', 'musk', 'student', 'penis', 'limits', 'hella', 'tape', 'jimmy', 'sen']",
+                    0.0
+                ],
+                [
+                    "['labour', 'cynthia', 'thinks', 'bunny', 'unwilling', 'warriorinitiative', 'effectively', 'hilarious', 'trek', 'language']",
+                    0.0
+                ],
+                [
+                    "['sweeping', 'holt', 'institutions', 'town', 'treatment', 'yang', 'shampoo', 'noun', 'physiology', 'tumble']",
+                    0.0
+                ],
+                [
+                    "['ravenclaw', 'budget', 'equal', 'russias', 'kate', 'mention', 'thief', 'segregation', 'animal', 'reflection']",
+                    0.0
+                ],
+                [
+                    "['houston', 'nasa', 'aaaa', '3a', 'dega', 'holmes', 'aai', 'prioritize', 'stronger', 'african']",
+                    0.0
+                ],
+                [
+                    "['encourage', 'czech', 'backwards', 'lame', 'zen', 'committee', 'disability', 'abortions', 'brenda', 'temper']",
+                    0.0
+                ],
+                [
+                    "['01', 'september', 'supremacy', 'couch', 'dai', 'utter', 'cucumber', 'aunt', 'common', 'mac']",
+                    0.0
+                ],
+                [
+                    "['wwii', 'entrepreneur', 'wrestling', 'precise', 'voter', 'unbelievably', 'log', 'russia', 'outsider', 'crime']",
+                    0.0
+                ],
+                [
+                    "['benjamin', 'athletes', 'cyber', 'october', 'rescue', 'ethan', 'easier', 'mess', 'scalia', 'teaching']",
+                    0.0
+                ],
+                [
+                    "['ski', 'nations', 'labor', 'wireless', 'adhd', 'sharma', 'products', 'justin', 'oakland', 'foreigner']",
+                    0.0
+                ],
+                [
+                    "['association', 'jackie', 'doggy', 'butterfly', '81', 'austin', 'knees', 'timeless', 'fav', 'evidently']",
+                    0.0
+                ],
+                [
+                    "['supermarket', 'wreck', 'whitehouse', 'judy', '25th', 'mistaken', 'terminal', 'minion', 'elephant', 'peterson']",
+                    0.0
+                ],
+                [
+                    "['average', 'rely', 'recital', 'isaac', 'target', '1996', 'prohibit', 'terribly', 'terror', 'immigration']",
+                    0.0
+                ],
+                [
+                    "['outrage', 'medication', 'enable', 'singer', 'unconstitutional', 'champs', 'er', 'yikes', 'delay', 'vocabulary']",
+                    0.0
+                ],
+                [
+                    "['strongly', 'perspective', 'ladder', 'year', 'watched', 'blanket', 'word', 'consist', 'priorities', 'electronic']",
+                    0.0
+                ],
+                [
+                    "['intro', 'temporary', 'disappoint', 'buddha', 'soo', 'democrat', 'human', 'charge', 'knows', 'varsity']",
+                    0.0
+                ],
+                [
+                    "['regardless', 'decade', 'commercial', 'perez', 'businesses', 'horribly', 'receive', 'hour', 'ravenclaw', 'morgan']",
+                    0.0
+                ],
+                [
+                    "['cops', 'initiative', 'leadership', 'hammer', 'reef', 'pose', 'sioux', 'oh', 'removal', '85']",
+                    0.0
+                ],
+                [
+                    "['label', 'emphasize', 'reveal', 'troll', 'stevie', 'asu', 'fighting', 'typically', 'didnt', 'ellison']",
+                    0.0
+                ],
+                [
+                    "['distant', 'grasp', 'greece', 'wes', 'summer', 'churches', 'addiction', 'understand', 'theory', 'motor']",
+                    0.0
+                ],
+                [
+                    "['rethink', 'isi', 'globally', 'laughs', 'lil', 'anthem', 'audrey', 'crank', 'lilli', 'bs']",
+                    0.0
+                ],
+                [
+                    "['cancer', 'backyard', 'ay', 'survive', 'veggie', 'lester', 'hiding', 'notion', 'new', 'vegas']",
+                    0.0
+                ],
+                [
+                    "['foil', 'sooo', 'perkins', 'backdrop', 'ii', 'ua', 'listing', 'peaceful', 'rule', 'sad']",
+                    0.0
+                ],
+                [
+                    "['robb', 'adoption', 'deliberately', 'leo', 'fresh', '273', 'luggage', 'edition', 'gladly', 'wtf']",
+                    0.0
+                ],
+                [
+                    "['kung', 'fireworks', 'getaway', 'involvement', 'sep', 'il', 'german', 'sloth', 'housemate', 'dawgs']",
+                    0.0
+                ],
+                [
+                    "['awake', 'donor', 'lawmaker', 'stink', 'treasure', 'driven', 'kasey', 'lightly', 'payment', 'shakespeare']",
+                    0.0
+                ],
+                [
+                    "['separation', 'delusion', 'desirable', '360', 'tillerson', 'jay', 'asleep', 'assistant', 'pickup', 'bush']",
+                    0.0
+                ],
+                [
+                    "['internal', 'rumor', 'recount', 'tattoo', 'adversity', 'quiet', 'confederate', 'diy', 'avenger', 'forth']",
+                    0.0
+                ],
+                [
+                    "['showing', 'left', 'philly', 'allergic', 'cnn', 'significantly', 'satisfaction', 'vine', 'tow', 'disciple']",
+                    0.0
+                ],
+                [
+                    "['verse', 'presidency', 'freakin', 'vitamin', 'documents', 'mint', 'journalist', 'harvey', 'pedestrian', 'folks']",
+                    0.0
+                ],
+                [
+                    "['gamers', 'provided', 'gatlinburg', 'problems', 'logo', 'equality', 'mate', 'olive', 'mr', 'weekend']",
+                    0.0
+                ],
+                [
+                    "['thou', 'stoked', 'fighting', 'mint', 'celtic', 'brilliantly', 'lonely', 'cc', 'material', 'east']",
+                    0.0
+                ],
+                [
+                    "['exposure', 'having', 'pessimistic', 'passport', 'betrayal', 'spread', 'dark', 'abbey', 'argument', 'counselor']",
+                    0.0
+                ],
+                [
+                    "['loans', 'motivation', '57', 'yup', '5am', 'summarize', 'sophomore', 'anatomy', 'shows', 'tire']",
+                    0.0
+                ],
+                [
+                    "['memorable', 'nazi', 'metal', 'energy', 'wat', 'melania', 'pissed', 'blacklivesmatter', 'shy', 'badge']",
+                    0.0
+                ],
+                [
+                    "['extend', 'reasonable', 'adversity', 'taking', 'editor', 'affirm', '98', 'benefit', 'tennessee', 'plays']",
+                    0.0
+                ],
+                [
+                    "['delegate', 'findyourbliss', 'kesem', 'msg', 'partial', 'likes', 'happens', 'anytime', 'winning', '83']",
+                    0.0
+                ],
+                [
+                    "['essential', 'neal', 'instructions', 'paint', 'dose', 'contradiction', 'forces', '365', 'rooms', 'matter']",
+                    0.0
+                ],
+                [
+                    "['unfortunate', 'setting', 'kickstarter', 'serve', 'omg', 'interpret', 'penguin', 'comin', 'fuck', 'generations']",
+                    0.0
+                ]
+            ],
+            "r2_mean": "0.003",
+            "r2_std": "0.000"
+        }
+    },
+    "MFQ_AUTHORITY_AVG": {
+        "bow_elasticnet": {
+            "params": {
+                "alpha": 0.001,
+                "l1_ratio": 0.2
+            },
+            "top_features": [
+                [
+                    "['day', 'today', 'great', 'happy', 'make', 'birthday', 'thank', 'thanks', 'god', 'fun']",
+                    0.24659202703051908
+                ],
+                [
+                    "['news', 'political', 'kind', 'man', 'human', 'order', 'world', 'list', 'speak', 'medium']",
+                    -0.2372652724832137
+                ],
+                [
+                    "['people', 'say', 'think', 'dont', 'really', 'thing', 'know', 'watch', 'just', 'start']",
+                    -0.1680020268403024
+                ],
+                [
+                    "['use', 'woman', 'facebook', 'book', 'pay', 'fight', 'dog', 'movie', 'sign', 'number']",
+                    -0.15063698266771341
+                ],
+                [
+                    "['love', 'time', 'year', 'life', 'youre', 'old', 'christmas', 'dd', 'end', 'play']",
+                    0.14867260889855755
+                ],
+                [
+                    "['a1a', 'lands', 'forgot', 'wed', 'ohhh', 'emails', 'xc', 'drinking', 'sand', 'rant']",
+                    0.12454178693762534
+                ],
+                [
+                    "['like', 'good', 'just', 'look', 'make', 'little', 'come', 'feel', 'big', 'morning']",
+                    -0.06284549146092093
+                ],
+                [
+                    "['week', 'didnt', 'remember', 'ill', 'miss', 'true', 'story', 'cool', 'nice', 'make']",
+                    0.06053177039994635
+                ],
+                [
+                    "['want', 'new', 'post', 'night', 'know', 'place', 'favorite', 'person', 'oh', 'hear']",
+                    -0.05990582306863497
+                ],
+                [
+                    "['im', 'trump', 'right', 'let', 'ive', 'vote', 'try', 'president', 'way', 'kid']",
+                    -0.053027617994947256
+                ],
+                [
+                    "['need', 'help', 'country', 'happen', 'win', 'video', 'high', 'spend', 'open', 'month']",
+                    -0.04569086936076936
+                ],
+                [
+                    "['home', 'america', 'turn', 'head', 'black', 'ready', 'sad', 'sweet', 'season', 'science']",
+                    -0.040907651530534425
+                ],
+                [
+                    "['state', 'enjoy', 'article', 'easy', 'church', 'retweeted', 'page', 'heres', 'excite', 'town']",
+                    -0.03544255935984218
+                ],
+                [
+                    "['churchill', 'ummmm', 'paint', 'warriorinitiative', 'navy', 'rapidly', 'chosen', 'grown', 'haiku', 'shameless']",
+                    0.0
+                ],
+                [
+                    "['elbow', 'debut', 'neo', 'bestfriend', 'annoyed', 'aussie', 'destiny', 'rocket', 'bitches', '____']",
+                    0.0
+                ],
+                [
+                    "['tread', '10th', 'able', 'weakness', 'aila', 'trainer', 'mitchell', 'contagious', 'deleted', 'acre']",
+                    0.0
+                ],
+                [
+                    "['heel', 'dda', 'shipping', 'crap', 'gymnastics', 'grandparent', 'bleach', 'commit', 'house', 'negotiate']",
+                    0.0
+                ],
+                [
+                    "['tomatoes', 'thief', 'original', 'philip', 'fees', 'pandora', 'capital', 'gilbert', 'gina', 'walter']",
+                    0.0
+                ],
+                [
+                    "['shocked', 'climatechange', 'lands', 'pump', '2007', 'blast', 'alligator', 'suggestions', 'maintenance', 'classified']",
+                    0.0
+                ],
+                [
+                    "['hanson', 'retail', 'cube', 'physical', 'mass', '1999', '2011', 'stupidity', 'qualified', 'ginger']",
+                    0.0
+                ],
+                [
+                    "['seriously', 'integrity', 'cyber', 'voters', 'clothes', 'tough', 'gardner', 'depress', 'sooooo', 'prospect']",
+                    0.0
+                ],
+                [
+                    "['mickey', 'socially', 'bar', 'rowe', 'disrupt', 'ridiculously', 'stuck', 'ottawa', 'carter', '100']",
+                    0.0
+                ],
+                [
+                    "['belong', 'flash', 'jon', 'internal', 'activist', 'fleet', 'complaint', 'tampa', 'exhaust', 'icecream']",
+                    0.0
+                ],
+                [
+                    "['legislator', 'tomorrow', 'preach', 'solid', 'music', 'shake', 'hes', 'liked', 'finals', '93']",
+                    0.0
+                ],
+                [
+                    "['connected', 'peru', 'sites', 'tally', 'terms', 'drown', 'installment', 'confidence', 'analyst', 'shower']",
+                    0.0
+                ],
+                [
+                    "['drank', 'mars', 'nh', 'pod', 'telephone', 'walmart', 'vegetables', 'caucus', 'sexual', 'hustle']",
+                    0.0
+                ],
+                [
+                    "['cauliflower', 'savage', 'famous', 'lobster', 'prosperous', 'fu', 'bind', 'higher', 'sister', 'civilization']",
+                    0.0
+                ],
+                [
+                    "['bbq', 'dddddddd', 'professor', 'xxxxa', 'blessed', 'forum', 'hammer', 'monica', 'palestine', '65']",
+                    0.0
+                ],
+                [
+                    "['solstice', 'eyes', 'jessica', 'kindergarten', 'briefly', 'susan', 'rewrite', 'wishes', 'illegals', 'wise']",
+                    0.0
+                ],
+                [
+                    "['coleman', 'medication', 'suicidal', 'cards', 'ex', 'dunno', 'tx', 'strategic', 'alphabet', 'nh']",
+                    0.0
+                ],
+                [
+                    "['2008', 'rejection', 'fox', 'dogs', 'flood', 'authority', 'nasty', 'difference', 'technical', 'roy']",
+                    0.0
+                ],
+                [
+                    "['arrest', 'sway', 'sayin', 'nerd', 'breaks', 'kent', 'kjv', 'swimming', 'sisters', 'shy']",
+                    0.0
+                ],
+                [
+                    "['tomi', 'butterfly', 'restore', 'sloth', 'reserve', 'scenario', 'ahhhh', 'practice', 'nah', 'intolerance']",
+                    0.0
+                ],
+                [
+                    "['extended', 'artwork', 'cathy', 'morals', 'keen', 'strategic', 'firmly', 'artist', 'hideous', 'shallow']",
+                    0.0
+                ],
+                [
+                    "['saturday', 'onion', 'fearless', 'prevail', 'mall', 'blonde', 'capacity', 'warrant', 'climate', 'needle']",
+                    0.0
+                ],
+                [
+                    "['lol', 'kesem', 'useless', 'superior', 'oral', 'classic', 'misunderstand', 'apologize', 'gods', '1999']",
+                    0.0
+                ],
+                [
+                    "['quantity', 'malice', 'resonate', 'deserving', 'gum', 'blatantly', 'motto', 'esp', 'rental', 'lookout']",
+                    0.0
+                ],
+                [
+                    "['20', 'families', 'study', 'german', 'nn', 'happiest', 'summit', 'chair', 'wit', 'task']",
+                    0.0
+                ],
+                [
+                    "['whip', 'john', 'porch', 'donate', 'lakers', 'dilemma', 'colors', 'besties', 'scripture', 'ye']",
+                    0.0
+                ],
+                [
+                    "['ng', 'grammy', 'wisely', 'threat', 'todayas', 'invite', 'relentless', 'positive', 'mlk', 'miller']",
+                    0.0
+                ],
+                [
+                    "['gas', 'ashlee', 'blah', 'promptly', 'pee', 'mellow', 'camera', 'kerry', 'cracker', 'lit']",
+                    0.0
+                ],
+                [
+                    "['unconditionally', 'waters', 'giving', 'argentina', 'notinthislifetime', 'aleppo', 'partially', 'closely', 'boxing', 'tequila']",
+                    0.0
+                ],
+                [
+                    "['recording', 'snorkel', 'unconstitutional', 'framework', 'parrot', 'lego', 'papa', 'concede', 'carolina', 'heavenly']",
+                    0.0
+                ],
+                [
+                    "['tropical', 'granted', 'gotten', 'river', 'civil', '98', 'logo', 'tomorrow', 'estimate', 'affect']",
+                    0.0
+                ],
+                [
+                    "['article', 'convinced', 'trying', 'media', 'reviews', 'noon', 'cow', 'greatly', 'meditate', 'animate']",
+                    0.0
+                ],
+                [
+                    "['decline', 'fingers', 'leading', 'ceo', 'festive', 'army', 'sublime', 'boris', 'lunatic', 'oldie']",
+                    0.0
+                ],
+                [
+                    "['bones', 'folly', 'sir', 'genius', 'earth', 'completion', 'developer', 'mobile', 'bark', 'wilderness']",
+                    0.0
+                ],
+                [
+                    "['meals', 'birthdays', 'study', 'insert', 'pick', 'visa', 'substantive', 'images', 'clarification', 'ditch']",
+                    0.0
+                ],
+                [
+                    "['torch', 'friendship', 'buzz', 'arctic', 'pull', 'blonde', 'applause', '9pm', 'reasonably', 'chronic']",
+                    0.0
+                ],
+                [
+                    "['fitness', 'published', 'dear', 'approach', 'lama', 'decrease', 'worthy', 'wonder', 'appalling', 'beings']",
+                    0.0
+                ],
+                [
+                    "['liquid', 'bw', 'course', 'pronounce', 'ranger', 'bias', 'fears', 'yale', 'meetings', 'dapl']",
+                    0.0
+                ],
+                [
+                    "['bull', 'ricky', 'able', 'opinions', 'patriotism', 'wolf', 'nixon', 'americans', 'reed', 'soooooo']",
+                    0.0
+                ],
+                [
+                    "['washed', 'issue', 'jay', 'ok', 'pile', 'morning', 'meredith', 'liberal', 'technical', 'spring']",
+                    0.0
+                ],
+                [
+                    "['mcconnell', 'sure', 'gentlemen', 'sunrise', 'rapidly', 'productivity', '81', 'documentary', 'bern', 'black']",
+                    0.0
+                ],
+                [
+                    "['iconic', 'rehearsal', 'rot', 'apprentice', 'sublime', 'trey', '62', 'armor', 'shouldve', 'weave']",
+                    0.0
+                ],
+                [
+                    "['ang', 'yea', 'oregon', 'attend', 'video', 'wrote', 'disappoint', 'discover', 'evangelicals', 'garlic']",
+                    0.0
+                ],
+                [
+                    "['26th', 'aaa', 'hollow', 'boil', 'cam', 'numbers', 'paragraph', 'worried', 'horribly', 'tyler']",
+                    0.0
+                ],
+                [
+                    "['morally', 'enforce', 'fed', 'assumption', 'deadly', 'diminish', 'activate', 'camel', 'exceed', 'phd']",
+                    0.0
+                ],
+                [
+                    "['obvious', 'graham', 'london', 'cake', 'cool', 'bruh', 'arrange', 'subway', 'classes', 'sincerely']",
+                    0.0
+                ],
+                [
+                    "['spy', 'equation', 'prosecute', 'feather', 'glen', 'held', 'gross', 'calc', 'rivera', 'deborah']",
+                    0.0
+                ],
+                [
+                    "['51', 'older', 'org', 'millionaire', 'blanket', 'recipient', 'reproductive', 'old', 'sandra', 'friend']",
+                    0.0
+                ],
+                [
+                    "['preach', 'involvement', 'musk', 'student', 'penis', 'limits', 'hella', 'tape', 'jimmy', 'sen']",
+                    0.0
+                ],
+                [
+                    "['labour', 'cynthia', 'thinks', 'bunny', 'unwilling', 'warriorinitiative', 'effectively', 'hilarious', 'trek', 'language']",
+                    0.0
+                ],
+                [
+                    "['sweeping', 'holt', 'institutions', 'town', 'treatment', 'yang', 'shampoo', 'noun', 'physiology', 'tumble']",
+                    0.0
+                ],
+                [
+                    "['ravenclaw', 'budget', 'equal', 'russias', 'kate', 'mention', 'thief', 'segregation', 'animal', 'reflection']",
+                    0.0
+                ],
+                [
+                    "['houston', 'nasa', 'aaaa', '3a', 'dega', 'holmes', 'aai', 'prioritize', 'stronger', 'african']",
+                    0.0
+                ],
+                [
+                    "['encourage', 'czech', 'backwards', 'lame', 'zen', 'committee', 'disability', 'abortions', 'brenda', 'temper']",
+                    0.0
+                ],
+                [
+                    "['01', 'september', 'supremacy', 'couch', 'dai', 'utter', 'cucumber', 'aunt', 'common', 'mac']",
+                    0.0
+                ],
+                [
+                    "['wwii', 'entrepreneur', 'wrestling', 'precise', 'voter', 'unbelievably', 'log', 'russia', 'outsider', 'crime']",
+                    0.0
+                ],
+                [
+                    "['benjamin', 'athletes', 'cyber', 'october', 'rescue', 'ethan', 'easier', 'mess', 'scalia', 'teaching']",
+                    0.0
+                ],
+                [
+                    "['ski', 'nations', 'labor', 'wireless', 'adhd', 'sharma', 'products', 'justin', 'oakland', 'foreigner']",
+                    0.0
+                ],
+                [
+                    "['association', 'jackie', 'doggy', 'butterfly', '81', 'austin', 'knees', 'timeless', 'fav', 'evidently']",
+                    0.0
+                ],
+                [
+                    "['supermarket', 'wreck', 'whitehouse', 'judy', '25th', 'mistaken', 'terminal', 'minion', 'elephant', 'peterson']",
+                    0.0
+                ],
+                [
+                    "['average', 'rely', 'recital', 'isaac', 'target', '1996', 'prohibit', 'terribly', 'terror', 'immigration']",
+                    0.0
+                ],
+                [
+                    "['outrage', 'medication', 'enable', 'singer', 'unconstitutional', 'champs', 'er', 'yikes', 'delay', 'vocabulary']",
+                    0.0
+                ],
+                [
+                    "['strongly', 'perspective', 'ladder', 'year', 'watched', 'blanket', 'word', 'consist', 'priorities', 'electronic']",
+                    0.0
+                ],
+                [
+                    "['intro', 'temporary', 'disappoint', 'buddha', 'soo', 'democrat', 'human', 'charge', 'knows', 'varsity']",
+                    0.0
+                ],
+                [
+                    "['regardless', 'decade', 'commercial', 'perez', 'businesses', 'horribly', 'receive', 'hour', 'ravenclaw', 'morgan']",
+                    0.0
+                ],
+                [
+                    "['cops', 'initiative', 'leadership', 'hammer', 'reef', 'pose', 'sioux', 'oh', 'removal', '85']",
+                    0.0
+                ],
+                [
+                    "['label', 'emphasize', 'reveal', 'troll', 'stevie', 'asu', 'fighting', 'typically', 'didnt', 'ellison']",
+                    0.0
+                ],
+                [
+                    "['distant', 'grasp', 'greece', 'wes', 'summer', 'churches', 'addiction', 'understand', 'theory', 'motor']",
+                    0.0
+                ],
+                [
+                    "['rethink', 'isi', 'globally', 'laughs', 'lil', 'anthem', 'audrey', 'crank', 'lilli', 'bs']",
+                    0.0
+                ],
+                [
+                    "['cancer', 'backyard', 'ay', 'survive', 'veggie', 'lester', 'hiding', 'notion', 'new', 'vegas']",
+                    0.0
+                ],
+                [
+                    "['foil', 'sooo', 'perkins', 'backdrop', 'ii', 'ua', 'listing', 'peaceful', 'rule', 'sad']",
+                    0.0
+                ],
+                [
+                    "['robb', 'adoption', 'deliberately', 'leo', 'fresh', '273', 'luggage', 'edition', 'gladly', 'wtf']",
+                    0.0
+                ],
+                [
+                    "['kung', 'fireworks', 'getaway', 'involvement', 'sep', 'il', 'german', 'sloth', 'housemate', 'dawgs']",
+                    0.0
+                ],
+                [
+                    "['awake', 'donor', 'lawmaker', 'stink', 'treasure', 'driven', 'kasey', 'lightly', 'payment', 'shakespeare']",
+                    0.0
+                ],
+                [
+                    "['separation', 'delusion', 'desirable', '360', 'tillerson', 'jay', 'asleep', 'assistant', 'pickup', 'bush']",
+                    0.0
+                ],
+                [
+                    "['internal', 'rumor', 'recount', 'tattoo', 'adversity', 'quiet', 'confederate', 'diy', 'avenger', 'forth']",
+                    0.0
+                ],
+                [
+                    "['showing', 'left', 'philly', 'allergic', 'cnn', 'significantly', 'satisfaction', 'vine', 'tow', 'disciple']",
+                    0.0
+                ],
+                [
+                    "['verse', 'presidency', 'freakin', 'vitamin', 'documents', 'mint', 'journalist', 'harvey', 'pedestrian', 'folks']",
+                    0.0
+                ],
+                [
+                    "['gamers', 'provided', 'gatlinburg', 'problems', 'logo', 'equality', 'mate', 'olive', 'mr', 'weekend']",
+                    0.0
+                ],
+                [
+                    "['thou', 'stoked', 'fighting', 'mint', 'celtic', 'brilliantly', 'lonely', 'cc', 'material', 'east']",
+                    0.0
+                ],
+                [
+                    "['exposure', 'having', 'pessimistic', 'passport', 'betrayal', 'spread', 'dark', 'abbey', 'argument', 'counselor']",
+                    0.0
+                ],
+                [
+                    "['loans', 'motivation', '57', 'yup', '5am', 'summarize', 'sophomore', 'anatomy', 'shows', 'tire']",
+                    0.0
+                ],
+                [
+                    "['memorable', 'nazi', 'metal', 'energy', 'wat', 'melania', 'pissed', 'blacklivesmatter', 'shy', 'badge']",
+                    0.0
+                ],
+                [
+                    "['extend', 'reasonable', 'adversity', 'taking', 'editor', 'affirm', '98', 'benefit', 'tennessee', 'plays']",
+                    0.0
+                ],
+                [
+                    "['delegate', 'findyourbliss', 'kesem', 'msg', 'partial', 'likes', 'happens', 'anytime', 'winning', '83']",
+                    0.0
+                ],
+                [
+                    "['essential', 'neal', 'instructions', 'paint', 'dose', 'contradiction', 'forces', '365', 'rooms', 'matter']",
+                    0.0
+                ],
+                [
+                    "['unfortunate', 'setting', 'kickstarter', 'serve', 'omg', 'interpret', 'penguin', 'comin', 'fuck', 'generations']",
+                    0.0
+                ]
+            ],
+            "r2_mean": "0.004",
+            "r2_std": "0.000"
+        }
+    },
+    "MFQ_PURITY_AVG": {
+        "bow_elasticnet": {
+            "params": {
+                "alpha": 0.001,
+                "l1_ratio": 0.2
+            },
+            "top_features": [
+                [
+                    "['day', 'today', 'great', 'happy', 'make', 'birthday', 'thank', 'thanks', 'god', 'fun']",
+                    0.3556825865744729
+                ],
+                [
+                    "['love', 'time', 'year', 'life', 'youre', 'old', 'christmas', 'dd', 'end', 'play']",
+                    0.26665135536213747
+                ],
+                [
+                    "['news', 'political', 'kind', 'man', 'human', 'order', 'world', 'list', 'speak', 'medium']",
+                    -0.2155087143673785
+                ],
+                [
+                    "['home', 'america', 'turn', 'head', 'black', 'ready', 'sad', 'sweet', 'season', 'science']",
+                    -0.1381116189759975
+                ],
+                [
+                    "['like', 'good', 'just', 'look', 'make', 'little', 'come', 'feel', 'big', 'morning']",
+                    -0.126285656404905
+                ],
+                [
+                    "['use', 'woman', 'facebook', 'book', 'pay', 'fight', 'dog', 'movie', 'sign', 'number']",
+                    -0.1254757209382104
+                ],
+                [
+                    "['people', 'say', 'think', 'dont', 'really', 'thing', 'know', 'watch', 'just', 'start']",
+                    -0.06667448481100112
+                ],
+                [
+                    "['im', 'trump', 'right', 'let', 'ive', 'vote', 'try', 'president', 'way', 'kid']",
+                    -0.021374256273961847
+                ],
+                [
+                    "['need', 'help', 'country', 'happen', 'win', 'video', 'high', 'spend', 'open', 'month']",
+                    -0.019241376563679382
+                ],
+                [
+                    "['want', 'new', 'post', 'night', 'know', 'place', 'favorite', 'person', 'oh', 'hear']",
+                    -0.017824649704172343
+                ],
+                [
+                    "['mean', 'base', 'respect', 'research', 'immigration', 'language', 'recent', 'liberty', 'legal', 'honest']",
+                    0.007943911707453606
+                ],
+                [
+                    "['churchill', 'ummmm', 'paint', 'warriorinitiative', 'navy', 'rapidly', 'chosen', 'grown', 'haiku', 'shameless']",
+                    0.0
+                ],
+                [
+                    "['elbow', 'debut', 'neo', 'bestfriend', 'annoyed', 'aussie', 'destiny', 'rocket', 'bitches', '____']",
+                    0.0
+                ],
+                [
+                    "['tread', '10th', 'able', 'weakness', 'aila', 'trainer', 'mitchell', 'contagious', 'deleted', 'acre']",
+                    0.0
+                ],
+                [
+                    "['heel', 'dda', 'shipping', 'crap', 'gymnastics', 'grandparent', 'bleach', 'commit', 'house', 'negotiate']",
+                    0.0
+                ],
+                [
+                    "['tomatoes', 'thief', 'original', 'philip', 'fees', 'pandora', 'capital', 'gilbert', 'gina', 'walter']",
+                    0.0
+                ],
+                [
+                    "['shocked', 'climatechange', 'lands', 'pump', '2007', 'blast', 'alligator', 'suggestions', 'maintenance', 'classified']",
+                    0.0
+                ],
+                [
+                    "['hanson', 'retail', 'cube', 'physical', 'mass', '1999', '2011', 'stupidity', 'qualified', 'ginger']",
+                    0.0
+                ],
+                [
+                    "['seriously', 'integrity', 'cyber', 'voters', 'clothes', 'tough', 'gardner', 'depress', 'sooooo', 'prospect']",
+                    0.0
+                ],
+                [
+                    "['mickey', 'socially', 'bar', 'rowe', 'disrupt', 'ridiculously', 'stuck', 'ottawa', 'carter', '100']",
+                    0.0
+                ],
+                [
+                    "['belong', 'flash', 'jon', 'internal', 'activist', 'fleet', 'complaint', 'tampa', 'exhaust', 'icecream']",
+                    0.0
+                ],
+                [
+                    "['legislator', 'tomorrow', 'preach', 'solid', 'music', 'shake', 'hes', 'liked', 'finals', '93']",
+                    0.0
+                ],
+                [
+                    "['connected', 'peru', 'sites', 'tally', 'terms', 'drown', 'installment', 'confidence', 'analyst', 'shower']",
+                    0.0
+                ],
+                [
+                    "['drank', 'mars', 'nh', 'pod', 'telephone', 'walmart', 'vegetables', 'caucus', 'sexual', 'hustle']",
+                    0.0
+                ],
+                [
+                    "['cauliflower', 'savage', 'famous', 'lobster', 'prosperous', 'fu', 'bind', 'higher', 'sister', 'civilization']",
+                    0.0
+                ],
+                [
+                    "['bbq', 'dddddddd', 'professor', 'xxxxa', 'blessed', 'forum', 'hammer', 'monica', 'palestine', '65']",
+                    0.0
+                ],
+                [
+                    "['solstice', 'eyes', 'jessica', 'kindergarten', 'briefly', 'susan', 'rewrite', 'wishes', 'illegals', 'wise']",
+                    0.0
+                ],
+                [
+                    "['coleman', 'medication', 'suicidal', 'cards', 'ex', 'dunno', 'tx', 'strategic', 'alphabet', 'nh']",
+                    0.0
+                ],
+                [
+                    "['2008', 'rejection', 'fox', 'dogs', 'flood', 'authority', 'nasty', 'difference', 'technical', 'roy']",
+                    0.0
+                ],
+                [
+                    "['arrest', 'sway', 'sayin', 'nerd', 'breaks', 'kent', 'kjv', 'swimming', 'sisters', 'shy']",
+                    0.0
+                ],
+                [
+                    "['tomi', 'butterfly', 'restore', 'sloth', 'reserve', 'scenario', 'ahhhh', 'practice', 'nah', 'intolerance']",
+                    0.0
+                ],
+                [
+                    "['extended', 'artwork', 'cathy', 'morals', 'keen', 'strategic', 'firmly', 'artist', 'hideous', 'shallow']",
+                    0.0
+                ],
+                [
+                    "['saturday', 'onion', 'fearless', 'prevail', 'mall', 'blonde', 'capacity', 'warrant', 'climate', 'needle']",
+                    0.0
+                ],
+                [
+                    "['lol', 'kesem', 'useless', 'superior', 'oral', 'classic', 'misunderstand', 'apologize', 'gods', '1999']",
+                    0.0
+                ],
+                [
+                    "['quantity', 'malice', 'resonate', 'deserving', 'gum', 'blatantly', 'motto', 'esp', 'rental', 'lookout']",
+                    0.0
+                ],
+                [
+                    "['20', 'families', 'study', 'german', 'nn', 'happiest', 'summit', 'chair', 'wit', 'task']",
+                    0.0
+                ],
+                [
+                    "['whip', 'john', 'porch', 'donate', 'lakers', 'dilemma', 'colors', 'besties', 'scripture', 'ye']",
+                    0.0
+                ],
+                [
+                    "['ng', 'grammy', 'wisely', 'threat', 'todayas', 'invite', 'relentless', 'positive', 'mlk', 'miller']",
+                    0.0
+                ],
+                [
+                    "['gas', 'ashlee', 'blah', 'promptly', 'pee', 'mellow', 'camera', 'kerry', 'cracker', 'lit']",
+                    0.0
+                ],
+                [
+                    "['unconditionally', 'waters', 'giving', 'argentina', 'notinthislifetime', 'aleppo', 'partially', 'closely', 'boxing', 'tequila']",
+                    0.0
+                ],
+                [
+                    "['recording', 'snorkel', 'unconstitutional', 'framework', 'parrot', 'lego', 'papa', 'concede', 'carolina', 'heavenly']",
+                    0.0
+                ],
+                [
+                    "['tropical', 'granted', 'gotten', 'river', 'civil', '98', 'logo', 'tomorrow', 'estimate', 'affect']",
+                    0.0
+                ],
+                [
+                    "['article', 'convinced', 'trying', 'media', 'reviews', 'noon', 'cow', 'greatly', 'meditate', 'animate']",
+                    0.0
+                ],
+                [
+                    "['decline', 'fingers', 'leading', 'ceo', 'festive', 'army', 'sublime', 'boris', 'lunatic', 'oldie']",
+                    0.0
+                ],
+                [
+                    "['bones', 'folly', 'sir', 'genius', 'earth', 'completion', 'developer', 'mobile', 'bark', 'wilderness']",
+                    0.0
+                ],
+                [
+                    "['meals', 'birthdays', 'study', 'insert', 'pick', 'visa', 'substantive', 'images', 'clarification', 'ditch']",
+                    0.0
+                ],
+                [
+                    "['torch', 'friendship', 'buzz', 'arctic', 'pull', 'blonde', 'applause', '9pm', 'reasonably', 'chronic']",
+                    0.0
+                ],
+                [
+                    "['fitness', 'published', 'dear', 'approach', 'lama', 'decrease', 'worthy', 'wonder', 'appalling', 'beings']",
+                    0.0
+                ],
+                [
+                    "['liquid', 'bw', 'course', 'pronounce', 'ranger', 'bias', 'fears', 'yale', 'meetings', 'dapl']",
+                    0.0
+                ],
+                [
+                    "['bull', 'ricky', 'able', 'opinions', 'patriotism', 'wolf', 'nixon', 'americans', 'reed', 'soooooo']",
+                    0.0
+                ],
+                [
+                    "['washed', 'issue', 'jay', 'ok', 'pile', 'morning', 'meredith', 'liberal', 'technical', 'spring']",
+                    0.0
+                ],
+                [
+                    "['mcconnell', 'sure', 'gentlemen', 'sunrise', 'rapidly', 'productivity', '81', 'documentary', 'bern', 'black']",
+                    0.0
+                ],
+                [
+                    "['iconic', 'rehearsal', 'rot', 'apprentice', 'sublime', 'trey', '62', 'armor', 'shouldve', 'weave']",
+                    0.0
+                ],
+                [
+                    "['ang', 'yea', 'oregon', 'attend', 'video', 'wrote', 'disappoint', 'discover', 'evangelicals', 'garlic']",
+                    0.0
+                ],
+                [
+                    "['26th', 'aaa', 'hollow', 'boil', 'cam', 'numbers', 'paragraph', 'worried', 'horribly', 'tyler']",
+                    0.0
+                ],
+                [
+                    "['morally', 'enforce', 'fed', 'assumption', 'deadly', 'diminish', 'activate', 'camel', 'exceed', 'phd']",
+                    0.0
+                ],
+                [
+                    "['obvious', 'graham', 'london', 'cake', 'cool', 'bruh', 'arrange', 'subway', 'classes', 'sincerely']",
+                    0.0
+                ],
+                [
+                    "['spy', 'equation', 'prosecute', 'feather', 'glen', 'held', 'gross', 'calc', 'rivera', 'deborah']",
+                    0.0
+                ],
+                [
+                    "['51', 'older', 'org', 'millionaire', 'blanket', 'recipient', 'reproductive', 'old', 'sandra', 'friend']",
+                    0.0
+                ],
+                [
+                    "['preach', 'involvement', 'musk', 'student', 'penis', 'limits', 'hella', 'tape', 'jimmy', 'sen']",
+                    0.0
+                ],
+                [
+                    "['labour', 'cynthia', 'thinks', 'bunny', 'unwilling', 'warriorinitiative', 'effectively', 'hilarious', 'trek', 'language']",
+                    0.0
+                ],
+                [
+                    "['sweeping', 'holt', 'institutions', 'town', 'treatment', 'yang', 'shampoo', 'noun', 'physiology', 'tumble']",
+                    0.0
+                ],
+                [
+                    "['ravenclaw', 'budget', 'equal', 'russias', 'kate', 'mention', 'thief', 'segregation', 'animal', 'reflection']",
+                    0.0
+                ],
+                [
+                    "['houston', 'nasa', 'aaaa', '3a', 'dega', 'holmes', 'aai', 'prioritize', 'stronger', 'african']",
+                    0.0
+                ],
+                [
+                    "['encourage', 'czech', 'backwards', 'lame', 'zen', 'committee', 'disability', 'abortions', 'brenda', 'temper']",
+                    0.0
+                ],
+                [
+                    "['01', 'september', 'supremacy', 'couch', 'dai', 'utter', 'cucumber', 'aunt', 'common', 'mac']",
+                    0.0
+                ],
+                [
+                    "['wwii', 'entrepreneur', 'wrestling', 'precise', 'voter', 'unbelievably', 'log', 'russia', 'outsider', 'crime']",
+                    0.0
+                ],
+                [
+                    "['benjamin', 'athletes', 'cyber', 'october', 'rescue', 'ethan', 'easier', 'mess', 'scalia', 'teaching']",
+                    0.0
+                ],
+                [
+                    "['ski', 'nations', 'labor', 'wireless', 'adhd', 'sharma', 'products', 'justin', 'oakland', 'foreigner']",
+                    0.0
+                ],
+                [
+                    "['association', 'jackie', 'doggy', 'butterfly', '81', 'austin', 'knees', 'timeless', 'fav', 'evidently']",
+                    0.0
+                ],
+                [
+                    "['supermarket', 'wreck', 'whitehouse', 'judy', '25th', 'mistaken', 'terminal', 'minion', 'elephant', 'peterson']",
+                    0.0
+                ],
+                [
+                    "['average', 'rely', 'recital', 'isaac', 'target', '1996', 'prohibit', 'terribly', 'terror', 'immigration']",
+                    0.0
+                ],
+                [
+                    "['outrage', 'medication', 'enable', 'singer', 'unconstitutional', 'champs', 'er', 'yikes', 'delay', 'vocabulary']",
+                    0.0
+                ],
+                [
+                    "['strongly', 'perspective', 'ladder', 'year', 'watched', 'blanket', 'word', 'consist', 'priorities', 'electronic']",
+                    0.0
+                ],
+                [
+                    "['intro', 'temporary', 'disappoint', 'buddha', 'soo', 'democrat', 'human', 'charge', 'knows', 'varsity']",
+                    0.0
+                ],
+                [
+                    "['regardless', 'decade', 'commercial', 'perez', 'businesses', 'horribly', 'receive', 'hour', 'ravenclaw', 'morgan']",
+                    0.0
+                ],
+                [
+                    "['cops', 'initiative', 'leadership', 'hammer', 'reef', 'pose', 'sioux', 'oh', 'removal', '85']",
+                    0.0
+                ],
+                [
+                    "['label', 'emphasize', 'reveal', 'troll', 'stevie', 'asu', 'fighting', 'typically', 'didnt', 'ellison']",
+                    0.0
+                ],
+                [
+                    "['distant', 'grasp', 'greece', 'wes', 'summer', 'churches', 'addiction', 'understand', 'theory', 'motor']",
+                    0.0
+                ],
+                [
+                    "['rethink', 'isi', 'globally', 'laughs', 'lil', 'anthem', 'audrey', 'crank', 'lilli', 'bs']",
+                    0.0
+                ],
+                [
+                    "['cancer', 'backyard', 'ay', 'survive', 'veggie', 'lester', 'hiding', 'notion', 'new', 'vegas']",
+                    0.0
+                ],
+                [
+                    "['foil', 'sooo', 'perkins', 'backdrop', 'ii', 'ua', 'listing', 'peaceful', 'rule', 'sad']",
+                    0.0
+                ],
+                [
+                    "['robb', 'adoption', 'deliberately', 'leo', 'fresh', '273', 'luggage', 'edition', 'gladly', 'wtf']",
+                    0.0
+                ],
+                [
+                    "['kung', 'fireworks', 'getaway', 'involvement', 'sep', 'il', 'german', 'sloth', 'housemate', 'dawgs']",
+                    0.0
+                ],
+                [
+                    "['awake', 'donor', 'lawmaker', 'stink', 'treasure', 'driven', 'kasey', 'lightly', 'payment', 'shakespeare']",
+                    0.0
+                ],
+                [
+                    "['separation', 'delusion', 'desirable', '360', 'tillerson', 'jay', 'asleep', 'assistant', 'pickup', 'bush']",
+                    0.0
+                ],
+                [
+                    "['internal', 'rumor', 'recount', 'tattoo', 'adversity', 'quiet', 'confederate', 'diy', 'avenger', 'forth']",
+                    0.0
+                ],
+                [
+                    "['showing', 'left', 'philly', 'allergic', 'cnn', 'significantly', 'satisfaction', 'vine', 'tow', 'disciple']",
+                    0.0
+                ],
+                [
+                    "['verse', 'presidency', 'freakin', 'vitamin', 'documents', 'mint', 'journalist', 'harvey', 'pedestrian', 'folks']",
+                    0.0
+                ],
+                [
+                    "['gamers', 'provided', 'gatlinburg', 'problems', 'logo', 'equality', 'mate', 'olive', 'mr', 'weekend']",
+                    0.0
+                ],
+                [
+                    "['thou', 'stoked', 'fighting', 'mint', 'celtic', 'brilliantly', 'lonely', 'cc', 'material', 'east']",
+                    0.0
+                ],
+                [
+                    "['exposure', 'having', 'pessimistic', 'passport', 'betrayal', 'spread', 'dark', 'abbey', 'argument', 'counselor']",
+                    0.0
+                ],
+                [
+                    "['loans', 'motivation', '57', 'yup', '5am', 'summarize', 'sophomore', 'anatomy', 'shows', 'tire']",
+                    0.0
+                ],
+                [
+                    "['memorable', 'nazi', 'metal', 'energy', 'wat', 'melania', 'pissed', 'blacklivesmatter', 'shy', 'badge']",
+                    0.0
+                ],
+                [
+                    "['extend', 'reasonable', 'adversity', 'taking', 'editor', 'affirm', '98', 'benefit', 'tennessee', 'plays']",
+                    0.0
+                ],
+                [
+                    "['delegate', 'findyourbliss', 'kesem', 'msg', 'partial', 'likes', 'happens', 'anytime', 'winning', '83']",
+                    0.0
+                ],
+                [
+                    "['essential', 'neal', 'instructions', 'paint', 'dose', 'contradiction', 'forces', '365', 'rooms', 'matter']",
+                    0.0
+                ],
+                [
+                    "['unfortunate', 'setting', 'kickstarter', 'serve', 'omg', 'interpret', 'penguin', 'comin', 'fuck', 'generations']",
+                    0.0
+                ],
+                [
+                    "['victory', 'library', 'absurdity', 'heather', 'specially', 'newsfeed', 'meltdown', 'soooo', 'heat', 'explicitly']",
+                    0.0
+                ],
+                [
+                    "['push', 'opportunity', 'lax', 'tracks', 'educated', 'east', 'arc', 'banking', 'workshop', 'trace']",
+                    0.0
+                ]
+            ],
+            "r2_mean": "0.004",
+            "r2_std": "0.000"
+        }
+    }
+}

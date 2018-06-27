@@ -13,7 +13,12 @@ def preprocess_text(df,
                     col,
                     methods,
                     data_dir ):
-    pre_list = ["lemmatize", "all_alpha", "link", "hashtag", "stop_words", "emojis", "partofspeech", "stem", "mentions", "ascii"]
+
+    priority = {1: ["link", "hashtag", "emojis", "mentions"],
+                2: ["all_alpha", "lemmatize", "stem", "stop_words", "partofspeech", "ascii"]
+                }
+
+    pre_list = [item for sublist in [val for val in priority.values()] for item in sublist]
 
     if not set(methods).issubset(pre_list):
         print("Some preprocessing methods are not available")
@@ -23,8 +28,10 @@ def preprocess_text(df,
         print("{} is not a column name".format(col))
         exit(1)
 
-    for method in methods:
-        df = globals()[method](df, col, data_dir)
+    for pri in priority.keys():
+        for method in methods:
+            if method in priority[pri]:
+                df = globals()[method](df, col, data_dir)
 
     df = remove_whitespaces(df, col)
     return df

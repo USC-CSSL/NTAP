@@ -30,7 +30,7 @@ def get_transformer_list(dataframe,
                          tokenizer= "tokenize"
                          ):
     # Either generates features from text (tfidf, skipgram, etc.) or load from file
-    validate_arguments(dataframe, text_col, feature_col, methods)
+    #validate_arguments(dataframe, text_col, feature_col, methods)
 
     sent_tokenizer = tokenize if tokenizer == "tokenize" else happiertokenize
 
@@ -64,7 +64,7 @@ def get_transformer_list(dataframe,
     lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
 
     # as in DLATK, rare features that occur for less that <feature_reduce> percent of data, are filtered and replaced with <OOV>
-    if feature_reduce:
+    if feature_reduce and feature_reduce != 0:
         X, lookup_dict = reduce_features(X, feature_reduce, lookup_dict)
         # rearrange lookup dict so that the keys include all values between 0 to len(features)
         lookup_dict = {i: feat for i, feat in enumerate(lookup_dict.values())}
