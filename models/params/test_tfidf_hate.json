@@ -1,0 +1,40 @@
+{
+    "batch_size": 100,
+    "dropout_ratio": 0.5,
+    "ngrams": [
+        1, 2
+    ],
+    "feature_cols": [],
+    "dictionary": "moral_foundations_theory",
+    "scoring_dir": "/home/aida/PycharmProjects/Hate/Hate/Tweets/Score",
+    "data_dir": "/home/aida/PycharmProjects/Hate/Hate/Tweets",
+    "feature_methods": [
+        "tfidf"
+    ],
+    "feature_reduce": 0.001,
+    "vocab_size": 10000,
+    "models": [
+        "SVM"
+    ],
+    "training_corpus": "wiki_gigaword",
+    "num_layers": 3,
+    "dataframe_name": "agree-gab.pkl",
+    "embedding_size": 300,
+    "text_col": "text",
+    "metrics": [
+        "r2"
+    ],
+    "targets": [
+       "nh"
+        ],
+    "all_data": "gab_all.pkl",
+    "learning_rate": 0.001,
+    "random_seed": 51,
+    "preprocessing": [],
+    "hidden_size": 128,
+    "pretrain": "glove-800",
+    "ordinal_cols": [],
+    "config_text": "indiv",
+    "embedding_method": "GloVe",
+    "categorical_cols": []
+}

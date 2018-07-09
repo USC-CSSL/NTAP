@@ -5,20 +5,70 @@ from nltk.corpus import wordnet, stopwords
 from nltk import word_tokenize
 from unidecode import unidecode
 from textblob import TextBlob
+import copy
 
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
+
+def split_indiv(df, col):
+    new_rows = list()
+    for index, row in df.iterrows():
+        texts = row[col]
+        template = row.to_dict()
+        for text in texts:
+            temp = {k:v for k,v in template.items()}
+            temp[col] = text
+            new_rows.append(temp)
+    return pd.DataFrame(new_rows)
+
+def split_bags(df, col, size_):
+    new_rows = list()
+    for index, row in df.iterrows():
+        texts = row[col]
+        template = row.to_dict()
+        idx = len(texts)
+        while idx >=0:
+            new_doc = " ".join(texts[idx - size_: idx])
+            idx = max(0, idx - size_)
+            template[col] = new_doc
+            new_rows.append(template)
+    return pd.DataFrame(new_rows)
+
+def restructure(df, col, config_text, data_dir, size_=10):
+    if config_text == 'indiv':
+        p = os.path.join(data_dir, config_text + ".pkl")
+        if os.path.isfile(p):
+            return pd.read_pickle(p)
+        else:
+            df = split_indiv(df, col)
+            df.to_pickle(p)
+            return df
+    elif config_text == 'concat':
+        print("Not done")
+        exit(1)
+    elif config_text == 'rebagged':
+        return split_bags(df, col, size_)
+    else:
+        print("config_text has improper value; exiting")
+        return
+
 def preprocess_text(df,
                     col,
                     methods,
-                    data_dir ):
-
+                    data_dir,
+                    config_text,
+                    name = None
+                    ):
     priority = {1: ["link", "hashtag", "emojis", "mentions"],
                 2: ["all_alpha", "lemmatize", "stem", "stop_words", "partofspeech", "ascii"]
                 }
 
     pre_list = [item for sublist in [val for val in priority.values()] for item in sublist]
+
+    print("restructuring... (Aida: I commented this part!)")
+    #df = restructure(df, col, config_text, data_dir)
+
 
     if not set(methods).issubset(pre_list):
         print("Some preprocessing methods are not available")
@@ -34,9 +84,14 @@ def preprocess_text(df,
                 df = globals()[method](df, col, data_dir)
 
     df = remove_whitespaces(df, col)
+    if name:
+        pd.to_pickle(df, data_dir + "/" + name + ".pkl")
     return df
 
-
+def toLower(df, col):
+    for i, row in df.iterrows():
+        df.at[i, col] = row[col].lower()
+    return df
 
 def remove_whitespaces(df, col):
     for i, row in df.iterrows():
@@ -185,6 +240,7 @@ def ascii(df, col, data_dir):
 
 
 def stop_words(df, col, data_dir):
+    print("Removing stop words")
     stop_words = set(stopwords.words('english'))
     for i, row in df.iterrows():
         df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if not word in stop_words)
@@ -198,7 +254,7 @@ def mentions(df, col, data_dir):
 
 
 def all_alpha(df, col, data_dir):
-    r = re.compile('[^a-zA-Z]')
+    r = re.compile('[^a-zA-Z0-9]')
     for i, row in df.iterrows():
         new_text = " ".join(r.sub("", word) for word in word_tokenize(row[col]))
         df.at[i, col] = new_text

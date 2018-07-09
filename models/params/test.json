@@ -1,0 +1,35 @@
+{
+    "training_corpus": "wiki_gigaword",
+    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "ordinal_cols": [],
+    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "feature_cols": [],
+    "preprocessing": [],
+    "embedding_method": "GloVe",
+    "dictionary": "moral_foundations_theory",
+    "config_text": "indiv",
+    "random_seed": 51,
+    "feature_methods": [
+        "fasttext"
+    ],
+    "text_col": "fb_status_msg",
+    "models": [
+        "elasticnet"
+    ],
+    "categorical_cols": [],
+    "ngrams": [
+        1
+    ],
+    "feature_reduce": 0.001,
+    "targets": [
+        "MFQ_FAIRNESS_AVG",
+        "MFQ_INGROUP_AVG",
+        "MFQ_PURITY_AVG",
+        "MFQ_AUTHORITY_AVG",
+        "MFQ_HARM_AVG"
+    ],
+    "dataframe_name": "yourmorals_df.pkl",
+    "metrics": [
+        "r2"
+    ]
+}
