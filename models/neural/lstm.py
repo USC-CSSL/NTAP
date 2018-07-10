@@ -71,7 +71,7 @@ class LSTM:
     def padding(self, corpus):
         padd_idx = self.vocab.index("<pad>")
         for i in range(len(corpus)):
-            corpus[i] = corpus[i][:81]
+            corpus[i] = corpus[i][:min(len(corpus[i]), self.max_length) - 1]
             while len(corpus[i]) < self.max_length:
                 corpus[i].append(padd_idx)
         return corpus

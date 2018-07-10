@@ -138,7 +138,10 @@ cell = tf.nn.rnn_cell.BasicLSTMCell(hidden_size)
 drop = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=keep_prob)
 network = tf.nn.rnn_cell.MultiRNNCell([drop for _ in range(num_layers)])
 
-y = tf.placeholder(tf.int32, [None])
+task_outputs = dict()
+for target in targets:
+    y = tf.placeholder(tf.int32, [None], name= target)
+    task_outputs[target] = y
 
 seq_length = tf.placeholder(tf.int32, [None])
 rnn_outputs, states = tf.nn.dynamic_rnn(network, embed,
@@ -146,134 +149,154 @@ rnn_outputs, states = tf.nn.dynamic_rnn(network, embed,
 
 last = last_relevant(rnn_outputs, seq_length)
 
-#logits = fully_connected(states, n_outputs, activation_fn=None)
-#logits1 = fully_connected(last[:, -1], n_outputs, activation_fn= tf.nn.relu)
+task_logits = dict()
+task_predictions = dict()
+task_loss = dict()
+task_accuracy = dict()
+for target in targets:
+    logits = fully_connected(last, 50, activation_fn= None)
+    drop_out = tf.contrib.layers.dropout(logits, keep_prob)
+    task_logits[target] = drop_out
+
+    predictions = fully_connected(drop_out, n_outputs, activation_fn= None)
+    task_predictions[target] = predictions
+
+    xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels= task_outputs[target], logits=drop_out)
+    loss = tf.reduce_mean(xentropy)
+    task_loss[target] = loss
+
+    # training_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    target_op = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(loss)
+
+    correct = tf.nn.in_top_k(drop_out, task_outputs[target], 1)
+    task_accuracy[target] = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+accuracy = sum(task_accuracy.values()) / float(len(targets))
+joint_loss = sum(task_loss.values())
+#training_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(joint_loss)
+training_op = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(joint_loss)
 
 
-logits = fully_connected(last, 50, activation_fn= None)
-drop_out = tf.contrib.layers.dropout(logits, keep_prob)
-
-predictions = fully_connected(drop_out, n_outputs, activation_fn= None)
-
-#optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-
-
-xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-loss = tf.reduce_mean(xentropy)
-
-training_op = optimizer.minimize(loss)
-
-correct = tf.nn.in_top_k(logits, y, 1)
-accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
 
 saver = tf.train.Saver()
 #exit(1)
 
-for target in targets:
-    print(target)
-    labels = annotated_df[target].values
-    indices = annotated_df["id"].values
+feed_dict = dict()
 
-    init = tf.global_variables_initializer()
+indices = annotated_df["id"].values
 
-    train_X, test_X, train_Y, test_Y, train_idx, test_idx = train_test_split(anno_ids, labels, indices, test_size=0.2, random_state= randint(1, 100))
+init = tf.global_variables_initializer()
 
-    num_epochs = 200
-    with tf.Session() as sess:
-        init.run()
+all_labels = np.transpose(np.array([np.array(annotated_df[target]) for target in targets]))
 
-        #for epoch in range(epoch):
+train_X, test_X, train_Y, test_Y, train_idx, test_idx = train_test_split(anno_ids, all_labels, indices, test_size=0.2, random_state= randint(1, 100))
 
-        acc_train = 0
-        epoch = 0
-        epoch_loss = 0
+num_epochs = 200
 
-        batches = lstm.get_batches(train_X, train_Y)
+def splitY(y_data, feed_dict):
+    for i in range(len(targets)):
+        feed_dict[task_outputs[targets[i]]] = y_data[:,i]
+    return feed_dict
 
-        lengths = np.array([len(line) for line in test_X])
-        test_X = lstm.padding(test_X)
-        test_X = np.array([np.array(line) for line in test_X])
-        test_Y = np.array(test_Y)
-        print(sum(test_Y))
-        print(sum(train_Y))
-        while True:
-            epoch_loss = float(0)
-            count = 0
-            epoch += 1
-            val_batch = randint(1, len(batches))
-            for (X_batch, X_len, y_batch) in batches:
-                count += 1
-                if count == val_batch:
-                    X_batch_test = X_batch
-                    y_batch_test = y_batch
-                    X_len_test = X_len
-                    continue
-                #print(X_batch)
-                #print(X_batch.shape)
-                #print(y_batch.shape)
-                #print(X_len)
-                if embedding_method == "GloVe":
-                    _, loss_val = sess.run([training_op, loss], feed_dict={train_inputs: X_batch, y: y_batch, seq_length: X_len, keep_prob: dropout_ratio, embedding_placeholder: embeddings})
-                else:
-                    _, loss_val = sess.run([training_op, loss], feed_dict={train_inputs: X_batch, y: y_batch, seq_length: X_len, keep_prob: dropout_ratio})
-                #print(loss_val)
-                epoch_loss += loss_val
-            if embedding_method == "GloVe":
-                acc_train = accuracy.eval(feed_dict={train_inputs: X_batch_test, y: y_batch_test, seq_length: X_len_test, keep_prob: 1, embedding_placeholder: embeddings})
-            else:
-                acc_train = accuracy.eval(feed_dict={train_inputs: X_batch_test, y: y_batch_test, seq_length: X_len_test, keep_prob: 1})
+with tf.Session() as sess:
+    init.run()
 
-            if embedding_method == "GloVe":
-                acc_test = accuracy.eval(
-                    feed_dict={train_inputs: test_X, y: test_Y, seq_length: lengths, keep_prob: 1,
-                               embedding_placeholder: embeddings})
-            else:
-                acc_test = accuracy.eval(feed_dict={train_inputs: test_X, y: test_Y, keep_prob: 1, seq_length: lengths})
-            print(epoch, "Train accuracy:", acc_train, "Loss: ", epoch_loss / float(count), "Test accuracy: ", acc_test)
+    #for epoch in range(epoch):
 
-            if acc_test > 0.71 and acc_train > 0.9:
-                break
-        # nh 91 72
-        # nm 96 86
+    acc_train = 0
+    epoch = 0
+    epoch_loss = 0
 
-        save_path = saver.save(sess, "/tmp/model.ckpt")
+    batches = lstm.get_batches(train_X, train_Y)
 
-        outputs = list()
-        for idx in range((len(corpus_ids) // batch_size) + 1):
-            text_batch = corpus_ids[idx * batch_size: min((idx + 1) * batch_size, len(corpus_ids))]
-            lengths = np.array([len(line) for line in text_batch])
-            text_batch = lstm.padding(text_batch)
-            text_batch = np.array([np.array(line) for line in text_batch])
-            if embedding_method == "GloVe":
-                output = sess.run(logits, feed_dict= {train_inputs: text_batch, seq_length: lengths, keep_prob: 1, embedding_placeholder: embeddings})
-            else:
-                output = sess.run(logits, feed_dict={train_inputs: text_batch, seq_length: lengths, keep_prob: 1})
-            outputs.extend(list(np.argmax(output, 1)))
-        pickle.dump(outputs, open(data_dir + '/' + target + "-outputs.pkl", "wb"))
-
-        dataframe[target] = outputs
-        tn = 0
-        fn = 0
-        fp = 0
-        tp = 0
-        checked = list()
-        for idx in test_idx:
-            if idx in checked:
+    lengths = np.array([len(line) for line in test_X])
+    test_X = lstm.padding(test_X)
+    test_X = np.array([np.array(line) for line in test_X])
+    test_Y = np.array(test_Y)
+    print(sum(test_Y))
+    print(sum(train_Y))
+    while True:
+        epoch_loss = float(0)
+        count = 0
+        epoch += 1
+        val_batch = randint(1, len(batches))
+        for (X_batch, X_len, y_batch) in batches:
+            count += 1
+            if count == val_batch:
+                X_batch_test = X_batch
+                y_batch_test = y_batch
+                X_len_test = X_len
                 continue
-            checked.append(idx)
-            if (dataframe.loc[dataframe["index"] == idx][target] == 1).bool():
-                if (annotated_df.loc[annotated_df["id"] == idx][target] == 1).any():
-                    tp += 1
-                else:
-                    fp += 1
+            #print(X_batch)
+            #print(X_batch.shape)
+            #print(y_batch.shape)
+            #print(X_len)
+            feed_dict.update()
+            if embedding_method == "GloVe":
+                _, loss_val = sess.run([training_op, loss], feed_dict= splitY(y_batch, {train_inputs: X_batch, seq_length: X_len, keep_prob: dropout_ratio, embedding_placeholder: embeddings}))
             else:
-                if (annotated_df.loc[annotated_df["id"] == idx][target] == 1).any():
-                    fn += 1
-                else:
-                    tn += 1
-        print(len(checked), "test cases")
-        print("Precision: ", float(tp)/float(tp + fp))
-        print("Recall: ", float(tp) / float(tp + fn))
+                _, loss_val = sess.run([training_op, loss], feed_dict=splitY(y_batch, {train_inputs: X_batch, seq_length: X_len, keep_prob: dropout_ratio}))
+            #print(loss_val)
+            epoch_loss += loss_val
+        if embedding_method == "GloVe":
+            acc_train = accuracy.eval(feed_dict=splitY(y_batch_test, {train_inputs: X_batch_test , seq_length: X_len_test, keep_prob: 1, embedding_placeholder: embeddings}))
+        else:
+            acc_train = accuracy.eval(feed_dict=splitY(y_batch_test, {train_inputs: X_batch_test, seq_length: X_len_test, keep_prob: 1}))
+
+        if embedding_method == "GloVe":
+            acc_test = accuracy.eval(
+                feed_dict=splitY(test_Y, {train_inputs: test_X, seq_length: lengths, keep_prob: 1,
+                           embedding_placeholder: embeddings}))
+        else:
+            acc_test = accuracy.eval(feed_dict=splitY(test_Y, {train_inputs: test_X, keep_prob: 1, seq_length: lengths}))
+        print(epoch, "Train accuracy:", acc_train, "Loss: ", epoch_loss / float(count), "Test accuracy: ", acc_test)
+
+        if acc_test > 0.67 and acc_train > 0.8 and epoch > 20:
+            break
+    # nh 91 72
+    # nm 96 86
+
+    save_path = saver.save(sess, "/tmp/model.ckpt")
+
+    results = dict()
+    for idx in range((len(corpus_ids) // batch_size) + 1):
+        text_batch = corpus_ids[idx * batch_size: min((idx + 1) * batch_size, len(corpus_ids))]
+        lengths = np.array([len(line) for line in text_batch])
+        text_batch = lstm.padding(text_batch)
+        text_batch = np.array([np.array(line) for line in text_batch])
+        if embedding_method == "GloVe":
+            output = sess.run(task_predictions, feed_dict={train_inputs: text_batch, seq_length: lengths, keep_prob: 1, embedding_placeholder: embeddings})
+        else:
+            output = sess.run(task_predictions, feed_dict={train_inputs: text_batch, seq_length: lengths, keep_prob: 1})
+
+        for target in targets:
+            results.get(target, []).extend(list(np.argmax(output[target], 1)))
+
+    results = pd.DataFrame(results)
+    dataframe = pd.concat([dataframe, results])
+    pickle.dump(dataframe, open(data_dir + '/' + "-".join(target for target in targets) + "-outputs.pkl", "wb"))
+
+    tn = 0
+    fn = 0
+    fp = 0
+    tp = 0
+    checked = list()
+    for idx in test_idx:
+        if idx in checked:
+            continue
+        checked.append(idx)
+        if (dataframe.loc[dataframe["index"] == idx][target] == 1).bool():
+            if (annotated_df.loc[annotated_df["id"] == idx][target] == 1).any():
+                tp += 1
+            else:
+                fp += 1
+        else:
+            if (annotated_df.loc[annotated_df["id"] == idx][target] == 1).any():
+                fn += 1
+            else:
+                tn += 1
+    print(len(checked), "test cases")
+    print("Precision: ", float(tp)/float(tp + fp))
+    print("Recall: ", float(tp) / float(tp + fn))
 
 print("fin")

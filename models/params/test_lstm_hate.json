@@ -1,6 +1,6 @@
 {
     "batch_size": 100,
-    "dropout_ratio": 0.5,
+    "dropout_ratio": 0.3,
     "ngrams": [
         1
     ],
@@ -16,7 +16,7 @@
     "models": [
         "lstm"
     ],
-    "saved": false,
+    "saved": true,
     "training_corpus": "wiki_gigaword",
     "num_layers": 1,
     "dataframe_name": "gab_union.pkl",
@@ -27,11 +27,12 @@
         "r2"
     ],
     "targets": [
-       "subversion"
+       "betrayal",
+        "nh"
         ],
     "all_data": "gab_all.pkl",
     "saved_data": "cleaned_data.pkl",
-    "learning_rate": 0.01,
+    "learning_rate": 0.001,
     "random_seed": 51,
     "preprocessing": ["link", "mentions", "stop_words", "lemmatize", "all_alpha"],
     "hidden_size": 100,
