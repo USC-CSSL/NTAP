@@ -1,6 +1,6 @@
 {
     "batch_size": 100,
-    "dropout_ratio": 0.3,
+    "dropout_ratio": 0.66,
     "ngrams": [
         1
     ],
@@ -27,18 +27,30 @@
         "r2"
     ],
     "targets": [
-       "betrayal",
+        "care",
+        "harm",
+        "fairness",
+        "cheating",
+        "authority",
+        "subversion",
+        "loyalty",
+        "betrayal",
+        "purity",
+        "degradation",
+        "nm",
+        "cv",
+        "hd",
         "nh"
         ],
     "all_data": "gab_all.pkl",
     "saved_data": "cleaned_data.pkl",
     "learning_rate": 0.001,
     "random_seed": 51,
-    "preprocessing": ["link", "mentions", "stop_words", "lemmatize", "all_alpha"],
-    "hidden_size": 100,
+    "preprocessing": ["link", "mentions"],
+    "hidden_size": 75,
     "pretrain": "glove-800",
     "ordinal_cols": [],
     "config_text": "indiv",
-    "embedding_method": "GloV",
+    "embedding_method": "GloVe",
     "categorical_cols": []
 }
