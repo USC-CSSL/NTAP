@@ -27,19 +27,7 @@
         "r2"
     ],
     "targets": [
-        "care",
-        "harm",
-        "fairness",
-        "cheating",
-        "authority",
-        "subversion",
-        "loyalty",
-        "betrayal",
-        "purity",
-        "degradation",
         "nm",
-        "cv",
-        "hd",
         "nh"
         ],
     "all_data": "gab_all.pkl",

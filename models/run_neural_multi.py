@@ -1,9 +1,10 @@
-
+from sklearn.decomposition import PCA
 import pandas as pd
 import sys, os, json, math
 import time, pickle
 from random import randint
 import numpy as np
+import matplotlib.pyplot as plt
 
 from preprocess import preprocess_text
 from summarystats import analyze_targets
@@ -56,8 +57,6 @@ print("Tokenizing data took %d seconds " % (time.clock() - init_clock))
 ######## Loading annotated data ############
 print("Loading annotated dataframe")
 annotated_df = pd.read_pickle(data_dir + '/' + saved_train) if saved else pd.read_pickle(data_dir + '/' + dataframe_name)
-#targets = [col for col in annotated_df.columns.tolist() if (col.startswith("MFQ") and not col.endswith("AVG"))]
-# analyze_targets(annotated_df, targets)
 
 print("Annotated dataframe has {} rows and {} columns".format(annotated_df.shape[0], annotated_df.shape[1]))
 init_clock = time.clock()
@@ -186,9 +185,13 @@ indices = annotated_df["id"].values
 
 init = tf.global_variables_initializer()
 
-all_labels = np.transpose(np.array([np.array(annotated_df[target]) for target in targets]))
+all_targets =  ["care","harm","fairness","cheating","authority","subversion","loyalty","betrayal","purity","degradation","nm","cv","hd","nh"]
 
-train_X, test_X, train_Y, test_Y, train_idx, test_idx = train_test_split(anno_ids, all_labels, indices, test_size=0.2, random_state= randint(1, 100))
+all_labels = np.transpose(np.array([np.array(annotated_df[target]) for target in all_targets]))
+target_labels = np.transpose(np.array([np.array(annotated_df[target]) for target in targets]))
+
+
+train_X, test_X, train_Y, test_Y, train_idx, test_idx = train_test_split(anno_ids, target_labels, indices, test_size=0.2, random_state= randint(1, 100))
 
 num_epochs = 200
 
@@ -196,6 +199,18 @@ def splitY(y_data, feed_dict):
     for i in range(len(targets)):
         feed_dict[task_outputs[targets[i]]] = y_data[:,i]
     return feed_dict
+
+def graph(vectors, labels, targets):
+    pca = PCA(n_components=2)
+
+    vec_components = pca.fit_transform(vectors)
+    df = pd.DataFrame(data=vec_components, columns=['component 1', 'component 2'])
+
+    labeldf = pd.DataFrame(data=labels, columns=targets)
+
+    finalDf = pd.concat([df, labeldf], axis=1)
+
+    finalDf.to_pickle("pca_vectors.pkl")
 
 with tf.Session() as sess:
     init.run()
@@ -226,7 +241,6 @@ with tf.Session() as sess:
                 y_batch_test = y_batch
                 X_len_test = X_len
                 continue
-            feed_dict.update()
             if embedding_method == "GloVe":
                 _, loss_val = sess.run([training_op, joint_loss], feed_dict= splitY(y_batch, {train_inputs: X_batch, seq_length: X_len, keep_prob: dropout_ratio, embedding_placeholder: embeddings}))
             else:
@@ -246,11 +260,29 @@ with tf.Session() as sess:
             acc_test = accuracy.eval(feed_dict=splitY(test_Y, {train_inputs: test_X, keep_prob: 1, seq_length: lengths}))
         print(epoch, "Train accuracy:", acc_train, "Loss: ", epoch_loss / float(count), "Test accuracy: ", acc_test)
 
-        if acc_test > 0.8 and acc_train > 0.9 and epoch > 1000 and epoch_loss < 0.1 * count:
+        #if acc_test > 0.78 and acc_train > 0.98 and epoch_loss < 0.05 * count:
+        if epoch == 10:
             break
 
     save_path = saver.save(sess, "/tmp/model.ckpt")
 
+######################## Get the hidden vectors #################################
+
+    batches = lstm.get_batches(anno_ids, target_labels)
+    vectors = list()
+    for (X_batch, X_len, y_batch) in batches:
+
+        if embedding_method == "GloVe":
+            vector = sess.run(last, feed_dict={train_inputs: X_batch, seq_length: X_len, keep_prob: dropout_ratio, embedding_placeholder: embeddings})
+        else:
+            vector = sess.run(last, feed_dict={train_inputs: X_batch, seq_length: X_len, keep_prob: dropout_ratio})
+        vectors.extend(vector)
+    vectors = np.array(vectors)
+    graph(vectors, all_labels, all_targets)
+
+
+######################## Predict the labels for all the data#####################
+"""
     results = dict()
     for idx in range((len(corpus_ids) // batch_size) + 1):
         text_batch = corpus_ids[idx * batch_size: min((idx + 1) * batch_size, len(corpus_ids))]
@@ -293,5 +325,5 @@ with tf.Session() as sess:
                     tn += 1
         print("Precision: ", float(tp)/float(tp + fp) if tp + fp != 0 else 0)
         print("Recall: ", float(tp) / float(tp + fn) if tp + fn != 0 else 0)
-
+"""
 print("fin")
