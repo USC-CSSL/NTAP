@@ -1,0 +1,44 @@
+{
+    "preprocessing": [],
+    "dictionary": "moral_foundations_theory",
+    "scoring_dir": "/home/brendan/Neural-Language-Profiles/scoring/",
+    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "ordinal_cols": [],
+    "feature_methods": [
+        "tfidf"
+    ],
+    "categorical_cols": [],
+    "dataframe_name": "binned_gab_dataframe.pkl",
+    "feature_cols": [],
+    "random_seed": 51,
+    "feature_reduce": 0,
+    "models": [
+        "log_regression"
+    ],
+    "ngrams": [
+        0,
+        2
+    ],
+    "training_corpus": "wiki_gigaword",
+    "targets": [
+        "care",
+        "harm",
+        "fairness",
+        "cheating",
+        "authority",
+        "subversion",
+        "loyalty",
+        "betrayal",
+        "purity",
+        "degradation",
+        "cv",
+        "hd"
+    ],
+    "metrics": [
+        "f1",
+        "accuracy"
+    ],
+    "embedding_method": "GloVe",
+    "text_col": "text",
+    "config_text": "indiv"
+}

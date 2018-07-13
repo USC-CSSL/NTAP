@@ -1,7 +1,8 @@
-from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import SGDRegressor, LogisticRegression
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sklearn.model_selection import GridSearchCV
+
+from sklearn.model_selection import GridSearchCV, cross_validate
 from sklearn import model_selection
 import numpy as np
 import operator, os, json
@@ -78,6 +79,49 @@ def GBRT(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
 
                                                 
     # Post conditions: best_model is the best model (by CV); scoring_dict[col][model] is updated
+
+
+################## Classification Methods ##################
+
+def log_regression(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
+    #X = np.array(X, dtype=np.float32)
+    #Y = np.array(Y)
+    #Y = Y.astype(int)
+    num_classes = list(set(Y))
+    model = "log_regression"
+    scoring_dict[col][model] = dict()
+    if len(num_classes) == 2:
+        print("Logistic Regression")
+        class_type = 'ovr'
+    elif len(num_classes) > 1:
+        print("Multinomial Logistic Regression")
+        class_type = 'multinomial'
+
+    log_model = LogisticRegression(class_weight=None, random_state=seed, 
+                                   solver='sag', multi_class=class_type, verbose=0,
+                                   tol=1e-5)
+    choose_model = GridSearchCV(log_model, cv=kfold, iid=True, 
+                                param_grid={"class_weight": [None, 'balanced'],
+                                            "C": np.arange(0.1, 1.0, 0.1)})
+    choose_model.fit(X, Y)
+    best_model = choose_model.best_estimator_
+    scoring_dict[col][model]['params'] = choose_model.best_params_
+
+    coefficients = best_model.coef_
+    #scoring_dict[col][model][class_] = dict()
+    averaged = np.mean(coefficients, axis=0)
+    print(averaged.shape)
+    coef_dict = {i: val for i, val in enumerate(averaged)}
+    word_coefs = {lookup_dict[i]: val for i, val in coef_dict.items()}
+    abs_val_coefs = {word: abs(val) for word, val in word_coefs.items()}
+    top_features = sorted(abs_val_coefs.items(), key=operator.itemgetter(1), reverse=True)[:100]
+    real_weights = [[word, word_coefs[word]] for word, _ in top_features]
+    scoring_dict[col][model]['top_features'] = real_weights
+    return scoring_dict, best_model
+
+
+
+
 
 
 def write_evaluations(scoring_dict, scoring_output):
