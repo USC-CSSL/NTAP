@@ -325,6 +325,7 @@ class LDAVectorizer(BaseEstimator, TransformerMixin):
                                              })
         """
         self.lda = lda_model.fit(self.dt_matrix)
+        print(self.lda.components_)
         return self
 
     def transform(self, X, y=None):

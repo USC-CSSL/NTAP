@@ -17,7 +17,7 @@ def get_transformer_list(dataframe,
                          data_dir, 
                          text_col,  # name of the col that contains the document texta
                          methods,  # type of features to load/generate. Can be a name or list of names
-                         feature_col= [], # list of columns that are considered as features
+                         feature_cols= [], # list of columns that are considered as features
                          ordinal_cols = [],
                          categorical_cols = [],
                          ngrams = [],
@@ -40,10 +40,10 @@ def get_transformer_list(dataframe,
         transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer,"cosine-sim")
         transformers.append((text_col, ) + transformation) if type(transformation) == tuple else (text_col, transformation)
 
-    if len(feature_col) > 0:
+    if len(feature_cols) > 0:
         transformers += gen_features(
-                columns=[ [col] for col in feature_col],
-                classes=[StandardScaler])
+                columns=[ [col] for col in feature_cols])
+                #classes=[StandardScaler])
 
     if len(categorical_cols) > 0:
         transformers += gen_features(
@@ -71,7 +71,7 @@ def get_transformer_list(dataframe,
 
     return X, lookup_dict
 
-def validate_arguments(dataframe, text_col, feature_col, methods):
+def validate_arguments(dataframe, text_col, feature_cols, methods):
 
     # text_col
     if text_col not in dataframe.columns:
@@ -79,12 +79,13 @@ def validate_arguments(dataframe, text_col, feature_col, methods):
         exit(1)
 
     # feature_col
-    if type(feature_col) != list:
+    if type(feature_cols) != list:
         print("feature_col should be a list of feature column names")
         exit(1)
-    if len(feature_col) > 0:
-        if not set(text_col).issubset(dataframe.columns):
-            print("To load LIWC/MFD features, load dataframe with \'feature_col\' as columns")
+    if len(feature_cols) > 0:
+        if not set(feature_cols).issubset(dataframe.columns):
+            print(feature_cols)
+            print("To load LIWC/MFD features, load dataframe with \'feature_cols\' as columns")
             exit(1)
 
     # methods

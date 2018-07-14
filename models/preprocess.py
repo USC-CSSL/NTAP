@@ -5,7 +5,7 @@ from nltk.corpus import wordnet, stopwords
 from nltk import word_tokenize
 from unidecode import unidecode
 from textblob import TextBlob
-
+from sys import stdout
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
@@ -32,14 +32,18 @@ def preprocess_text(df,
         for method in methods:
             if method in priority[pri]:
                 df = globals()[method](df, col, data_dir)
-
-    df = remove_whitespaces(df, col)
+    print("FUCK")
+    #df = remove_whitespaces(df, col)
     return df
 
 
 
 def remove_whitespaces(df, col):
+    count = 0
     for i, row in df.iterrows():
+        stdout.write("\r{:.2%} done".format(float(count) / len(df)))
+        stdout.flush()
+        count += 1
         text = row[col]
         collapsed_whitespace = re.sub(r"[\s]+", " ", text)
         df.at[i, col] = collapsed_whitespace
@@ -50,15 +54,22 @@ def link(df, col, data_dir):
     print("Extracting http(s) links")
     num_links = 0
     link_dict = dict()
+    http_pattern = re.compile(r"http(s)?[^\s]+")
+    count = 0
     for index, row in df.iterrows():
-        text = row[col]
-        new_text, num_links = sub_link(text, link_dict, counter=num_links)
+        stdout.write("\r{:.2%} done".format(float(count) / len(df)))
+        stdout.flush()
+        count += 1
+        new_text = http_pattern.sub(" ", row[col])
+        #new_text, num_links = sub_link(text, link_dict, counter=num_links)
         df.at[index, col] = new_text
+    """
     link_path = data_dir + '/' + "web_links.json"
     if not os.path.isfile(link_path):
         print("Writing links to {}".format(link_path))
         with open(link_path, 'w', encoding='utf-8') as fo:
             json.dump(link_dict, fo, ensure_ascii=False, indent=4)
+    """
     return df
 
 def hashtag(df, col, data_dir):
@@ -192,8 +203,10 @@ def stop_words(df, col, data_dir):
 
 
 def mentions(df, col, data_dir):
+    mention_re = re.compile(r"@\w+")
     for i, row in df.iterrows():
-        df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if word[0] != "@")
+        df.at[i, col] = mention_re.sub("", row[col])
+        #df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if word[0] != "@")
     return df
 
 

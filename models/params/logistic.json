@@ -1,25 +1,33 @@
 {
-    "preprocessing": [],
-    "dictionary": "moral_foundations_theory",
-    "scoring_dir": "/home/brendan/Neural-Language-Profiles/scoring/",
-    "data_dir": "/home/brendan/neural_profiles_datadir/",
-    "ordinal_cols": [],
-    "feature_methods": [
-        "tfidf"
-    ],
-    "categorical_cols": [],
     "dataframe_name": "binned_gab_dataframe.pkl",
-    "feature_cols": [],
-    "random_seed": 51,
-    "feature_reduce": 0,
+    "data_dir": "/home/brendan/neural_profiles_datadir/",
     "models": [
         "log_regression"
+    ],
+    "feature_methods": [
+        "tfidf"
     ],
     "ngrams": [
         0,
         2
     ],
+    "feature_reduce": 0,
+    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "random_seed": 51,
     "training_corpus": "wiki_gigaword",
+    "preprocessing": [],
+    "ordinal_cols": [],
+    "categorical_cols": [],
+    "feature_cols": [],
+    "metrics": [
+        "f1",
+        "accuracy",
+        "precision",
+        "recall"
+    ],
+    "embedding_method": "GloVe",
+    "dictionary": "moral_foundations_theory",
+    "config_text": "indiv",
     "targets": [
         "care",
         "harm",
@@ -34,11 +42,5 @@
         "cv",
         "hd"
     ],
-    "metrics": [
-        "f1",
-        "accuracy"
-    ],
-    "embedding_method": "GloVe",
-    "text_col": "text",
-    "config_text": "indiv"
+    "text_col": "text"
 }

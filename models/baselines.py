@@ -32,8 +32,9 @@ if __name__ == '__main__':
 
     validate_arguments(df, text_col, feature_cols, feature_methods)
     #Preprocessing the data
+    print("Preprocessing", preprocessing)
     df = preprocess_text(df, text_col, preprocessing ,data_dir)
-
+    df.to_pickle("text_dataframe.pkl")
     # Transform features
     X, lookup_dict = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,
                                             ordinal_cols, categorical_cols, ngrams=ngrams, bom_method=embedding_method,
@@ -42,5 +43,5 @@ if __name__ == '__main__':
 
 
     # Performing classification
-    evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text)
+    evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text, metrics)
 

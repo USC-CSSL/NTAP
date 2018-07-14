@@ -1,0 +1,49 @@
+{
+    "feature_methods": [
+        "lda"
+    ],
+    "ngrams": [
+        0,
+        2
+    ],
+    "models": [
+        "log_regression"
+    ],
+    "metrics": [
+        "f1",
+        "accuracy",
+        "precision",
+        "recall"
+    ],
+    "feature_reduce": 0,
+    "preprocessing": [
+        "link",
+        "mentions"
+    ],
+    "data_dir": "/home/brendan/neural_profiles_datadir/",
+    "targets": [
+        "care",
+        "harm",
+        "fairness",
+        "cheating",
+        "authority",
+        "subversion",
+        "loyalty",
+        "betrayal",
+        "purity",
+        "degradation",
+        "cv",
+        "hd"
+    ],
+    "feature_cols": [],
+    "dictionary": "moral_foundations_theory",
+    "training_corpus": "wiki_gigaword",
+    "random_seed": 51,
+    "embedding_method": "GloVe",
+    "scoring_dir": "/home/brendan/NeuralLanguageProfiles/scoring/",
+    "config_text": "indiv",
+    "categorical_cols": [],
+    "dataframe_name": "merged_gab_texts.pkl",
+    "text_col": "text",
+    "ordinal_cols": []
+}
