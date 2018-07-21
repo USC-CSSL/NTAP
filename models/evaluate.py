@@ -1,10 +1,10 @@
 from sklearn.linear_model import SGDRegressor, LogisticRegression
 from sklearn.ensemble import GradientBoostingRegressor
-
+from sklearn.svm import LinearSVC
 
 from sklearn.model_selection import GridSearchCV, cross_validate, train_test_split
 from sklearn import model_selection
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 metric_mapping = {'f1': f1_score, 'accuracy': accuracy_score, 'precision': precision_score, 'recall': recall_score}
 
 import numpy as np
@@ -24,9 +24,9 @@ def evaluate_models(df, X, targets, lookup_dict, models, seed, feature_methods, 
         for model in models:
             scoring_dict, best_model = globals()[model](X_train, y_train, lookup_dict, scoring_dict, col, kfold, seed)
 
+        y_hat = best_model.predict(X_test)
+        print(classification_report(y_test, y_hat, best_model.classes_, digits=3))
         for metric in metrics:
-            y_hat = best_model.predict(X_test)
-            print(len(y_test), len(y_hat))
             if metric == 'accuracy':
                 score = metric_mapping[metric](y_test, y_hat)
             else:
@@ -133,7 +133,7 @@ def svm(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
     model = "svm"
     scoring_dict[col][model] = dict()
     svm_model = LinearSVC(dual=False, random_state=seed)
-    choose_model = GridSearchCV(svm_model, cv=kfold, iid=True,
+    choose_model = GridSearchCV(svm_model, cv=kfold, iid=True, scoring='accuracy',
                                 param_grid={'class_weight': [None, 'balanced'],
                                             'C': np.arange(0.1, 1.0, 0.1)})
     choose_model.fit(X, Y)

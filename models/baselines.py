@@ -36,6 +36,7 @@ if __name__ == '__main__':
     df = preprocess_text(df, text_col, preprocessing ,data_dir)
     df.to_pickle("text_dataframe.pkl")
     # Transform features
+    print(categorical_cols)
     X, lookup_dict = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,
                                             ordinal_cols, categorical_cols, ngrams=ngrams, bom_method=embedding_method,
                                             training_corpus=training_corpus, dictionary=dictionary,

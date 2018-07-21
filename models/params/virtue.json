@@ -1,0 +1,40 @@
+{
+    "scoring_dir": "/home/brendan/gab_project/scoring/",
+    "ordinal_cols": [],
+    "embedding_method": "GloVe",
+    "ngrams": [
+        0,
+        2
+    ],
+    "preprocessing": [
+        "link",
+        "mentions"
+    ],
+    "targets": [
+        "hate"
+    ],
+    "dictionary": "moral_foundations_theory",
+    "data_dir": "/home/brendan/gab_project/data/",
+    "training_corpus": "wiki_gigaword",
+    "dataframe_name": "binned_gab_dataframe.pkl",
+    "categorical_cols": [
+        "care",
+        "fairness",
+        "authority",
+        "loyalty",
+        "purity"
+    ],
+    "text_col": "text",
+    "random_seed": 51,
+    "config_text": "indiv",
+    "models": [
+        "log_regression",
+        "svm"
+    ],
+    "metrics": [
+        "accuracy"
+    ],
+    "feature_cols": [],
+    "feature_reduce": 0,
+    "feature_methods": []
+}

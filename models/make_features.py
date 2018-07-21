@@ -46,6 +46,7 @@ def get_transformer_list(dataframe,
                 #classes=[StandardScaler])
 
     if len(categorical_cols) > 0:
+        print("FUCKINGNNGKNDKNFKD")
         transformers += gen_features(
                     columns=[ [col] for col in categorical_cols],
                     classes=[CategoricalImputer, CategoricalEncoder]
