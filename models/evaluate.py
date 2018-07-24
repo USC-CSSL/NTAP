@@ -117,14 +117,13 @@ def log_regression(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
     coefficients = best_model.coef_
     for i in range(len(coefficients)):
         class_name = best_model.classes_[i]
-        scoring_dict[col][model][class_name] = dict()
         coef = coefficients[i]
-        coef_dict = {i: val for i, val in enumerate(coef)}
-        word_coefs = {lookup_dict[i]: val for i, val in coef_dict.items()}
+        coef_dict = {j: val for j, val in enumerate(coef)}
+        word_coefs = {lookup_dict[j]: val for j, val in coef_dict.items()}
         abs_val_coefs = {word: abs(val) for word, val in word_coefs.items()}
         top_features = sorted(abs_val_coefs.items(), key=operator.itemgetter(1), reverse=True)[:100]
         real_weights = [[word, word_coefs[word]] for word, _ in top_features]
-        scoring_dict[col][model][class_name + '_top_features'] = real_weights
+        scoring_dict[col][model][str(class_name) + '_top_features'] = real_weights
     return scoring_dict, best_model
 
 
@@ -143,14 +142,13 @@ def svm(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
     coefficients = best_model.coef_
     for i in range(len(coefficients)):
         class_name = best_model.classes_[i]
-        scoring_dict[col][model][class_name] = dict()
         coef = coefficients[i]
-        coef_dict = {i: val for i, val in enumerate(coef)}
-        word_coefs = {lookup_dict[i]: val for i, val in coef_dict.items()}
+        coef_dict = {j: val for j, val in enumerate(coef)}
+        word_coefs = {lookup_dict[j]: val for j, val in coef_dict.items()}
         abs_val_coefs = {word: abs(val) for word, val in word_coefs.items()}
         top_features = sorted(abs_val_coefs.items(), key=operator.itemgetter(1), reverse=True)[:100]
         real_weights = [[word, word_coefs[word]] for word, _ in top_features]
-        scoring_dict[col][model][class_name + '_top_features'] = real_weights
+        scoring_dict[col][model][str(class_name) + '_top_features'] = real_weights
     return scoring_dict, best_model
 
 def write_evaluations(scoring_dict, scoring_output):

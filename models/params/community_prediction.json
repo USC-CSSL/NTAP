@@ -1,0 +1,36 @@
+{
+    "ordinal_cols": [],
+    "targets": [
+        "community"
+    ],
+    "preprocessing": [
+        "link",
+        "mentions"
+    ],
+    "models": [
+        "log_regression",
+        "svm"
+    ],
+    "feature_methods": [
+        "tfidf"
+    ],
+    "dataframe_name": "gab_network.pkl",
+    "feature_reduce": 0,
+    "ngrams": [
+        0,
+        2
+    ],
+    "embedding_method": "GloVe",
+    "config_text": "indiv",
+    "data_dir": "/home/brendan/gab_project/data/",
+    "random_seed": 51,
+    "training_corpus": "wiki_gigaword",
+    "text_col": "text",
+    "dictionary": "moral_foundations_theory",
+    "metrics": [
+        "accuracy"
+    ],
+    "feature_cols": [],
+    "scoring_dir": "/home/brendan/gab_project/scoring/",
+    "categorical_cols": []
+}

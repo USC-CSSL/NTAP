@@ -30,7 +30,6 @@ def get_transformer_list(dataframe,
                          tokenizer= "tokenize"
                          ):
     # Either generates features from text (tfidf, skipgram, etc.) or load from file
-    #validate_arguments(dataframe, text_col, feature_col, methods)
 
     sent_tokenizer = tokenize if tokenizer == "tokenize" else happiertokenize
 
@@ -75,7 +74,9 @@ def get_transformer_list(dataframe,
 def validate_arguments(dataframe, text_col, feature_cols, methods):
 
     # text_col
-    if text_col not in dataframe.columns:
+    if text_col is None:
+        print("No text features included in model")
+    elif text_col not in dataframe.columns:
         print("Not valid text column")
         exit(1)
 

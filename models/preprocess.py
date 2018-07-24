@@ -26,13 +26,13 @@ def preprocess_text(df,
 
     if col not in df.columns:
         print("{} is not a column name".format(col))
-        exit(1)
+        return df
+        #exit(1)
 
     for pri in priority.keys():
         for method in methods:
             if method in priority[pri]:
                 df = globals()[method](df, col, data_dir)
-    print("FUCK")
     #df = remove_whitespaces(df, col)
     return df
 
