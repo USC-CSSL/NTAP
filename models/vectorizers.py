@@ -19,8 +19,8 @@ from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.model_selection import GridSearchCV
 
 from gensim.models import KeyedVectors as kv
-import torch
-import fastText
+#import torch
+#import fastText
 
 def load_glove_from_file(fname, vocab=None):
     # vocab is possibly a set of words in the raw text corpus
@@ -240,6 +240,8 @@ class DictionaryVectorizer(BaseEstimator, TransformerMixin):
             self.dictionary_re[cat] = list()
             for word in words:
                 word = word.replace(")", "\\)").replace("(", "\\(").replace(":", "\\:").replace(";", "\\;").replace("/", "\\/")
+                if len(word) == 0:
+                    continue
                 if word[-1] == "*":
                     self.dictionary_re[cat].append(re.compile("(" + word + "\w*)"))
                 else:
@@ -248,7 +250,11 @@ class DictionaryVectorizer(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         vectors = list()
+        c = 0
         for sentence in X:
+            c += 1
+            stdout.write("\r{:.2%} done".format(float(c) / len(X)))
+            stdout.flush()
             vectors.append(self.count_sentence(sentence))
         return np.array(vectors)
 
@@ -376,36 +382,11 @@ class FastTextVectorizer(BaseEstimator, TransformerMixin):
             os.makedirs(self.temp_data)
 
     def fit(self, X, y=None):
-        """
-        self.input_text = os.path.join(self.temp_data, "input.txt")
-        self.output_text = os.path.join(self.temp_data, "output.txt")
-        with open(self.input_text, 'w', encoding='utf-8') as fo:
-            fo.write('\n'.join(X))
-        """
         print("Loading fasttext model")
         self.trained_model = fastText.load_model(self.model_path)
         return self
 
     def transform(self, X, y=None):
-        """
-        input_file = open(self.input_text, 'r', encoding='utf-8')
-        output_file = open(self.output_text, 'w', encoding='utf-8')
-        bash_command = "fasttext print-sentence-vectors {0} < {1} > {2}".format(self.model_path,
-                    self.input_text, self.output_text)
-        #bash_command = "fasttext print-sentence-vectors"
-        subprocess.call(bash_command, executable="/bin/bash", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        with open(self.output_text, 'r', encoding='utf-8') as fo:
-            lines = fo.readlines()
-            print(len(lines), len(X))
-            if len(lines) != len(X):
-                raise ValueError("Incorrect file format")
-            embeddings = list()
-            for i in range(len(lines)):
-                line_tokens = lines[i].split()
-                embeddings.append(line_tokens[len(X[i].split())-1:])
-            sentences = np.array(embeddings, dtype='float32')
-        print(sentences.shape)
-        """
         sentences = list()
         print("Encoding sentences with FastText")
         for i, sent in enumerate(X):

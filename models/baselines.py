@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import sys, os, json
 
@@ -16,14 +17,8 @@ if __name__ == '__main__':
     with open(sys.argv[1], 'r') as fo:
         params = json.load(fo)
 
-    #params = json.load(open("params/test_fasttext.json", "r"))
-    try:
-        for par in params.keys():
-            locals()[par] = params[par]
-
-    except KeyError:
-        print("Could not load all parameters; if you're not using a parameter, set it to None")
-        exit(1)
+    for par in params.keys():
+        locals()[par] = params[par]
 
     # Reading the dataset
     df = pd.read_pickle(data_dir + '/' + dataframe_name)
@@ -34,15 +29,20 @@ if __name__ == '__main__':
     #Preprocessing the data
     print("Preprocessing", preprocessing)
     df = preprocess_text(df, text_col, preprocessing ,data_dir)
-    df.to_pickle("text_dataframe.pkl")
     # Transform features
-    print(categorical_cols)
     X, lookup_dict = get_transformer_list(df, data_dir, text_col, feature_methods, feature_cols,
                                             ordinal_cols, categorical_cols, ngrams=ngrams, bom_method=embedding_method,
                                             training_corpus=training_corpus, dictionary=dictionary,
                                             comp_measure='cosine-sim', random_seed=random_seed, feature_reduce=feature_reduce)
 
-
+    for i in range(len(lookup_dict)):
+        new_col = np.array([row[i] for row in X])
+        col_name = lookup_dict[i]
+        df.loc[:, col_name] = pd.Series(new_col, index=df.index)
+    
+    df.to_pickle("liwc_features.pkl")
+    feature_dest = "saved_features.csv"
+    #save_features(X, lookup_dict, feature_dest)
     # Performing classification
-    evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text, metrics)
+    #evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text, metrics)
 

@@ -2,16 +2,14 @@ import json
 
 if __name__ == '__main__':
     params = dict()
-    params['data_dir'] = '/home/brendan/gab_project/data/'
-    params['scoring_dir'] = '/home/brendan/gab_project/scoring/'
+    params['data_dir'] = '/home/brendan/Data/MediaDiet/data/'
+    params['scoring_dir'] = '/home/brendan/Data/MediaDiet/scoring/'
 
     # choices: indiv, concat
-    params['config_text'] = 'indiv'
-    #params['dataframe_name'] = 'binned_gab_dataframe.pkl'
-    params['dataframe_name'] = 'gab_network.pkl'
-    #params['dataframe_name'] = 'lda_gab_data.pkl'
+    #params['config_text'] = 'indiv'
+    params['dataframe_name'] = 'tv_series_raw.pkl'
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = ['tfidf']
+    params['feature_methods'] = ['dictionary']
 
     # should be from dataframe's columns
     params['feature_cols'] = [] # ["topic{}".format(idx) for idx in range(100)]
@@ -27,15 +25,8 @@ if __name__ == '__main__':
 
     params['training_corpus'] = 'wiki_gigaword'
     params['embedding_method'] = 'GloVe'
-    params['dictionary'] = 'moral_foundations_theory'
-    params['models'] = ['log_regression', 'svm']  # ['elasticnet']
-    """
-    params['targets'] = ['care', 'harm', 'fairness', 'cheating', 'authority',
-                         'subversion', 'loyalty', 'betrayal', 'purity',
-                         'degradation', 'cv', 'hd', 'moral', 'hate']
-    """
-    params['targets'] = ['community']
-    #params['targets'] = ['MFQ_' + s + '_AVG' for s in ["FAIRNESS", "INGROUP", "PURITY", "AUTHORITY", "HARM"]]
+    params['dictionary'] = 'liwc'
+    #params['models'] = ['log_regression', 'svm']  # ['elasticnet']
     params['metrics'] = ['accuracy']
     params['random_seed'] = 51
 
@@ -46,6 +37,6 @@ if __name__ == '__main__':
     # [min, max]. default = [0, 1]
     params['ngrams'] = [0, 2]
 
-    with open("params/community_prediction.json", 'w') as fo:
+    with open("params/get_liwc_features.json", 'w') as fo:
         json.dump(params, fo, indent=4)
 
