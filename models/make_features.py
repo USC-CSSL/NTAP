@@ -1,11 +1,15 @@
 import re
 
+import sklearn
+print(sklearn.__version__)
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler, CategoricalEncoder
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn_pandas import gen_features, CategoricalImputer, DataFrameMapper
-from sklearn.impute import SimpleImputer as Imputer
+#from sklearn.impute import SimpleImputer as Imputer
+from sklearn.preprocessing import LabelBinarizer
 from scipy import sparse
 
 from vectorizers import *
@@ -47,10 +51,10 @@ def get_transformer_list(dataframe,
     if len(categorical_cols) > 0:
         print("FUCKINGNNGKNDKNFKD")
         transformers += gen_features(
-                    columns=[ [col] for col in categorical_cols],
-                    classes=[CategoricalImputer, CategoricalEncoder]
+                    columns=[ col for col in categorical_cols],
+                    classes=[CategoricalImputer, LabelBinarizer]
                             )
-
+    """
     if len(ordinal_cols) > 0:
         transformers += gen_features(
                     columns=[ [col] for col in ordinal_cols],
@@ -58,7 +62,7 @@ def get_transformer_list(dataframe,
                              {'class': MinMaxScaler}
                             ])
 
-
+    """
     mapper = DataFrameMapper(transformers, sparse=True, input_df=True)
     X = mapper.fit_transform(dataframe)
     lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}

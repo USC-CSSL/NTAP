@@ -44,5 +44,5 @@ if __name__ == '__main__':
 
 
     # Performing classification
-    evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text, metrics)
+    evaluate_models(df, X, targets, lookup_dict, models, random_seed, feature_methods, scoring_dir, config_text, metrics, output_name)
 

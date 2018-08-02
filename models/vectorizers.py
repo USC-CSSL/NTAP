@@ -20,7 +20,7 @@ from sklearn.model_selection import GridSearchCV
 
 from gensim.models import KeyedVectors as kv
 import torch
-import fastText
+#import fastText
 
 def load_glove_from_file(fname, vocab=None):
     # vocab is possibly a set of words in the raw text corpus

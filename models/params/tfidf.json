@@ -15,14 +15,13 @@
     ],
     "dataframe_name": "binned_gab_dataframe.pkl",
     "text_col": "text",
-    "scoring_dir": "/home/brendan/gab_project/scoring/",
-    "data_dir": "/home/brendan/gab_project/data/",
+    "scoring_dir": "/Users/BrendansMac/Documents/gab_project/scoring/",
+    "data_dir": "/Users/BrendansMac/Documents/gab_project/data/",
     "models": [
-        "log_regression",
-        "svm"
+        "log_regression"
     ],
     "targets": [
-        "hate"
+        "moral"
     ],
     "ngrams": [
         0,
@@ -32,5 +31,6 @@
         "link",
         "mentions"
     ],
-    "dictionary": "moral_foundations_theory"
+    "dictionary": "moral_foundations_theory",
+    "output_name": "tfidf_predict_moral"
 }
