@@ -28,15 +28,8 @@ if __name__ == '__main__':
 
     params['training_corpus'] = 'wiki_gigaword'
     params['embedding_method'] = 'GloVe'
-    params['dictionary'] = 'moral_foundations_theory'
-    params['models'] = ['log_regression']  # ['elasticnet']
-    """
-    params['targets'] = ['care', 'harm', 'fairness', 'cheating', 'authority',
-                         'subversion', 'loyalty', 'betrayal', 'purity',
-                         'degradation', 'cv', 'hd', 'moral', 'hate']
-    """
-    params['targets'] = ['hate']
-    #params['targets'] = ['MFQ_' + s + '_AVG' for s in ["FAIRNESS", "INGROUP", "PURITY", "AUTHORITY", "HARM"]]
+    params['dictionary'] = 'liwc'
+    #params['models'] = ['log_regression', 'svm']  # ['elasticnet']
     params['metrics'] = ['accuracy']
     params['random_seed'] = 51
 

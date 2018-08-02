@@ -47,14 +47,12 @@ def get_transformer_list(dataframe,
         transformers += gen_features(
                 columns=[ [col] for col in feature_cols])
                 #classes=[StandardScaler])
-
     if len(categorical_cols) > 0:
         print("FUCKINGNNGKNDKNFKD")
         transformers += gen_features(
                     columns=[ col for col in categorical_cols],
                     classes=[CategoricalImputer, LabelBinarizer]
                             )
-    """
     if len(ordinal_cols) > 0:
         transformers += gen_features(
                     columns=[ [col] for col in ordinal_cols],
@@ -62,7 +60,6 @@ def get_transformer_list(dataframe,
                              {'class': MinMaxScaler}
                             ])
 
-    """
     mapper = DataFrameMapper(transformers, sparse=True, input_df=True)
     X = mapper.fit_transform(dataframe)
     lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
