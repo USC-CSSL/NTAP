@@ -1,0 +1,44 @@
+{
+    "batch_size": 100,
+    "dropout_ratio": 0.66,
+    "ngrams": [
+        1
+    ],
+    "feature_cols": [],
+    "dictionary": "moral_foundations_theory",
+    "scoring_dir": "/home/aida/neural_profiles_datadir/Score",
+    "data_dir": "/home/aida/neural_profiles_datadir",
+    "feature_methods": [
+        "fasttext"
+    ],
+    "feature_reduce": 0.001,
+    "vocab_size": 10000,
+    "models": [
+        "lstm"
+    ],
+    "saved": true,
+    "training_corpus": "wiki_gigaword",
+    "num_layers": 1,
+    "dataframe_name": "gab_union.pkl",
+    "saved_train": "cleaned_train.pkl",
+    "embedding_size": 300,
+    "text_col": "text",
+    "metrics": [
+        "r2"
+    ],
+    "targets": [
+        "nm",
+        "nh"
+        ],
+    "all_data": "gab_all.pkl",
+    "saved_data": "cleaned_data.pkl",
+    "learning_rate": 0.001,
+    "random_seed": 51,
+    "preprocessing": ["link", "mentions"],
+    "hidden_size": 75,
+    "pretrain": "glove-800",
+    "ordinal_cols": [],
+    "config_text": "indiv",
+    "embedding_method": "GloVe",
+    "categorical_cols": []
+}

@@ -1,6 +1,10 @@
 import json
+import sys
+import os
 
-if __name__ == '__main__':
+import pandas as pd
+
+def get_params():
     params = dict()
     root = '/Users/BrendansMac/Documents/'
     params['data_dir'] = root + '/gab_project/data/'
@@ -8,8 +12,6 @@ if __name__ == '__main__':
 
     # choices: indiv, concat
     params['config_text'] = 'indiv'
-    #params['dataframe_name'] = 'binned_gab_dataframe.pkl'
-    #params['dataframe_name'] = 'gab_network.pkl'
     params['dataframe_name'] = 'lda_gab_data.pkl'
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
     params['feature_methods'] = []
@@ -41,6 +43,24 @@ if __name__ == '__main__':
     params['ngrams'] = [0, 2]
     params['output_name'] = 'lda'
 
-    with open("params/lda.json", 'w') as fo:
+    # added params for neural methods
+    params["models"] = ["lstm"]  # other options: nested_lstm, attention_lstm, ...
+    params["num_layers"] = 1
+    params["hidden_size"] = 1028
+    params["vocab_size"] = 10000
+    params["embedding_size"] = 300
+    params["batch_size"] = 100
+    params["learning_rate"] = 1e-4
+    params["pretrain"] = "glove-800"
+    params["dropout_ratio"] = 0.5
+
+    return params
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print("Usage: python gen_params.py output_name.json")
+        exit(1)
+    params = get_params()
+    with open(os.path.join("params", sys.argv[1]), 'w') as fo:
         json.dump(params, fo, indent=4)
 
