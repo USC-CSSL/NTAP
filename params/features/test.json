@@ -1,0 +1,29 @@
+{
+    "data": "indiv.pkl",
+    "feature_methods": [
+        "lda"
+    ],
+    "text_col": "fb_status_msg",
+    "training_corpus": "wiki_gigaword",
+    "embedding_method": "GloVe",
+    "dictionary": "liwc",
+    "random_seed": 51,
+    "extract": [
+        "link",
+        "mentions",
+        "hashtag",
+        "emojis",
+        "mentions"
+    ],
+    "preprocess": [
+        "lemmatize",
+        "stem"
+    ],
+    "stopwords": "default",
+    "tokenize": "default",
+    "ngrams": [
+        0,
+        2
+    ],
+    "feature_reduce": 0
+}
