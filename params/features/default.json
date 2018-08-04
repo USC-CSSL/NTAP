@@ -1,5 +1,4 @@
 {
-    "data": "indiv.pkl",
     "feature_methods": [
         "lda"
     ],

@@ -1,14 +1,20 @@
+"""
+To-Do: 
+1.) Add infersent functionality
+    - Call bash script to run externally
+2.) One-at-a-time
+    - Including categorical all-as-one
+    - Second step: load all features from file (having been generated) and use sklearn-pandas there
+"""
+
 import re
 
 import sklearn
-print(sklearn.__version__)
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn_pandas import gen_features, CategoricalImputer, DataFrameMapper
-#from sklearn.impute import SimpleImputer as Imputer
 from sklearn.preprocessing import LabelBinarizer
 from scipy import sparse
 
@@ -20,9 +26,8 @@ from utils import cosine_similarity, tokenize, happiertokenize
 def get_transformer_list(dataframe,
                          data_dir, 
                          text_col,  # name of the col that contains the document texta
-                         methods,  # type of features to load/generate. Can be a name or list of names
+                         methods,  # type of features to load/generate. type == str
                          feature_cols= [], # list of columns that are considered as features
-                         ordinal_cols = [],
                          categorical_cols = [],
                          ngrams = [],
                          bom_method=None,  # options: 'skipgram', 'glove'
@@ -48,27 +53,16 @@ def get_transformer_list(dataframe,
                 columns=[ [col] for col in feature_cols])
                 #classes=[StandardScaler])
     if len(categorical_cols) > 0:
-        print("FUCKINGNNGKNDKNFKD")
         transformers += gen_features(
                     columns=[ col for col in categorical_cols],
                     classes=[CategoricalImputer, LabelBinarizer]
                             )
-    if len(ordinal_cols) > 0:
-        transformers += gen_features(
-                    columns=[ [col] for col in ordinal_cols],
-                    classes=[{'class': Imputer, 'missing_values':-1},
-                             {'class': MinMaxScaler}
-                            ])
 
     mapper = DataFrameMapper(transformers, sparse=True, input_df=True)
     X = mapper.fit_transform(dataframe)
     lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
 
     # as in DLATK, rare features that occur for less that <feature_reduce> percent of data, are filtered and replaced with <OOV>
-    if feature_reduce and feature_reduce != 0:
-        X, lookup_dict = reduce_features(X, feature_reduce, lookup_dict)
-        # rearrange lookup dict so that the keys include all values between 0 to len(features)
-        lookup_dict = {i: feat for i, feat in enumerate(lookup_dict.values())}
 
     return X, lookup_dict
 
@@ -102,31 +96,6 @@ def validate_arguments(dataframe, text_col, feature_cols, methods):
             print("{} is not an existing method".format(method))
             exit(1)
 
-def reduce_features(X, feature_reduce, lookup):
-    drop_columns = []
-    for col in range(X.shape[1]):
-        feat, freq = np.unique(X[:,col], return_counts=True)
-        if float(max(freq)) / float(X.shape[0]) > 1 - feature_reduce:
-            drop_columns.append(col)
-
-    for col in drop_columns:
-        print("Dropping columns " + lookup[col])
-        lookup.pop(col)
-    if type(X) == np.ndarray:
-        X = np.delete(X, drop_columns, 1)
-    #X1 = sparse.csr_matrix(np.array(X))
-    else:
-        X = dropcols_coo(X, drop_columns)
-    return X, lookup
-
-def dropcols_coo(M, idx_to_drop):
-    idx_to_drop = np.unique(idx_to_drop)
-    C = M.tocoo()
-    keep = ~np.in1d(C.col, idx_to_drop)
-    C.data, C.row, C.col = C.data[keep], C.row[keep], C.col[keep]
-    C.col -= idx_to_drop.searchsorted(C.col)    # decrement column indices
-    C._shape = (C.shape[0], C.shape[1] - len(idx_to_drop))
-    return C.tocsr()
 
 
 
@@ -165,14 +134,6 @@ def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_see
 
 def dictionary(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
     return (DictionaryVectorizer(data_path= data_dir, dictionary_name= dictionary), {"alias": "Dictionary_" + dictionary})
-"""
-def ngram(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams):
-    return (NgramVectorizer(n = ngrams, tokenizer= tokenize), {"alias": "Ngram"})
-"""
-
-def infersent(dataframe, text_col, bom_method, training_corpus, dictionary,
-                random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    return (InfersentVectorizer(data_dir, tokenizer=tokenize), {'alias': "InferSent4096"})
 
 def fasttext(dataframe, text_col, bom_method, training_corpus, dictionary,
                 random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):

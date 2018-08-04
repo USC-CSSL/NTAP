@@ -4,10 +4,27 @@ import os
 
 import pandas as pd
 
+def get_baseline_params():
+    params = dict()
+    params['method'] = 'log_regression'
+
+
+def mfq_data_params(group_by='post', project='MFQ-facebook'):
+    params = dict()
+    params['project'] = project
+    params['group_by'] = group_by  # 'user'
+    return params
+
+def get_data_params(project="MFQ-facebook"):
+    if project == "MFQ-facebook":
+        group_by = 'post'
+        return mfq_data_params(group_by=group_by, project=project)
+    else:
+        return False
+
 def feature_gen_params():
     params = dict()
 
-    params['data'] = 'indiv.pkl'
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
     params['feature_methods'] = ['lda']
 
@@ -34,12 +51,14 @@ def feature_gen_params():
     return params
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Usage: python gen_params.py output_name.json")
-        exit(1)
-
+    name = "default"
     params = feature_gen_params()
-    outname = sys.argv[1] if sys.argv[1].endswith('.json') else sys.argv[1] + ".json"
-    with open(os.path.join("params", "features", outname), 'w') as fo:
+    outname = os.path.join("params", "features", name + '.json') 
+    with open(outname, 'w') as fo:
         json.dump(params, fo, indent=4)
-
+        print("Wrote features params to %s" % outname)
+    data_params = get_data_params()
+    outname = os.path.join("params", "data", name + '.json')
+    with open(outname, 'w') as fo:
+        json.dump(data_params, fo, indent=4)
+        print("Wrote data params to %s" % outname)
