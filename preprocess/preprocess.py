@@ -1,4 +1,4 @@
-import re, os, json, nltk, string, emot, emoji
+import re, os, json, nltk, string, emot, emoji, sys
 from nltk.stem import WordNetLemmatizer, PorterStemmer
 import pandas as pd
 from nltk.corpus import wordnet, stopwords
@@ -16,19 +16,17 @@ import copy
 def preprocess_text(df,
                     col,
                     methods,
-                    data_dir,
                     config_text,
                     name = None
                     ):
+    """
     priority = {1: ["link", "hashtag", "emojis", "mentions"],
                 2: ["all_alpha", "lemmatize", "stem", "stop_words", "partofspeech", "ascii"]
                 }
-
+    
     pre_list = [item for sublist in [val for val in priority.values()] for item in sublist]
 
     print("restructuring... (Aida: I commented this part!)")
-    #df = restructure(df, col, config_text, data_dir)
-
 
     if not set(methods).issubset(pre_list):
         print("Some preprocessing methods are not available")
@@ -38,78 +36,40 @@ def preprocess_text(df,
         print("{} is not a column name".format(col))
         return df
         #exit(1)
+    """
 
-    for pri in priority.keys():
-        for method in methods:
-            if method in priority[pri]:
-                df = globals()[method](df, col, data_dir)
-    #df = remove_whitespaces(df, col)
-
-    df = remove_whitespaces(df, col)
-    if name:
-        pd.to_pickle(df, data_dir + "/" + name + ".pkl")
-    return df
-
-def toLower(df, col):
-    for i, row in df.iterrows():
-        df.at[i, col] = row[col].lower()
-    return df
-
-def remove_whitespaces(df, col):
-    count = 0
-    for i, row in df.iterrows():
-        stdout.write("\r{:.2%} done".format(float(count) / len(df)))
-        stdout.flush()
-        count += 1
-        text = row[col]
-        collapsed_whitespace = re.sub(r"[\s]+", " ", text)
-        df.at[i, col] = collapsed_whitespace
-    return df
-
-
-def link(df, col, data_dir):
+def link(df, col):
     print("Extracting http(s) links")
-    num_links = 0
-    link_dict = dict()
     http_pattern = re.compile(r"http(s)?[^\s]+")
-    count = 0
-    for index, row in df.iterrows():
-        stdout.write("\r{:.2%} done".format(float(count) / len(df)))
-        stdout.flush()
-        count += 1
-        new_text = http_pattern.sub(" ", row[col])
-        #new_text, num_links = sub_link(text, link_dict, counter=num_links)
-        df.at[index, col] = new_text
-    """
-    link_path = data_dir + '/' + "web_links.json"
-    if not os.path.isfile(link_path):
-        print("Writing links to {}".format(link_path))
-        with open(link_path, 'w', encoding='utf-8') as fo:
-            json.dump(link_dict, fo, ensure_ascii=False, indent=4)
-    """
+    texts = df[col].values.tolist()
+    links = [http_pattern.findall(text) for text in texts]
+    new_texts = [http_pattern.sub("", text) for text in texts]
+    df.loc[:, col] = pd.Series(new_texts, index=df.index)
+    df.loc[:, "links"] = pd.Series(links, index=df.index)
     return df
 
-def hashtag(df, col, data_dir):
+def hashtag(df, col):
     print("Extracting hashtags")
-    hashtags = list()
-    for index, row in df.iterrows():
-        text = row[col]
-        post_hashtags = [word[1:] for word in text.split() if word[0] == "#"]
-        hashtags.append(post_hashtags)
-    df['hashtags'] = pd.Series(hashtags, index=df.index)
+    hashtag_pattern = re.compile(r"#[a-zA-Z0-9]+")
+    texts = df[col].values.tolist()
+    hashtags = [hashtag_pattern.findall(text) for text in texts]
+    new_texts = [hashtag_pattern.sub("", text) for text in texts]
+    df.loc[:, col] = pd.Series(new_texts, index=df.index)
+    df.loc[:, "hashtags"] = pd.Series(hashtags, index=df.index)
     return df
 
 
-def sub_link(string, links, counter=0):
-    http_pattern = re.compile(r"http(s)?[^\s]+")
-    num_matches = len(http_pattern.findall(string))
-    for i in range(num_matches):
-        links[counter + i] = http_pattern.search(string).group(0)
-        string = http_pattern.sub("link{}".format(counter + i), string, count=1)
-    counter += num_matches
-    return string, counter
+def mentions(df, col):
+    print("Extracting mentions")
+    mention_re = re.compile(r"@[a-zA-Z0-9]+")
+    texts = df[col].values.tolist()
+    mentions = [mention_re.findall(text) for text in texts]
+    new_texts = [mention_re.sub("", text) for text in texts]
+    df.loc[:, col] = pd.Series(new_texts, index=df.index)
+    df.loc[:, "mentions"] = pd.Series(mentions, index=df.index)
+    return df
 
-def emojis(df, col, dir):
+def emojis(df, col):
     emojis_col = list()
     for i, row in df.iterrows():
         text = row[col]
@@ -131,6 +91,8 @@ def emojis(df, col, dir):
     df["emojis"] = pd.Series(emojis_col, index=df.index)
     return df
 
+"""
+
 def partofspeech(df, col, dir):
     useless_parts = []
     for i, row in df.iterrows():
@@ -142,14 +104,19 @@ def partofspeech(df, col, dir):
         df.at[i, col] = " ".join(word for word in new_text)
     return df
 
-def stem(df, col, dir):
+"""
+
+def stem(df, col):
+    print("Stemming with Porter Stemmer")
     stemmer = PorterStemmer()
-    for i, row in df.iterrows():
-        new_text = " ".join([stemmer.stem(w) for w in row[col].split()])
-        df.at[i, col] = new_text
+    texts = df[col].values.tolist()
+    new_texts = [" ".join([stemmer.stem(w) for w in text.split()]) for text in texts]
+    df.loc[:, col] = new_texts
     return df
 
-def lemmatize(df, col, dir):
+"""
+
+def lemmatize(df, col):
     lemmatizer = WordNetLemmatizer()
     #lemmatized_posts = list()
     for ind, row in df.iterrows():
@@ -180,7 +147,7 @@ def get_wordnet_pos(treebank_tag):
     else:
         return ''
 
-def english(df, col, data_dir):
+def english(df, col):
     print("Removing non-English posts")
     delete_indices = list()  # for non-English documents
     c = 0
@@ -202,7 +169,7 @@ def english(df, col, data_dir):
     print("Dropped {} rows; new dataframe has {} rows".format(old_rows - df.shape[0], df.shape[0]))
     return df
 
-def ascii(df, col, data_dir):
+def ascii(df, col):
     print("Transliterate all unicode to ascii-approx")
     for i, row in df.iterrows():
         text = row[col]
@@ -211,26 +178,35 @@ def ascii(df, col, data_dir):
         df.at[i, col] = collapsed_whitespace
     return df
 
+"""
 
-def stop_words(df, col, data_dir):
+def stop_words(df, col, lower):
     print("Removing stop words")
     stop_words = set(stopwords.words('english'))
-    for i, row in df.iterrows():
-        df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if not word in stop_words)
+    stop_words_exp = re.compile(r"({})\s+".format('|'.join(stop_words)))
+    texts = df[col].values.tolist()
+    if lower:
+        new_texts = [stop_words_exp.sub(' ', text.lower()) for text in texts]
+    else:
+        new_texts = [stop_words_exp.sub(' ', text) for text in texts]
+    df.loc[:, col] = new_texts
     return df
+    
 
-
-def mentions(df, col, data_dir):
-    mention_re = re.compile(r"@\w+")
-    for i, row in df.iterrows():
-        df.at[i, col] = mention_re.sub("", row[col])
-        #df.at[i, col] = " ".join(word for word in word_tokenize(row[col]) if word[0] != "@")
-    return df
-
-
-def all_alpha(df, col, data_dir):
-    r = re.compile('[^a-zA-Z0-9]')
-    for i, row in df.iterrows():
-        new_text = " ".join(r.sub("", word) for word in word_tokenize(row[col]))
-        df.at[i, col] = new_text
-    return df
+if __name__ == '__main__':
+    filename = os.environ['SOURCE_PATH']
+    param_file = os.environ['PARAMS']
+    dataframe = pd.read_pickle(filename)
+    
+    with open(param_file, 'r') as fo:
+        params = json.load(fo)
+    for par in params.keys():
+        locals()[par] = params[par]
+    
+    for method in extract:
+        globals()[method](dataframe, text_col)    
+    for method in preprocess:
+        globals()[method](dataframe, text_col)
+    if stopwords is not None:
+        stop_words(dataframe, text_col, lower)
+    dataframe.to_pickle(filename)

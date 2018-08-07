@@ -7,7 +7,7 @@ treebank_tokenizer = nltk_token.TreebankWordTokenizer()
 wordpunc_tokenizer = nltk_token.WordPunctTokenizer()
 
 from happierfuntokenizing import HappierTokenizer
-def tokenize(text):
+def wordpunc_tokenize(text):
 
     #tokens = nltk_tokenizer.tokenize(text)
     tokens = wordpunc_tokenizer.tokenize(text)

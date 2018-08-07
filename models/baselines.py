@@ -1,0 +1,70 @@
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import KFold, ParameterGrid
+from sklearn.linear_model import LogisticRegression
+
+def do_param_grid(grid, X_train, y_train, X_test, y_test, model):
+    best_score_ = 0.
+    best_grid_ = None
+    predictions = None
+    for g in ParameterGrid(grid):
+        model.set_params(**g)
+        model.fit(X_train, y_train)
+        score_ = model.score(X_train, y_train)
+        if score_ > best_score_:
+            best_score = score_
+            best_grid_ = g
+            predictions = model.predict(X_test)
+    return best_grid_, predictions
+
+class Classifier:
+    def __init__(self, params):
+        self.method = params["prediction_method"]
+        self.kfolds = params["k_folds"]
+        self.seed = params["random_seed"]
+        self.param_grid = {"class_weight": ['balanced'],
+                           "C": [0.2]}
+
+    def cv_results(self, X, y):
+        ### k-fold cross-validation: train on 90%, test on 10%; report all results
+        # cast target vector to numpy int:
+        y_int = y.astype(int)
+        # get num-classes:
+        num_classes = len(list(set(y_int)))
+        if self.method == 'log_regression':
+            class_type = 'ovr' if num_classes == 2 else 'multinomial'
+            self.model = LogisticRegression(random_state=self.seed, solver='sag', 
+                                            multi_class=class_type, verbose=0,
+                                            tol=1e-4, max_iter=60)
+        elif self.method == 'svm':
+            self.model = LinearSVC(dual=False, random_state=self.seed)
+        kf = KFold(n_splits=self.kfolds, shuffle=True, random_state=self.seed)
+        predictions = dict()
+        parameters = dict()
+        indices = dict()
+        for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y_int[train_idx], y_int[test_idx]
+            parameter_iter, prediction_iter = do_param_grid(self.param_grid, 
+                                                            X_train, y_train, 
+                                                            X_test, y_test, 
+                                                            self.model)
+            predictions[idx] = prediction_iter
+            parameters[idx] = parameter_iter
+            indices[idx] = test_idx
+        return predictions, parameters, indices
+
+    def format_results(self, predictions, true_vals, row_indices):
+        ### Define a multi-index with (cv-num, doc_idx)
+        list_of_cvs = [[i] * len(predictions[i]) for i in list(predictions.keys())]
+        cv_nums = [item for sublist in list_of_cvs for item in sublist]
+        doc_idxs = [item for sublist in list(row_indices.values()) for item in sublist]
+        vals = [item for sublist in list(predictions.values()) for item in sublist]
+        #doc_idxs = [item for sublist in list_of_ids for item in sublist]
+        arrays = [cv_nums, doc_idxs]
+        tuples = list(zip(*arrays))
+        mindex = pd.MultiIndex.from_tuples(tuples, names=["CrossVal_fold", "Doc_index"])
+
+        list_of_dicts = [{"y": true_vals[i], "y_hat": vals[i]} for i in range(len(true_vals))]
+        return pd.DataFrame(list_of_dicts, index=mindex)

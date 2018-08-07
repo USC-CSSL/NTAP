@@ -4,43 +4,37 @@ import os
 
 import pandas as pd
 
-def get_baseline_params():
-    params = dict()
-    params['method'] = 'log_regression'
+def add_baseline_params(params):
+    params['prediction_task'] = 'classification'  # regression
+    params['prediction_method'] = 'log_regression'
+    params['target_cols'] = ['MFQ_cruel', 'MFQ_compassion']
+    params['k_folds'] = 3
 
-
-def mfq_data_params(group_by='post', project='MFQ-facebook'):
-    params = dict()
-    params['project'] = project
-    params['group_by'] = group_by  # 'user'
-    return params
-
-def get_data_params(project="MFQ-facebook"):
+def add_data_params(params, project="MFQ-facebook"):
+    params['text_col'] = 'fb_status_msg'
+    params['extract'] = []  # ["link", "mentions", "hashtag"]  # "emojis"
+    params['preprocess'] = [] # ['stem']  # 'lemmatize'
+    ### Working: link, mentions, hashtag, stem
+    ### Not Working: lemmatize, emojis
+    params['lower'] = True
+    params['stopword_list'] = 'nltk'  # None, 'my_list.txt', etc.
     if project == "MFQ-facebook":
-        group_by = 'post'
-        return mfq_data_params(group_by=group_by, project=project)
-    else:
-        return False
+        params['group_by'] = 'post'
 
-def feature_gen_params():
-    params = dict()
-
+def add_feature_params(params):
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = ['lda']
+    params['feature_methods'] = ['ddr']
 
     # should be one of the dataframe's columns that contains the text
     params['text_col'] ='fb_status_msg'
+    params['feature_cols'] = list()
+    params['categoricals'] = list()
 
-    params['training_corpus'] = 'wiki_gigaword'
-    params['embedding_method'] = 'GloVe'
-    params['dictionary'] = 'liwc'
+    params['word_embedding'] = 'glove'  # word2vec
+    params['dictionary'] = 'mfd'
     params['random_seed'] = 51
 
-    # should be from ["lemmatize", "all_alpha", "link", "hashtag", "emojis", "partofspeech", "stem", "mentions", "ascii"]
-    params['extract'] = ["link", "mentions", "hashtag", "emojis", "mentions"]
-    params['preprocess'] = ['lemmatize', 'stem']
-    params['stopwords'] = 'default'  # None, 'my_list.txt', etc.
-    params['tokenize'] = 'default'
+    params['tokenize'] = 'wordpunc'
     # [min, max]: default = [0, 1]
     params['ngrams'] = [0, 2]
 
@@ -48,17 +42,15 @@ def feature_gen_params():
     ### Develop this part. Type of reduction, etc. ###
     params['feature_reduce'] = 0
 
-    return params
 
 if __name__ == '__main__':
-    name = "default"
-    params = feature_gen_params()
-    outname = os.path.join("params", "features", name + '.json') 
+    instance_name = os.environ["INSTANCE_NAME"]
+    proj_name = os.environ["PROJ_NAME"]
+    params = dict()
+    add_data_params(params, project=proj_name)
+    add_feature_params(params)
+    add_baseline_params(params)
+    outname = os.path.join("params", instance_name + '.json') 
     with open(outname, 'w') as fo:
         json.dump(params, fo, indent=4)
-        print("Wrote features params to %s" % outname)
-    data_params = get_data_params()
-    outname = os.path.join("params", "data", name + '.json')
-    with open(outname, 'w') as fo:
-        json.dump(data_params, fo, indent=4)
-        print("Wrote data params to %s" % outname)
+        print("Wrote baseline params to %s" % outname)

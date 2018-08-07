@@ -1,7 +1,5 @@
 #!/bin/bash
 
-WORKING_DIR=$1
-PROJ_NAME=$2
-PARAMS=$3
+SCRIPT="./models/run_base.py"
 
-echo "Gathering features from file and running selected models"
+python $SCRIPT 

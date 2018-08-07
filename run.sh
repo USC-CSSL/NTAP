@@ -3,27 +3,23 @@
 PYTH_PATH="$(which python)"
 echo "Using python located in: ${PYTH_PATH}"
 
-WORKING_DIR=/home/brendan/neural_profiles_datadir
-PROJ_NAME="MFQ-facebook"
+export WORKING_DIR=/home/brendan/neural_profiles_datadir
+export PROJ_NAME="MFQ-facebook"
+export INSTANCE_NAME="test_run"
 
-# Directory structure:
-# params/
-# ----data/
-# ----features/
-# ----prediction/
-# ----scoring/
-# ----neural/
+python get_params.py
 
-python get_params.py 
-DATA_PARAMS="./params/data/default.json"
-FEAT_PARAMS="./params/features/default.json"
-BASE_PARAMS="./params/baselines/default.json"
+. set-vars.sh $WORKING_DIR $PROJ_NAME $INSTANCE_NAME
 
 echo "Processing data for project $PROJ_NAME"
-./prep_data.sh $WORKING_DIR $PROJ_NAME $DATA_PARAMS
+#./prep_data.sh
 
 echo "Generating features"
-./gen_features.sh $WORKING_DIR $PROJ_NAME $FEAT_PARAMS
+#./gen_features.sh
 
 echo "Building and Training baseline methods using generated/supplied features"
-./train_baselines.sh $WORKING_DIR $PROJ_NAME $BASE_PARAMS
+./train_baselines.sh
+
+#./train_neural.sh
+
+#./evaluate.sh

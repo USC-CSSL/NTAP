@@ -7,64 +7,28 @@ To-Do:
     - Second step: load all features from file (having been generated) and use sklearn-pandas there
 """
 
-import re
+import re, sys, json, os
+import pandas as pd
 
 import sklearn
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn_pandas import gen_features, CategoricalImputer, DataFrameMapper
 from sklearn.preprocessing import LabelBinarizer
 from scipy import sparse
 
-from vectorizers import *
-from utils import cosine_similarity, tokenize, happiertokenize
+from vectorizers.LDA import LDAVectorizer
+from vectorizers.DDR import DDRVectorizer
+from vectorizers.bag_of_means import BoMVectorizer
+from vectorizers.dictionary import DictionaryVectorizer
+from vectorizers.fasttext import FastTextVectorizer
 
-
-# returns transformer list, one per generated/loaded text feature
-def get_transformer_list(dataframe,
-                         data_dir, 
-                         text_col,  # name of the col that contains the document texta
-                         methods,  # type of features to load/generate. type == str
-                         feature_cols= [], # list of columns that are considered as features
-                         categorical_cols = [],
-                         ngrams = [],
-                         bom_method=None,  # options: 'skipgram', 'glove'
-                         training_corpus=None,  # options: 'google-news', 'wiki', 'common-crawl'
-                         dictionary=None,  # options: 'liwc', 'mfd'
-                         comp_measure='cosine-sim',
-                         random_seed=0,
-                         feature_reduce=None,
-                         tokenizer= "tokenize"
-                         ):
-    # Either generates features from text (tfidf, skipgram, etc.) or load from file
-
-    sent_tokenizer = tokenize if tokenizer == "tokenize" else happiertokenize
-
-    transformers = list()
-
-    for method in methods:
-        transformation = globals()[method](dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer,"cosine-sim")
-        transformers.append((text_col, ) + transformation) if type(transformation) == tuple else (text_col, transformation)
-
-    if len(feature_cols) > 0:
-        transformers += gen_features(
-                columns=[ [col] for col in feature_cols])
-                #classes=[StandardScaler])
-    if len(categorical_cols) > 0:
-        transformers += gen_features(
-                    columns=[ col for col in categorical_cols],
-                    classes=[CategoricalImputer, LabelBinarizer]
-                            )
-
-    mapper = DataFrameMapper(transformers, sparse=True, input_df=True)
-    X = mapper.fit_transform(dataframe)
-    lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
-
-    # as in DLATK, rare features that occur for less that <feature_reduce> percent of data, are filtered and replaced with <OOV>
-
-    return X, lookup_dict
+from utils import cosine_similarity
+from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
+toks = {'happier': happiertokenize,
+        'wordpunc': wordpunc_tokenize,
+        'tweet': tweettokenize}
 
 def validate_arguments(dataframe, text_col, feature_cols, methods):
 
@@ -96,46 +60,86 @@ def validate_arguments(dataframe, text_col, feature_cols, methods):
             print("{} is not an existing method".format(method))
             exit(1)
 
-
-
-
-
-def tfidf(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir,ngrams,sent_tokenizer, comp_measure = "cosine-sim"):
-    return TfidfVectorizer(min_df=10, stop_words='english',
+def tfidf(dataframe, ngrams, sent_tokenizer, stop_list):
+    return TfidfVectorizer(min_df=10, stop_words=stop_list,
             tokenizer=sent_tokenizer, ngram_range=ngrams), {'alias': 'tfidf'}
 
-def bagofmeans(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    if training_corpus is None or bom_method is None:
-        print("Specify bom_method and training_corpus")
-    return (BoMVectorizer(training_corpus,
-                         embedding_type=bom_method,
-                         tokenizer=sent_tokenizer, data_path=data_dir)
-                         , {'alias': "_".join([bom_method, training_corpus])})
+def bagofmeans(bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
+    return (BoMVectorizer(embedding_type=bom_method,
+                          tokenizer=sent_tokenizer, 
+                          )
+            , {'alias': bom_method})
 
-def ddr(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    if dictionary is None or training_corpus is None or bom_method is None:
-        print("Specify dictionary, bom_method, and training_corpus")
-        exit(1)
-    sim = cosine_similarity if comp_measure == 'cosine-sim' else None
-    return (DDRVectorizer(training_corpus,
-                         embedding_type=bom_method,
-                         tokenizer=sent_tokenizer,
-                         data_path=data_dir,
-                         dictionary=dictionary,
-                         similarity=sim), {'alias': "_".join([bom_method, training_corpus, dictionary])})
+def ddr(**kwargs): # bom_method, sent_tokenizer, dictionary, comp_measure="cosine-sim"):
+    sim = cosine_similarity if kwargs['comp_measure'] == 'cosine-sim' else None
+    return (DDRVectorizer(embedding_type=kwargs['bom_method'],
+                          tokenizer=kwargs['sent_tokenizer'],
+                          dictionary=kwargs['dictionary'],
+                          similarity=sim), 
+            {'alias': "_".join([kwargs['bom_method'], kwargs['dictionary']])})
 
-def lda(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    num_topics = 100
+def lda(random_seed, sent_tokenizer, ngram_range, num_topics, num_iterations,
+        vocab_size, stop_list, ngrams):
     return (LDAVectorizer(seed=random_seed,
-                         tokenizer=sent_tokenizer,
-                         num_topics=num_topics),
-           {'alias': "LDA_" + str(num_topics) + "topics"})
+                          tokenizer=sent_tokenizer,
+                          num_topics=num_topics,
+                          num_iter=num_iterations,
+                          num_words=vocab_size,
+                          stop_words=stop_list,
+                          ngrams=ngrams),
+            {'alias': "LDA_" + str(num_topics) + "topics"})
 
+def dictionary(dictionary):
+    return (DictionaryVectorizer(dictionary_name=dictionary), 
+            {"alias": "Dictionary_" + dictionary})
 
-def dictionary(dataframe, text_col, bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    return (DictionaryVectorizer(data_path= data_dir, dictionary_name= dictionary), {"alias": "Dictionary_" + dictionary})
+def fasttext(sent_tokenizer):
+    return (FastTextVectorizer(tokenizer=sent_tokenizer), 
+            {'alias': "FastText_wiki"})
 
-def fasttext(dataframe, text_col, bom_method, training_corpus, dictionary,
-                random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    return (FastTextVectorizer(data_dir), {'alias': "FastText_wiki"})
+def load_params(f):
+    with open(f, 'r') as fo:
+        return json.load(fo)
+
+def collect_features(dataframe, params):
+    doc_index = list(dataframe.index)
+    sent_tokenizer = toks[params["tokenize"]]
+
+    transformers = list()
+    for method in params['feature_methods']:
+        transformation = globals()[method](bom_method=params['word_embedding'], 
+                                           dictionary=params['dictionary'], 
+                                           random_seed=params['random_seed'], 
+                                           ngrams=params['ngrams'], 
+                                           sent_tokenizer=sent_tokenizer,
+                                           comp_measure="cosine-sim")
+        transformers.append((params['text_col'], ) + transformation) if type(transformation) == tuple else (params['text_col'], transformation)
+
+    if len(params['feature_cols']) > 0:  # continuous variables
+        transformers += gen_features(
+                columns=[ [col] for col in params['feature_cols']])
+                #classes=[StandardScaler])
+    if len(params['categoricals']) > 0:  # categorical variables
+        transformers += gen_features(
+                    columns=[ col for col in params['categoricals']],
+                    classes=[CategoricalImputer, LabelBinarizer]
+                            )
+
+    mapper = DataFrameMapper(transformers, sparse=True, input_df=True)
+    X = mapper.fit_transform(dataframe)
+    lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
+
+    feature_df = pd.DataFrame(X, columns=mapper.transformed_names_)
+    feature_df.index = doc_index
+    return feature_df
+
+if __name__ == '__main__':
+    source_path = os.environ['SOURCE_PATH']
+    feat_path = os.environ['FEAT_PATH']
+    param_path = os.environ['PARAMS']
+    source_df = pd.read_pickle(source_path)
+    params = load_params(param_path)
+
+    feature_df = collect_features(source_df, params)
+    feature_df.to_pickle(feat_path)
 

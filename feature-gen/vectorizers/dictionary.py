@@ -1,3 +1,7 @@
+import re
+from sys import stdout
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
 
 class DictionaryVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, dictionary_name, data_path):

@@ -1,32 +1,50 @@
 
+### Helper function ###
+def load_glove_from_file(fname, vocab=None):
+    # vocab is possibly a set of words in the raw text corpus
+    if not os.path.isfile(fname):
+        raise IOError("You're trying to access a GloVe embeddings file that doesn't exist")
+    embeddings = dict()
+    with open(fname, 'r') as fo:
+        for line in fo:
+            tokens = line.split()
+            if vocab is not None:
+                if tokens[0] not in vocab:
+                    continue
+            if len(tokens) > 0:
+                embeddings[str(tokens[0])] = np.array(tokens[1:], dtype=np.float32)
+    return embeddings
 
-from utils import load_glove_from_file
-
+import os, json
+from gensim.models import KeyedVectors as kv
+import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import GridSearchCV
 
-from gensim.models import KeyedVectors as kv
+glove_path = os.environ["GLOVE_PATH"]
+word2vec_path = os.environ["WORD2VEC_PATH"]
+mfd_path = os.environ["MFD_PATH"]
+
 class DDRVectorizer(BaseEstimator, TransformerMixin):
-    def __init__(self, training_corpus, embedding_type,
-                 tokenizer, dictionary, data_path, similarity):
-        self.corpus = training_corpus
+    def __init__(self, embedding_type,
+                 tokenizer, dictionary, similarity):
         self.embedding_type = embedding_type
         self.tokenizer = tokenizer
         self.dictionary = dictionary
-        self.corpus_path = os.path.join(data_path, 'word_embeddings') 
-        dictionary_path = os.path.join(data_path, 'dictionaries', dictionary + '.json')
+        if embedding_type == 'glove':
+            self.embeddings_path = glove_path
+        else:
+            self.embeddings_path = word2vec_path
+        print(mfd_path)
+        dict_path = mfd_path if dictionary == 'mfd' else None
         try:
-            with open(dictionary_path, 'r') as fo:
+            with open(dict_path, 'r') as fo:
                 data = json.load(fo)
                 self.dictionary = data.items()
         except FileNotFoundError:
-            print("Could not load dictionary %s from %s" % (self.dictionary, dictionary_path))
+            print("Could not load dictionary %s from %s" % (self.dictionary, dict_path))
             exit(1)
-
         self.similarity = similarity
-        self.corpus_filenames = {'GoogleNews': 'GoogleNews-vectors-negative300.bin',
-                                 'common_crawl': 'glove.42B.300d.txt',
-                                 'wiki_gigaword': 'glove.6B.300d.txt'}
 
     def get_feature_names(self):
         return [item[0] for item in self.dictionary]
@@ -36,14 +54,14 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
         oov = list()
         count = 0
         for token in tokens:
-            if self.embedding_type == 'skipgram':
+            if self.embedding_type == 'word2vec':
                 try:
                     array = self.skipgram_vectors.get_vector(token)
                     arrays.append(array)
                     count += 1
                 except KeyError as error:
                     oov.append(token)
-            elif self.embedding_type == 'GloVe':
+            elif self.embedding_type == 'glove':
                 try:
                     array = self.glove_vectors[token]
                     arrays.append(array)
@@ -64,16 +82,14 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
             (raise exception if not found)
         """
 
-        self.embeddings_path = os.path.join(self.corpus_path, self.embedding_type, 
-                                            self.corpus_filenames[self.corpus])
         if not os.path.exists(self.embeddings_path):
             print(self.embeddings_path)
             raise ValueError("Invalid Word2Vec training corpus + method")
         print("Loading embeddings")
-        if self.embedding_type == 'skipgram':
+        if self.embedding_type == 'word2vec':
             # type is 'gensim.models.keyedvectors.Word2VecKeyedVectors'
             self.skipgram_vectors = kv.load_word2vec_format(self.embeddings_path, binary=True)
-        if self.embedding_type == 'GloVe':
+        if self.embedding_type == 'glove':
             # type is dict
             self.glove_vectors = load_glove_from_file(self.embeddings_path)
         return self

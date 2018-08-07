@@ -8,11 +8,11 @@ from nltk.corpus import wordnet
 import nltk
 from textblob import TextBlob
 
-source = sys.argv[1]
-dest = sys.argv[2]
-param_file = sys.argv[3]
+source = os.environ['RAW_PATH']
+dest = os.environ['SOURCE_PATH']
+param_path = os.environ['PARAMS']
 
-with open(param_file, 'r') as fo:
+with open(param_path, 'r') as fo:
     params = json.load(fo)
 
 raw_df = pd.read_csv(source, delimiter='|', encoding="latin-1", low_memory=False)
