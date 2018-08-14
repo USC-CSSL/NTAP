@@ -1,9 +1,12 @@
 #!/bin/bash
 
-PYTH_PATH="$(which python)"
+
+PYTH_PATH="python3"
 echo "Using python located in: ${PYTH_PATH}"
 
-export WORKING_DIR=/home/brendan/neural_profiles_datadir
+alias python= PYTH_PATH
+
+export WORKING_DIR=/home/aida/neural_profiles_datadir
 export PROJ_NAME="MFQ-facebook"
 export INSTANCE_NAME="test_run"
 
@@ -18,8 +21,9 @@ echo "Generating features"
 #./gen_features.sh
 
 echo "Building and Training baseline methods using generated/supplied features"
-./train_baselines.sh
+#./train_baselines.sh
 
-#./train_neural.sh
+echo "Building and Training neural network"
+./train_neural.sh
 
 #./evaluate.sh

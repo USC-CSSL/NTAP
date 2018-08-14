@@ -42,6 +42,31 @@ def add_feature_params(params):
     ### Develop this part. Type of reduction, etc. ###
     params['feature_reduce'] = 0
 
+def add_neural_params(params):
+    params["learning_rate"] = 0.0001
+    params["batch_size"] = 100
+    params["keep_ratio"] = 0.66
+
+    #choose from ["GRU", "LSTM"]
+    params["cell"] = "LSTM"
+
+    #choose from ["LSTM", "BiLSTM", "CNN", "RNN"]
+    params["model"] = "LSTM"
+    params["vocab_size"] = 10000
+    params["embedding_size"] = 300
+    params["hidden_size"] = 256
+    params["pretrain"] = True
+    params["train_embedding"] = False
+    params["num_layers"] = 1
+    params["n_outputs"] = 6
+
+    #choose from ["Mean", "Weighted"]
+    params["loss"] = "Mean"
+    params["epoch"] = 500
+    params["save_vectors"] = False
+
+    # should be dataframe columns that are needed to be visualized with embedding vectors
+    params["visualize_cols"] = []
 
 if __name__ == '__main__':
     instance_name = os.environ["INSTANCE_NAME"]
@@ -50,6 +75,7 @@ if __name__ == '__main__':
     add_data_params(params, project=proj_name)
     add_feature_params(params)
     add_baseline_params(params)
+    add_neural_params(params)
     outname = os.path.join("params", instance_name + '.json') 
     with open(outname, 'w') as fo:
         json.dump(params, fo, indent=4)

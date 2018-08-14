@@ -6,9 +6,9 @@ import pandas as pd
 
 def get_params():
     params = dict()
-    root = '/Users/BrendansMac/Documents/'
-    params['data_dir'] = root + '/gab_project/data/'
-    params['scoring_dir'] = root + '/gab_project/scoring/'
+    root = '/home/aida/neural_profiles_datadir/'
+    params['data_dir'] = root + '/data/'
+    params['scoring_dir'] = root + '/scoring/'
 
     # choices: indiv, concat
     params['config_text'] = 'indiv'

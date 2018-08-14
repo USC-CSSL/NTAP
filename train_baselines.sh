@@ -2,4 +2,4 @@
 
 SCRIPT="./models/run_base.py"
 
-python $SCRIPT 
+python3 $SCRIPT
