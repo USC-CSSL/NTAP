@@ -8,12 +8,6 @@ from neural.CNN import CNN
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from nltk import tokenize as nltk_token
-#from set_globals import glove_path, word2vec_path
-from random import randint
-#from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
-#toks = {'happier': happiertokenize,
-#        'wordpunc': wordpunc_tokenize,
-#        'tweet': tweettokenize}
 
 class Neural:
     def __init__(self, params):
@@ -66,10 +60,12 @@ class Neural:
     def build(self):
         if self.pretrain:
             self.load_glove()
+        else:
+            self.embeddings = None
         if self.model == "LSTM" or self.model == "BiLSTM":
             self.nn = LSTM(self.params, self.max_length, self.vocab, self.embeddings)
         else:
-            self.nn = CNN()
+            self.nn = CNN(self.params, self.max_length, self.vocab, self.embeddings)
         self.nn.build()
 
     def graph(self, vectors, labels):
@@ -88,18 +84,52 @@ class Neural:
     def cv_model(self, X, y):
         kf = KFold(n_splits=self.params["k_folds"], shuffle=True, random_state=self.random_seed)
         predictions = dict()
+        f1s = dict()
         vectors = dict()
         indices = dict()
+        accuracy = dict()
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
             # train_idx, test_idx = np.array(indices)[train_index], np.array(indices)[test_index]
-            vectors_iter, prediction_iter = self.nn.run_model(self.get_batches(X_train, y_train) ,
+            predictions[idx], accuracy[idx] = self.nn.run_model(self.get_batches(X_train, y_train) ,
                                                                   self.get_batches(X_test, y_test))
-            predictions[idx] = prediction_iter
-            vectors[idx] = vectors_iter
-            indices[idx] = test_idx
+            f1s[idx] = self.get_f1(predictions[idx], y_test)
+            #predictions[idx] = prediction_iter
+            #vectors[idx] = vectors_iter
+            #indices[idx] = test_idx
+        print("Overall F1 for ")
+        print(sum(f1s.values()) / len(f1s.values()))
 
+
+    def get_f1(self, predictions, labels):
+        for target in range(len(self.target_cols)):
+            print("Calculating F1 values for", self.target_cols[target])
+            true = dict()
+            false = dict()
+            all = dict()
+            precision = dict()
+            f1 = dict()
+            recall = dict()
+            for i in range(self.n_outputs):
+                true[i] = 0
+                all[i] = 0
+                false[i] = 0
+
+            for idx in range(len(predictions)):
+                if predictions[idx, target] == labels[idx, target]:
+                    true[predictions[idx, target]] += 1
+                else:
+                    false[predictions[idx, target]] += 1
+                all[predictions[idx, target]] += 1
+
+            for i in range(self.n_outputs):
+                precision[i] = float(true[i]) / float(true[i] + false[i]) if true[i] + false[i] != 0 else 0
+                recall[i] = float(true[i]) / float(all[i]) if all[i] != 0 else 0
+                f1[i] = 2 * precision[i] * recall[i] / (precision[i] + recall[i]) if precision[i] + recall[
+                    i] > 0 else 0
+                print(i, f1[i])
+            return f1
 
     def load_embeddings(self):
         if self.word_embedding == 'glove':

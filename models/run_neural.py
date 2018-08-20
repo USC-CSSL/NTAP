@@ -3,62 +3,8 @@ import os, json
 import numpy as np
 
 from neural.neural import Neural
-from random import randint
-from sklearn.model_selection import KFold
-import tensorflow as tf
-
-"""
-if len(sys.argv) != 2:
-    print("Usage: python run_neural.py params.json")
-    exit(1)
-with open(sys.argv[1], 'r') as fo:
-    params = json.load(fo)
-
-params = json.load(open("params/test_lstm_hate.json", "r"))
-try:
-    for par in params.keys():
-        locals()[par] = params[par]
 
 
-except KeyError:
-    print("Could not load all parameters; if you're not using a parameter, set it to None")
-    exit(1)
-
-
-
-#Preprocessing the data
-
-
-############### Loading non annotated data##############
-print("Loading the whole dataframe")
-init_clock = time.clock()
-
-dataframe = pd.read_pickle(data_dir + '/' + saved_data) if saved else pd.read_pickle(data_dir + '/' + all_data)
-print("Whole data has {} rows and {} columns".format(dataframe.shape[0], dataframe.shape[1]))
-
-# Preprocessing the data
-if not saved:
-    dataframe = preprocess_text(dataframe, "text", preprocessing, data_dir, config_text, "cleaned_data")
-print("Loading data took %d seconds " % (time.clock() - init_clock))
-
-init_clock = time.clock()
-docs = [tokenize(sent.lower()) for sent in dataframe["text"].values.tolist()]
-print("Tokenizing data took %d seconds " % (time.clock() - init_clock))
-######## Loading annotated data ############
-print("Loading annotated dataframe")
-annotated_df = pd.read_pickle(data_dir + '/' + saved_train) if saved else pd.read_pickle(data_dir + '/' + dataframe_name)
-
-print("Annotated dataframe has {} rows and {} columns".format(annotated_df.shape[0], annotated_df.shape[1]))
-init_clock = time.clock()
-if not saved:
-    annotated_df = preprocess_text(annotated_df, text_col, preprocessing, data_dir, config_text, "cleaned_train")
-#annotated_df = annotated_df.sample(frac=1)
-print("Loading annotated data took %d seconds " % (time.clock() - init_clock))
-
-
-annotated_df = annotated_df.sample(frac = 1)
-print("Number of data points in the sampled data is ", len(annotated_df))
-"""
 
 param_path = os.environ['PARAMS']
 source_path = os.environ['SOURCE_PATH']
@@ -71,7 +17,7 @@ if __name__ == '__main__':
     print(source_df.shape)
     missing_indices = list()
     for target in params["target_cols"]:
-        print("Predicting {}".format(target))
+        print("Removing missing values from", target, "column")
         missing_indices.extend(source_df[source_df[target] == -1.].index)
     source_df = source_df.drop(missing_indices)
     print("Shape of dataframe after getting rid of the Nan values is", source_df.shape)
@@ -102,6 +48,7 @@ if __name__ == '__main__':
 
     if params["k_folds"] > 0:
         neural.cv_model(X, y)
+
 
     if params["save_vectors"]:
         neural.run_model(X, y, source_df[params["visualize_cols"]])

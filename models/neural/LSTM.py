@@ -90,6 +90,7 @@ class LSTM():
         self.accuracy = dict()
         self.xentropy = dict()
         self.drop_out = dict()
+        self.predicted_label = dict()
 
         for target in self.target_cols:
             self.logits[target] = fully_connected(last, math.floor(self.hidden_size / 2), activation_fn=tf.nn.sigmoid)
@@ -102,8 +103,9 @@ class LSTM():
                                                                                    logits=self.predictions[target])
             self.loss[target] = tf.reduce_mean(self.xentropy[target])
 
+            self.predicted_label[target] = tf.argmax(self.predictions[target], 1)
             self.accuracy[target] = tf.reduce_mean(
-                tf.cast(tf.equal(tf.argmax(self.predictions[target], 1), self.task_outputs[target]), tf.float32))
+                tf.cast(tf.equal(self.predicted_label[target], self.task_outputs[target]), tf.float32))
 
         self.joint_accuracy = sum(self.accuracy.values()) / len(self.target_cols)
         if self.loss == "Mean":
@@ -132,8 +134,9 @@ class LSTM():
                 for (X_batch, X_len, y_batch) in batches:
                     feed_dict = self.splitY(y_batch, {self.train_inputs: X_batch,
                                                       self.sequence_length: X_len,
-                                                      self.keep_prob: self.keep_ratio,
-                                                      self.embedding_placeholder: self.my_embeddings if self.pretrain else None})
+                                                      self.keep_prob: self.keep_ratio})
+                    if self.pretrain:
+                        feed_dict[self.embedding_placeholder] = self.my_embeddings
                     _, loss_val = self.sess.run(
                         [self.training_op, self.joint_loss], feed_dict=feed_dict)
                     epoch_loss += loss_val
@@ -144,10 +147,13 @@ class LSTM():
                     break
         vectors = list()
         for (X_batch, X_len, y_batch) in batches:
+            feed_dict = {self.train_inputs: X_batch, self.sequence_length: X_len,
+                self.keep_prob: self.keep_ratio}
+            if self.pretrain:
+                feed_dict[self.embedding_placeholder] = self.my_embeddings
             vector = self.sess.run(self.last,
-                                       feed_dict={self.train_inputs: X_batch, self.sequence_length: X_len,
-                                                  self.keep_prob: self.keep_ratio,
-                                                  self.embedding_placeholder: self.my_embeddings if self.pretrain else None})
+                                       feed_dict=feed_dict)
+
             vectors.extend(vector)
         vectors = np.array(vectors)
         vectors.dump(os.environ['FEAT_PATH'] + "/vectors.pkl")
@@ -158,94 +164,42 @@ class LSTM():
 
         with tf.Session() as self.sess:
             init.run()
-            epoch = 0
+            epoch = 1
+            test_predictions = {target: np.array([]) for target in self.target_cols}
             while True:
+                ## Train
                 epoch_loss = float(0)
                 acc_train = 0
                 epoch += 1
                 for (X_batch, X_len, y_batch) in batches:
                     feed_dict = self.splitY(y_batch, {self.train_inputs: X_batch,
                                                       self.sequence_length: X_len,
-                                                      self.keep_prob: self.keep_ratio,
-                                                      self.embedding_placeholder: self.my_embeddings if self.pretrain else None})
-                    _, loss_val, predictions_= self.sess.run([self.training_op, self.joint_loss, self.predictions], feed_dict= feed_dict)
-                    epoch_loss += loss_val
-                    #print(predictions_["hate"])
-                    acc_train += self.joint_accuracy.eval(feed_dict= feed_dict)
+                                                      self.keep_prob: self.keep_ratio})
+                    if self.pretrain:
+                        feed_dict[self.embedding_placeholder] = self.my_embeddings
+                    _, loss_val= self.sess.run([self.training_op, self.joint_loss], feed_dict= feed_dict)
 
+                    acc_train += self.joint_accuracy.eval(feed_dict=feed_dict)
+                    epoch_loss += loss_val
+
+                ## Test
                 acc_test = 0
                 for (X_batch, X_len, y_batch) in test_batches:
-                    acc_test += self.joint_accuracy.eval(
-                        feed_dict=self.splitY(y_batch, {self.train_inputs: X_batch, self.sequence_length: X_len,
-                                                        self.keep_prob: 1,
-                                                        self.embedding_placeholder: self.my_embeddings if self.pretrain else None}))
+                    feed_dict = self.splitY(y_batch, {self.train_inputs: X_batch, self.sequence_length: X_len,
+                                                        self.keep_prob: 1})
+                    if self.pretrain:
+                        feed_dict[self.embedding_placeholder] = self.my_embeddings
+                    acc_test += self.joint_accuracy.eval(feed_dict=feed_dict)
+                    if epoch == self.epochs:
+                        for target in self.target_cols:
+                            test_predictions[target] = np.append(test_predictions[target], self.predicted_label[target].eval(feed_dict=feed_dict))
 
                 print(epoch, "Train accuracy:", acc_train / float(len(batches)),
                       "Loss: ", epoch_loss / float(len(batches)),
                       "Test accuracy: ", acc_test / float(len(test_batches)))
 
-                if epoch > 500:
+                if epoch == self.epochs:
+                    test_predictions = np.transpose(np.array([test_predictions[target] for target in self.target_cols]))
                     break
-            #acc.append(acc_test / float(len(test_batches)))
             #save_path = saver.save(self.sess, "/tmp/model.ckpt")
-"""
-            results = dict()
-            for (text_batch, lengths, _) in self.get_batches(X):
-                output = self.sess.run(self.predictions,
-                                       feed_dict={self.train_inputs: text_batch, self.sequence_length: lengths,
-                                                  self.keep_prob: 1,
-                                                  self.embedding_placeholder: self.my_embeddings if self.pretrain else None})
-                for target in self.target_cols:
-                    results.setdefault(target, []).extend(list(np.argmax(output[target], 1)))
-            results["index"] = indices
-            re_dataframe = pd.DataFrame(results)
-
-            for target in self.target_cols:
-                print("Analyzing results of", target)
-                true = dict()
-                false = dict()
-                all = dict()
-                precision = dict()
-                f1 = dict()
-                recall = dict()
-                checked = list()
-                for i in range(self.n_outputs):
-                    true[i] = 0
-                    all[i] = 0
-                    false[i] = 0
-
-                for idx in test_idx:
-                    if idx in checked:
-                        continue
-                    checked.append(idx)
-                    if (re_dataframe.loc[re_dataframe["index"] == idx].iloc[0][target] ==
-                            annotated_df.loc[annotated_df["index"] == idx].iloc[0][target]).any():
-                        true[re_dataframe.loc[re_dataframe["index"] == idx].iloc[0][target]] += 1
-                    else:
-                        false[re_dataframe.loc[re_dataframe["index"] == idx].iloc[0][target]] += 1
-                    all[annotated_df.loc[annotated_df["index"] == idx].iloc[0][target]] += 1
-
-                for i in range(n_outputs):
-                    precision[i] = float(true[i]) / float(true[i] + false[i]) if true[i] + false[
-                        i] != 0 else 0
-                    recall[i] = float(true[i]) / float(all[i]) if all[i] != 0 else 0
-                    f1[i] = 2 * precision[i] * recall[i] / (precision[i] + recall[i]) if precision[i] + \
-                                                                                         recall[
-                                                                                             i] > 0 else 0
-                none.append(f1[0])
-                qes.append(f1[1])
-                prob.append(f1[2])
-                print("none", f1[0], "ques", f1[1], "prob", f1[2])
-
-    print(float(sum(none)) / float(len(none)))
-    print(float(sum(qes)) / float(len(qes)))
-    print(float(sum(prob)) / float(len(prob)))
-    print(float(sum(acc)) / float(len(acc)))
-    results = pd.DataFrame(
-        {'none': none,
-         'ques': qes,
-         'prob': prob,
-         'acc': acc
-         })
-    results.to_pickle("results.pkl")
-"""
+        return test_predictions, acc_test / float(len(test_batches))

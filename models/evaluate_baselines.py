@@ -199,7 +199,6 @@ def svm(X, Y, lookup_dict, scoring_dict, col, kfold, seed):
     return scoring_dict, best_model
 
 def write_evaluations(scoring_dict, scoring_output, output_name):
-
     if not os.path.exists(scoring_output):
         os.makedirs(scoring_output)
     scoring_output = os.path.join(scoring_output, output_name + ".json")
