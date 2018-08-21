@@ -197,6 +197,8 @@ if __name__ == '__main__':
     filename = os.environ['SOURCE_PATH']
     param_file = os.environ['PARAMS']
     dataframe = pd.read_pickle(filename)
+
+    print("Preprocessing data")
     
     with open(param_file, 'r') as fo:
         params = json.load(fo)

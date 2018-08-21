@@ -25,7 +25,16 @@ from vectorizers.dictionary import DictionaryVectorizer
 from vectorizers.fasttext import FastTextVectorizer
 
 from utils import cosine_similarity
-from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
+from os.path import dirname
+
+#print(os.environ["PYTHONPATH"])
+
+token_path = os.path.dirname(os.getcwd())
+
+#os.environ["PYTHONPATH"] = token_path
+
+
+from tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
 toks = {'happier': happiertokenize,
         'wordpunc': wordpunc_tokenize,
         'tweet': tweettokenize}
@@ -59,6 +68,7 @@ def validate_arguments(dataframe, text_col, feature_cols, methods):
         if method not in gen_list:
             print("{} is not an existing method".format(method))
             exit(1)
+        
 
 def tfidf(dataframe, ngrams, sent_tokenizer, stop_list):
     return TfidfVectorizer(min_df=10, stop_words=stop_list,

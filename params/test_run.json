@@ -6,7 +6,7 @@
     "stopword_list": "nltk",
     "group_by": "post",
     "feature_methods": [
-        "ddr"
+        "tfidf"
     ],
     "feature_cols": [],
     "categoricals": [],

@@ -23,7 +23,7 @@ def add_data_params(params, project="MFQ-facebook"):
 
 def add_feature_params(params):
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = ['ddr']
+    params['feature_methods'] = ['tfidf']
 
     # should be one of the dataframe's columns that contains the text
     params['text_col'] ='fb_status_msg'
