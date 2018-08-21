@@ -1,0 +1,17 @@
+__pycache__/
+
+# ide files
+.idea/
+
+
+# personal file
+requirements.txt
+
+# virtualenv
+nlp_env/
+
+.DS_Store
+
+# necessary requirements
+fastText/
+scikit-learn/
