@@ -3,6 +3,8 @@ __pycache__/
 # ide files
 .idea/
 
+.xml
+
 
 # personal file
 requirements.txt

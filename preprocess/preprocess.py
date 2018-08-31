@@ -2,16 +2,23 @@ import re, os, json, nltk, string, emot, emoji, sys
 from nltk.stem import WordNetLemmatizer, PorterStemmer
 import pandas as pd
 from nltk.corpus import wordnet, stopwords
-from nltk import word_tokenize
+from nltk import word_tokenize  # TweetTokenizer
 from unidecode import unidecode
 from textblob import TextBlob
 from sys import stdout
 import copy
+# import time
+import requests
+import tagme
 
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
 
+DEFAULT_LANG = 'en'
+DEFAULT_LONG_TEXT = 3
+DEFAULT_TAG_API = "https://tagme.d4science.org/tagme/tag"
+DEFAULT_RHO = 0.1  # suggested rho values between 0.1 and 0.3
 
 def preprocess_text(df,
                     col,
@@ -38,6 +45,7 @@ def preprocess_text(df,
         #exit(1)
     """
 
+
 def link(df, col):
     print("Extracting http(s) links")
     http_pattern = re.compile(r"http(s)?[^\s]+")
@@ -47,6 +55,7 @@ def link(df, col):
     df.loc[:, col] = pd.Series(new_texts, index=df.index)
     df.loc[:, "links"] = pd.Series(links, index=df.index)
     return df
+
 
 def hashtag(df, col):
     print("Extracting hashtags")
@@ -68,6 +77,7 @@ def mentions(df, col):
     df.loc[:, col] = pd.Series(new_texts, index=df.index)
     df.loc[:, "mentions"] = pd.Series(mentions, index=df.index)
     return df
+
 
 def emojis(df, col):
     emojis_col = list()
@@ -91,6 +101,7 @@ def emojis(df, col):
     df["emojis"] = pd.Series(emojis_col, index=df.index)
     return df
 
+
 """
 
 def partofspeech(df, col, dir):
@@ -106,6 +117,7 @@ def partofspeech(df, col, dir):
 
 """
 
+
 def stem(df, col):
     print("Stemming with Porter Stemmer")
     stemmer = PorterStemmer()
@@ -113,6 +125,7 @@ def stem(df, col):
     new_texts = [" ".join([stemmer.stem(w) for w in text.split()]) for text in texts]
     df.loc[:, col] = new_texts
     return df
+
 
 """
 
@@ -180,6 +193,7 @@ def ascii(df, col):
 
 """
 
+
 def stop_words(df, col, lower):
     print("Removing stop words")
     stop_words = set(stopwords.words('english'))
@@ -191,12 +205,41 @@ def stop_words(df, col, lower):
         new_texts = [stop_words_exp.sub(' ', text) for text in texts]
     df.loc[:, col] = new_texts
     return df
+
+# Use TagMe API to perform entity linking
+
+def entity_linking(df, col):
+
+    print("Adding entities to data frame")
+    # list of list of annotation titles
+    ann_title_col = list()
+    texts = df[col].values.tolist()
+
+    for text in texts:
+        print(text)
+        # long_text = 0 to speed up tagme process
+        text_ann = tagme.annotate(text, lang=DEFAULT_LANG, api=DEFAULT_TAG_API, long_text=DEFAULT_LONG_TEXT)
+        # list of annotation titles
+        ann_title = list()
+        # For each annotation in a post, append only annotations that satisfies rho to corresponding lists
+        for ann in text_ann.get_annotations(DEFAULT_RHO):
+            ann_title.append(ann.entity_title)
+        print("row list of titles: ")
+        print(ann_title)
+        # Append list to associated column list
+        ann_title_col.append(ann_title)
+    print("final ann_title_col: ")
+    print(ann_title_col)
+    print("Added entity linking titles to dataframe")
+    df["entity title"] = pd.Series(ann_title_col, index=df.index)
+    return df
     
 
 if __name__ == '__main__':
     filename = os.environ['SOURCE_PATH']
     param_file = os.environ['PARAMS']
     dataframe = pd.read_pickle(filename)
+    tagme.GCUBE_TOKEN = "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
 
     print("Preprocessing data")
     
@@ -211,4 +254,6 @@ if __name__ == '__main__':
         globals()[method](dataframe, text_col)
     if stopwords is not None:
         stop_words(dataframe, text_col, lower)
+
+
     dataframe.to_pickle(filename)

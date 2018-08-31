@@ -13,7 +13,7 @@ def add_baseline_params(params):
 def add_data_params(params, project="MFQ-facebook"):
     params['text_col'] = 'fb_status_msg'
     params['extract'] = []  # ["link", "mentions", "hashtag"]  # "emojis"
-    params['preprocess'] = [] # ['stem']  # 'lemmatize'
+    params['preprocess'] = ['entity_linking'] # ['stem', 'entity_linking']  # 'lemmatize'
     ### Working: link, mentions, hashtag, stem
     ### Not Working: lemmatize, emojis
     params['lower'] = True
@@ -23,7 +23,7 @@ def add_data_params(params, project="MFQ-facebook"):
 
 def add_feature_params(params):
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = ['tfidf']
+    params['feature_methods'] = ['ddr']
 
     # should be one of the dataframe's columns that contains the text
     params['text_col'] ='fb_status_msg'
