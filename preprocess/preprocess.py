@@ -2,16 +2,20 @@ import re, os, json, nltk, string, emot, emoji, sys
 from nltk.stem import WordNetLemmatizer, PorterStemmer
 import pandas as pd
 from nltk.corpus import wordnet, stopwords
-from nltk import word_tokenize
+from nltk import word_tokenize  # TweetTokenizer
 from unidecode import unidecode
 from textblob import TextBlob
 from sys import stdout
 import copy
+# import time
+import requests
+import tagme
 
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
-
+# TODO: Add tagme token
+tagme.GCUBE_TOKEN = "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
 
 def preprocess_text(df,
                     col,
@@ -38,6 +42,7 @@ def preprocess_text(df,
         #exit(1)
     """
 
+
 def link(df, col):
     print("Extracting http(s) links")
     http_pattern = re.compile(r"http(s)?[^\s]+")
@@ -47,6 +52,7 @@ def link(df, col):
     df.loc[:, col] = pd.Series(new_texts, index=df.index)
     df.loc[:, "links"] = pd.Series(links, index=df.index)
     return df
+
 
 def hashtag(df, col):
     print("Extracting hashtags")
@@ -68,6 +74,7 @@ def mentions(df, col):
     df.loc[:, col] = pd.Series(new_texts, index=df.index)
     df.loc[:, "mentions"] = pd.Series(mentions, index=df.index)
     return df
+
 
 def emojis(df, col):
     emojis_col = list()
@@ -91,6 +98,7 @@ def emojis(df, col):
     df["emojis"] = pd.Series(emojis_col, index=df.index)
     return df
 
+
 """
 
 def partofspeech(df, col, dir):
@@ -106,6 +114,7 @@ def partofspeech(df, col, dir):
 
 """
 
+
 def stem(df, col):
     print("Stemming with Porter Stemmer")
     stemmer = PorterStemmer()
@@ -113,6 +122,7 @@ def stem(df, col):
     new_texts = [" ".join([stemmer.stem(w) for w in text.split()]) for text in texts]
     df.loc[:, col] = new_texts
     return df
+
 
 """
 
@@ -180,6 +190,7 @@ def ascii(df, col):
 
 """
 
+
 def stop_words(df, col, lower):
     print("Removing stop words")
     stop_words = set(stopwords.words('english'))
@@ -191,6 +202,35 @@ def stop_words(df, col, lower):
         new_texts = [stop_words_exp.sub(' ', text) for text in texts]
     df.loc[:, col] = new_texts
     return df
+
+
+def tagme(df, col, rho):  # maybe add rho
+    print("Adding entities to data frame")
+    # List of wikipedia page ID's
+    ann_col_id = list()
+    # List of annotated titles
+    ann_col_title = list()
+    # List of uri's associated with each annotation
+    ann_col_uri = list()
+
+    texts = df[col].values.tolist()
+    for text in texts:
+        text_ann = tagme.annotate(text)
+        # For each annotation in a post, append only annotations that satisfies rho to corresponding lists
+        for ann in text_ann.get_annotations(rho):
+            ann_col_id.append(ann.entity_id)
+            ann_col_title.append(ann.entity_title)
+            ann_col_uri.append(ann.entity_uri)
+
+    # TODO: finish!
+    # Need to figure out how to add list to cell in "ID", "Title", and "URI" columns
+    # for each row (user) && how to add those new columns to df
+
+
+    # df["annotations"] = pd.Series(ann_col, index=df.index)
+
+
+
     
 
 if __name__ == '__main__':
@@ -211,4 +251,8 @@ if __name__ == '__main__':
         globals()[method](dataframe, text_col)
     if stopwords is not None:
         stop_words(dataframe, text_col, lower)
+    # TagMe
+    if entity_linking:
+        tagme(dataframe, text_col, rho)
+
     dataframe.to_pickle(filename)
