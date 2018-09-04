@@ -14,6 +14,8 @@ import tagme
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
+# TODO: Add tagme token
+tagme.GCUBE_TOKEN = "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
 
 DEFAULT_LANG = 'en'
 DEFAULT_LONG_TEXT = 3
@@ -216,7 +218,6 @@ def entity_linking(df, col):
     texts = df[col].values.tolist()
 
     for text in texts:
-        print(text)
         # long_text = 0 to speed up tagme process
         text_ann = tagme.annotate(text, lang=DEFAULT_LANG, api=DEFAULT_TAG_API, long_text=DEFAULT_LONG_TEXT)
         # list of annotation titles
@@ -224,12 +225,8 @@ def entity_linking(df, col):
         # For each annotation in a post, append only annotations that satisfies rho to corresponding lists
         for ann in text_ann.get_annotations(DEFAULT_RHO):
             ann_title.append(ann.entity_title)
-        print("row list of titles: ")
-        print(ann_title)
         # Append list to associated column list
         ann_title_col.append(ann_title)
-    print("final ann_title_col: ")
-    print(ann_title_col)
     print("Added entity linking titles to dataframe")
     df["entity title"] = pd.Series(ann_title_col, index=df.index)
     return df

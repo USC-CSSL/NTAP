@@ -18,6 +18,8 @@ def add_data_params(params, project="MFQ-facebook"):
     ### Not Working: lemmatize, emojis
     params['lower'] = True
     params['stopword_list'] = 'nltk'  # None, 'my_list.txt', etc.
+    params['entity_linking'] = False
+    params['rho'] = 0.1  # Suggested rho value between 0.1 and 0.3
     if project == "MFQ-facebook":
         params['group_by'] = 'post'
 
