@@ -8,11 +8,11 @@ def add_baseline_params(params):
     params['prediction_task'] = 'classification'  # regression
     params['prediction_method'] = 'log_regression'
     params['target_cols'] = ['hate']
-    params['k_folds'] = 3
+    params['k_folds'] = 10
 
 def add_data_params(params, project="Gab"):
     params['text_col'] = 'text'
-    params['extract'] = []  # ["link", "mentions", "hashtag"]  # "emojis"
+    params['extract'] = ["link", "mentions", "hashtags"]  # ["link", "mentions", "hashtag"]  # "emojis"
     params['preprocess'] = [] # ['stem']  # 'lemmatize'
     ### Working: link, mentions, hashtag, stem
     ### Not Working: lemmatize, emojis
@@ -23,10 +23,9 @@ def add_data_params(params, project="Gab"):
 
 def add_feature_params(params):
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = ['ddr']
+    params['feature_methods'] = ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
 
     # should be one of the dataframe's columns that contains the text
-    params['text_col'] ='text'
     params['feature_cols'] = list()
     params['categoricals'] = list()
 
@@ -43,19 +42,19 @@ def add_feature_params(params):
     params['feature_reduce'] = 0
 
 def add_neural_params(params):
-    params["learning_rate"] = 0.0005
+    params["learning_rate"] = 0.0001
     params["batch_size"] = 100
     params["keep_ratio"] = 0.66
 
     #choose from ["GRU", "LSTM"]
     params["cell"] = "LSTM"
 
-    #choose from ["LSTM", "BiLSTM", "CNN", "RNN"]
-    params["model"] = "CNN"
+    #choose from ["LSTM", "BiLSTM", "CNN", "RNN", "RCNN"]
+    params["model"] = "RCNN"
     params["vocab_size"] = 10000
     params["embedding_size"] = 300
     params["hidden_size"] = 256
-    params["pretrain"] = False
+    params["pretrain"] = True
     params["train_embedding"] = False
     params["num_layers"] = 1
     params["n_outputs"] = 3
@@ -64,9 +63,8 @@ def add_neural_params(params):
     params["num_filters"] = 2
     #choose from ["Mean", "Weighted"]
     params["loss"] = "Mean"
-    params["epoch"] = 500
     params["save_vectors"] = False
-    params["epochs"] = 1000
+    params["epochs"] = 500
 
     # should be dataframe columns that are needed to be visualized with embedding vectors
     params["visualize_cols"] = []
