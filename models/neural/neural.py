@@ -5,6 +5,7 @@ import os, math
 import operator
 from neural.LSTM import LSTM
 from neural.CNN import CNN
+from neural.RCNN import RCNN
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from nltk import tokenize as nltk_token
@@ -20,6 +21,7 @@ class Neural:
         else:
             #self.embeddings_path = word2vec_path
             self.embeddings_path = os.environ['WORD2VEC_PATH']
+
 
     def tokenize_data(self, corpus):
         #sent_tokenizer = toks[self.params["tokenize"]]
@@ -62,10 +64,16 @@ class Neural:
             self.load_glove()
         else:
             self.embeddings = None
+
         if self.model == "LSTM" or self.model == "BiLSTM":
             self.nn = LSTM(self.params, self.max_length, self.vocab, self.embeddings)
-        else:
+        elif self.model == "CNN":
+            if self.pretrain:
+                self.embeddings.reshape(self.embeddings.shape[0], self.embeddings.shape[1], 1)
             self.nn = CNN(self.params, self.max_length, self.vocab, self.embeddings)
+        else:
+            self.nn = RCNN(self.params, self.max_length, self.vocab, self.embeddings)
+
         self.nn.build()
 
     def graph(self, vectors, labels):
@@ -77,7 +85,7 @@ class Neural:
 
 
     def run_model(self, X, y, labels):
-        vectors = self.nn.get_vectors(self.get_batches(X, y))
+        vectors = self.nn.get_vectors(self.get_batches(X, y, padding=(self.model != "CNN")))
         self.graph(vectors, labels)
 
 
@@ -92,14 +100,15 @@ class Neural:
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
             # train_idx, test_idx = np.array(indices)[train_index], np.array(indices)[test_index]
-            predictions[idx], accuracy[idx] = self.nn.run_model(self.get_batches(X_train, y_train) ,
+            # TODO: For CNN get batches with no padding
+            predictions[idx], accuracy[idx] = self.nn.run_model(self.get_batches(X_train, y_train),
                                                                   self.get_batches(X_test, y_test))
             f1s[idx] = self.get_f1(predictions[idx], y_test)
             #predictions[idx] = prediction_iter
             #vectors[idx] = vectors_iter
             #indices[idx] = test_idx
-        print("Overall F1 for ")
-        print(sum(f1s.values()) / len(f1s.values()))
+        #print("Overall F1 for ")
+        #print(sum(f1s.values()) / len(f1s.values()))
 
 
     def get_f1(self, predictions, labels):
@@ -163,14 +172,15 @@ class Neural:
         # self.embeddings = np.array(collections.OrderedDict(sorted(self.embeddings.items())).values())
         self.embeddings = np.array(list(self.embeddings.values()))
 
-    def get_batches(self, corpus_ids, labels=None):
+    def get_batches(self, corpus_ids, labels=None, padding=True):
         batches = []
         for idx in range(len(corpus_ids) // self.batch_size + 1):
             labels_batch = labels[idx * self.batch_size: min((idx + 1) * self.batch_size,
                                                         len(labels))] if labels is not None else []
             text_batch = corpus_ids[idx * self.batch_size: min((idx + 1) * self.batch_size, len(corpus_ids))]
             lengths = np.array([len(line) for line in text_batch])
-            text_batch = self.padding(text_batch)
+            if padding:
+                text_batch = self.padding(text_batch)
             batches.append((np.array([np.array(line) for line in text_batch]), lengths, np.array(labels_batch)))
         return batches
 
