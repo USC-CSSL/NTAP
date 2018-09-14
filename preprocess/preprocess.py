@@ -14,9 +14,6 @@ import tagme
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
-# TODO: Add tagme token
-tagme.GCUBE_TOKEN = "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
-
 DEFAULT_LANG = 'en'
 DEFAULT_LONG_TEXT = 3
 DEFAULT_TAG_API = "https://tagme.d4science.org/tagme/tag"
@@ -208,27 +205,73 @@ def stop_words(df, col, lower):
     df.loc[:, col] = new_texts
     return df
 
-# Use TagMe API to perform entity linking
 
+# Helper function to get abstracts
+# takes in annotation, then returns corresponding abstract
+def add_abstract(title):
+
+    parameters = {
+        'text': title,
+        'lang': DEFAULT_LANG,
+        'include_abstract': 'true',
+        'gcube-token': "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
+    }
+
+    # Get wikipedia request
+    res = requests.get(DEFAULT_TAG_API, params=parameters)
+    abstract = re.search('abstract\":\"(.*)\"id\"', res.text)
+    new_text = abstract.group(1).split('\",\"id\"')[0]
+
+    return new_text
+
+
+# Use TagMe API to perform entity linking
 def entity_linking(df, col):
 
-    print("Adding entities to data frame")
+    file_name = os.environ['ENTITY_PATH']
+    if os.path.isfile(file_name):
+        abstract_df = pd.read_pickle(file_name)
+        abstract_dict = abstract_df.to_dict()
+    else:
+        # abstract_df = pd.DataFrame()
+        abstract_dict = {}
+
+    print("Adding entities to data frame and corresponding abstracts")
     # list of list of annotation titles
     ann_title_col = list()
-    texts = df[col].values.tolist()
+    # list of list of annotation ID's
+    ann_id_col = list()
 
+    texts = df[col].values.tolist()
     for text in texts:
         # long_text = 0 to speed up tagme process
         text_ann = tagme.annotate(text, lang=DEFAULT_LANG, api=DEFAULT_TAG_API, long_text=DEFAULT_LONG_TEXT)
         # list of annotation titles
         ann_title = list()
+        # list of annotation ID's
+        ann_id = list()
+
         # For each annotation in a post, append only annotations that satisfies rho to corresponding lists
         for ann in text_ann.get_annotations(DEFAULT_RHO):
             ann_title.append(ann.entity_title)
+            ann_id.append(ann.entity_id)
+
+            # If ID isn't in dictionary, add the corresponding abstract
+            if ann.entity_id not in abstract_dict:
+                # Get wikipedia request
+                abstract_dict[ann.entity_id] = add_abstract(ann.entity_title)
+
         # Append list to associated column list
         ann_title_col.append(ann_title)
-    print("Added entity linking titles to dataframe")
+        ann_id_col.append(ann_id)
+
+    abstract_df = pd.Series(abstract_dict)
+    abstract_df.index.name = 'ID'
+    abstract_df.columns = ['Abstracts']
+    abstract_df.to_pickle(file_name)
+
     df["entity title"] = pd.Series(ann_title_col, index=df.index)
+    df["entity ID"] = pd.Series(ann_id_col, index=df.index)
     return df
     
 
@@ -251,6 +294,5 @@ if __name__ == '__main__':
         globals()[method](dataframe, text_col)
     if stopwords is not None:
         stop_words(dataframe, text_col, lower)
-
 
     dataframe.to_pickle(filename)

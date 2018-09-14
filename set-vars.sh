@@ -2,6 +2,7 @@
 
 # Data-processing Paths
 export RAW_PATH="$WORKING_DIR/data/${PROJ_NAME}/source.csv";
+export ENTITY_PATH="$WORKING_DIR/data/${PROJ_NAME}/abstracts.pkl";
 export SOURCE_PATH="$WORKING_DIR/data/${PROJ_NAME}/${INSTANCE_NAME}.pkl";
 export FEAT_PATH=${WORKING_DIR}/features/${PROJ_NAME}/${INSTANCE_NAME}.pkl;
 export PRED_PATH=${WORKING_DIR}/predictions/${PROJ_NAME}/${INSTANCE_NAME}/;
