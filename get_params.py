@@ -6,24 +6,24 @@ import pandas as pd
 
 def add_baseline_params(params):
     params['prediction_task'] = 'classification'  # regression
-    params['prediction_method'] = 'log_regression'
-    params['target_cols'] = ['hate']
-    params['k_folds'] = 10
+    params['prediction_method'] = 'svm'
+    params['target_cols'] = ['MFQ_loyalty']
+    params['k_folds'] = 3
 
-def add_data_params(params, project="Gab"):
-    params['text_col'] = 'text'
+def add_data_params(params, project="MFQ-facebook"):
+    params['text_col'] = 'fb_status_msg'
     params['extract'] = ["link", "mentions", "hashtags"]  # ["link", "mentions", "hashtag"]  # "emojis"
     params['preprocess'] = [] # ['stem']  # 'lemmatize'
     ### Working: link, mentions, hashtag, stem
     ### Not Working: lemmatize, emojis
     params['lower'] = True
     params['stopword_list'] = 'nltk'  # None, 'my_list.txt', etc.
-    if project == "MFQ-facebook":
-        params['group_by'] = 'post'
+    params['group_by'] = 'user-bagged'  # options: post, user, user-bagged
+    params['discretize'] = 'binarize'  # options binarize, extremes, three-way
 
 def add_feature_params(params):
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
+    params['feature_methods'] = ['ddr']  #, 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
 
     # should be one of the dataframe's columns that contains the text
     params['feature_cols'] = list()
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     add_data_params(params, project=proj_name)
     add_feature_params(params)
     add_baseline_params(params)
-    add_neural_params(params)
+    #add_neural_params(params)
     outname = os.path.join("params", instance_name + '.json') 
     with open(outname, 'w') as fo:
         json.dump(params, fo, indent=4)

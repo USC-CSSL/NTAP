@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# Data-processing Paths
+# Data-processing Paths: Project-specific
 export RAW_PATH="$WORKING_DIR/data/${PROJ_NAME}/source.csv";
-export SOURCE_PATH="$WORKING_DIR/data/${PROJ_NAME}/${INSTANCE_NAME}.pkl";
-export FEAT_PATH=${WORKING_DIR}/features/${PROJ_NAME}/${INSTANCE_NAME}.pkl;
-export PRED_PATH=${WORKING_DIR}/predictions/${PROJ_NAME}/${INSTANCE_NAME}/;
-mkdir -p $PRED_PATH
+export SOURCE_DIR="$WORKING_DIR/data/${PROJ_NAME}/${INSTANCE_NAME}";
+mkdir -p "$SOURCE_DIR"
+export SOURCE_PATH="${SOURCE_DIR}/full_df.pkl";
+
+export FEAT_DIR=${WORKING_DIR}/features/${PROJ_NAME}/${INSTANCE_NAME};
+export PRED_DIR=${WORKING_DIR}/predictions/${PROJ_NAME}/${INSTANCE_NAME}/;
+mkdir -p "$PRED_DIR"
+mkdir -p "$FEAT_DIR"
 
 # External data source paths
 export GLOVE_PATH="${WORKING_DIR}/word_embeddings/GloVe/glove.6B.300d.txt";

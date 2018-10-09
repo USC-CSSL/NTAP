@@ -4,10 +4,9 @@ import json
 from sys import stdout
 import sys
 sys.path.append('../..')
-from set_globals import fasttext_path
 
 from sklearn.base import BaseEstimator, TransformerMixin
-import fastText
+import fasttext as fastText
 
 class FastTextVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, tokenizer=None):

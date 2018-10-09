@@ -3,6 +3,7 @@ import numpy as np
 
 from sklearn.model_selection import KFold, ParameterGrid
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 
 def do_param_grid(grid, X_train, y_train, X_test, y_test, model):
     best_score_ = 0.
@@ -40,9 +41,11 @@ class Classifier:
         elif self.method == 'svm':
             self.model = LinearSVC(dual=False, random_state=self.seed)
         kf = KFold(n_splits=self.kfolds, shuffle=True, random_state=self.seed)
+
         predictions = dict()
         parameters = dict()
         indices = dict()
+        features = np.ones( ( num_classes, X.shape[1]) )
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y_int[train_idx], y_int[test_idx]
@@ -50,10 +53,14 @@ class Classifier:
                                                             X_train, y_train, 
                                                             X_test, y_test, 
                                                             self.model)
+            features += self.model.coef_
             predictions[idx] = prediction_iter
             parameters[idx] = parameter_iter
             indices[idx] = test_idx
-        return predictions, parameters, indices
+
+        features /= len(predictions)
+
+        return predictions, parameters, indices, features
 
     def format_results(self, predictions, true_vals, row_indices):
         ### Define a multi-index with (cv-num, doc_idx)
@@ -68,3 +75,15 @@ class Classifier:
 
         list_of_dicts = [{"y": true_vals[i], "y_hat": vals[i]} for i in range(len(true_vals))]
         return pd.DataFrame(list_of_dicts, index=mindex)
+
+    def format_features(self, features,  feature_names):
+        """
+        'features' is a (n_classes, n_features) numpy array
+        return: dataframe indexed by class, columns by feature_names
+        """
+        dataframe = pd.DataFrame(features)
+        print(dataframe)
+        dataframe.index = self.model.classes_
+        dataframe.columns = feature_names
+
+        return dataframe

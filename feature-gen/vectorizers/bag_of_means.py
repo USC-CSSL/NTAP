@@ -18,7 +18,6 @@ def load_glove_from_file(fname, vocab=None):
 import sys
 sys.path.append("../..")
 
-from set_globals import glove_path, word2vec_path
 
 import os, re, json
 import numpy as np

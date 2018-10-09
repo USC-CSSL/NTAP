@@ -33,9 +33,14 @@ if __name__ == '__main__':
         else:
             raise ValueError("Invalid prediction_task; candidates: classification|regression")
         
-        predictions, param_sets, index_dict = predictor.cv_results(X, y)
+        predictions, param_sets, index_dict, features = predictor.cv_results(X, y)
         row_indices = {k:[instance_names[keys] for keys in v] for k,v in index_dict.items()}
         pred_series = predictor.format_results(predictions, 
                                                y.astype(int), 
                                                row_indices)
-        pred_series.to_pickle(prediction_path + target + '.pkl')
+        os.makedirs(os.path.join(prediction_path, target))
+        pred_series.to_pickle(prediction_path + target + '/predictions.pkl')
+
+        feature_df = predictor.format_features(features,
+                                               feature_names)
+        feature_df.to_pickle(prediction_path + target + '/features.pkl')

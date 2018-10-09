@@ -26,6 +26,8 @@ from vectorizers.fasttext import FastTextVectorizer
 
 from utils import cosine_similarity
 from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
+#from tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
+
 toks = {'happier': happiertokenize,
         'wordpunc': wordpunc_tokenize,
         'tweet': tweettokenize}
@@ -134,12 +136,16 @@ def collect_features(dataframe, params):
     return feature_df
 
 if __name__ == '__main__':
-    source_path = os.environ['SOURCE_PATH']
-    feat_path = os.environ['FEAT_PATH']
+    dataset_dir = os.environ['SOURCE_DIR']
+    feat_dir = os.environ['FEAT_DIR']
     param_path = os.environ['PARAMS']
-    source_df = pd.read_pickle(source_path)
     params = load_params(param_path)
 
-    feature_df = collect_features(source_df, params)
+    dataset_df = pd.read_pickle(os.path.join(dataset_dir, params['group_by'] + '.pkl'))
+    feat_path = os.path.join(feat_dir, params['group_by'] + '.pkl')
+
+    print(dataset_df)
+
+    feature_df = collect_features(dataset_df, params)
     feature_df.to_pickle(feat_path)
 
