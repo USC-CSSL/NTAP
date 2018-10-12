@@ -1,0 +1,33 @@
+{
+    "text_col": "fb_status_msg",
+    "extract": [
+        "link",
+        "mentions",
+        "hashtags"
+    ],
+    "preprocess": [],
+    "lower": true,
+    "stopword_list": "nltk",
+    "group_by": "user",
+    "discretize": "binarize",
+    "feature_methods": [
+        "ddr"
+    ],
+    "feature_cols": [],
+    "categoricals": [],
+    "word_embedding": "glove",
+    "dictionary": "mfd",
+    "random_seed": 51,
+    "tokenize": "wordpunc",
+    "ngrams": [
+        0,
+        2
+    ],
+    "feature_reduce": 0,
+    "prediction_task": "classification",
+    "prediction_method": "svm",
+    "target_cols": [
+        "MFQ_loyalty"
+    ],
+    "k_folds": 3
+}

@@ -18,7 +18,7 @@ def add_data_params(params, project="MFQ-facebook"):
     ### Not Working: lemmatize, emojis
     params['lower'] = True
     params['stopword_list'] = 'nltk'  # None, 'my_list.txt', etc.
-    params['group_by'] = 'user-bagged'  # options: post, user, user-bagged
+    params['group_by'] = 'user'  #'user-bagged'  # options: post, user, user-bagged
     params['discretize'] = 'binarize'  # options binarize, extremes, three-way
 
 def add_feature_params(params):

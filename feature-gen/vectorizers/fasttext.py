@@ -6,7 +6,12 @@ import sys
 sys.path.append('../..')
 
 from sklearn.base import BaseEstimator, TransformerMixin
-import fasttext as fastText
+
+# Different versions of fasttext 
+try:
+    import fasttext as fastText
+except ModuleNotFoundError:
+    import fastText
 
 class FastTextVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, tokenizer=None):

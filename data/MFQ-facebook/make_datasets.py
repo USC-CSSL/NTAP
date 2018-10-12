@@ -56,7 +56,7 @@ def make_concatenated(mindexed_df, num_bags=10, threshold=5):
             rebagged = split_into_bags(concat, num_bags)    
             for bag in rebagged:
                 bag_dict.append({"userid": auth, "fb_status_msg": bag})
-        concat_dict.append({"userid": auth, "fb_status_msg": concat})
+            concat_dict.append({"userid": auth, "fb_status_msg": concat})
     concat_df = pd.DataFrame(concat_dict)
     concat_df.index = concat_df["userid"]
     rebagged_df = pd.DataFrame(bag_dict)
@@ -64,8 +64,8 @@ def make_concatenated(mindexed_df, num_bags=10, threshold=5):
 
     ### Add user-level meta-information from source DF
     # concat
-    author_ids = mindexed.loc[ concat_df['userid'].tolist(), :]
-    for 
+    author_ids = mindexed_df.loc[ concat_df['userid'].tolist(), :]
+    #for 
 
 
     return concat_df, rebagged_df
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         params = json.load(fo)
     source_df = pd.read_pickle(source_path)
     make_multi_index(source_df)
-    rebagged, concat = make_concatenated(source_df)
+    concat, rebagged = make_concatenated(source_df)
 
     ### Write data, based on bagging options
     bagging_option = params["group_by"]

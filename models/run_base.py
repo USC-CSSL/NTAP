@@ -5,15 +5,20 @@ import numpy as np
 from baselines import Classifier  #, Regressor
 
 param_path = os.environ['PARAMS']
-source_path = os.environ['SOURCE_PATH']
-feature_path = os.environ['FEAT_PATH']
-prediction_path = os.environ['PRED_PATH']
+source_dir = os.environ['SOURCE_DIR']
+feature_dir = os.environ['FEAT_DIR']
+prediction_path = os.environ['PRED_DIR']
 
 if __name__ == '__main__':
     with open(param_path, 'r') as fo:
         params = json.load(fo)
-    source_df = pd.read_pickle(source_path)
-    feature_df = pd.read_pickle(feature_path)
+    
+    source_df = pd.read_pickle(os.path.join(source_dir, params['group_by'] + '.pkl'))
+    feature_df = pd.read_pickle(os.path.join(feature_dir, params['group_by'] + '.pkl'))
+
+    print(source_df)
+    print(feature_df)
+    exit(1)
 
     for target in params["target_cols"]:
         print("Predicting {}".format(target))
@@ -39,8 +44,8 @@ if __name__ == '__main__':
                                                y.astype(int), 
                                                row_indices)
         os.makedirs(os.path.join(prediction_path, target))
-        pred_series.to_pickle(prediction_path + target + '/predictions.pkl')
+        pred_series.to_pickle(os.path.join(prediction_path + target, 'predictions.pkl'))
 
         feature_df = predictor.format_features(features,
                                                feature_names)
-        feature_df.to_pickle(prediction_path + target + '/features.pkl')
+        feature_df.to_pickle(os.path.join(prediction_path + target, 'features.pkl'))
