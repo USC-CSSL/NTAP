@@ -9,7 +9,7 @@
     "lower": true,
     "stopword_list": "nltk",
     "group_by": "user",
-    "discretize": null,
+    "discretize": "binarize",
     "feature_methods": [
         "tfidf"
     ],
@@ -23,9 +23,6 @@
         0,
         2
     ],
-    "num_topics": 100,
-    "num_iter": 500,
-    "vocab_size": 10000,
     "feature_reduce": 0,
     "prediction_task": "classification",
     "prediction_method": "svm",

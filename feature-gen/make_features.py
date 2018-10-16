@@ -26,11 +26,16 @@ from vectorizers.fasttext import FastTextVectorizer
 
 from utils import cosine_similarity
 from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
-#from tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
 
 toks = {'happier': happiertokenize,
         'wordpunc': wordpunc_tokenize,
         'tweet': tweettokenize}
+
+from nltk.corpus import stopwords
+
+stoplists = {'nltk': stopwords.words('english'),
+             'default': 'english'}
+
 
 def validate_arguments(dataframe, text_col, feature_cols, methods):
 
@@ -62,17 +67,19 @@ def validate_arguments(dataframe, text_col, feature_cols, methods):
             print("{} is not an existing method".format(method))
             exit(1)
 
-def tfidf(dataframe, ngrams, sent_tokenizer, stop_list):
-    return TfidfVectorizer(min_df=10, stop_words=stop_list,
-            tokenizer=sent_tokenizer, ngram_range=ngrams), {'alias': 'tfidf'}
+def tfidf(**kwargs):
+    return TfidfVectorizer(max_features=kwargs["num_words"], 
+                           stop_words=kwargs["stop_words"],
+                           tokenizer=kwargs["sent_tokenizer"], 
+                           ngram_range=kwargs["ngrams"]), {'alias': 'tfidf'}
 
-def bagofmeans(bom_method, training_corpus, dictionary, random_seed, data_dir, ngrams, sent_tokenizer, comp_measure = "cosine-sim"):
-    return (BoMVectorizer(embedding_type=bom_method,
-                          tokenizer=sent_tokenizer, 
+def bagofmeans(**kwargs):
+    return (BoMVectorizer(embedding_type=kwargs['bom_method'],
+                          tokenizer=kwargs['sent_tokenizer'] 
                           )
             , {'alias': bom_method})
 
-def ddr(**kwargs): # bom_method, sent_tokenizer, dictionary, comp_measure="cosine-sim"):
+def ddr(**kwargs): 
     sim = cosine_similarity if kwargs['comp_measure'] == 'cosine-sim' else None
     return (DDRVectorizer(embedding_type=kwargs['bom_method'],
                           tokenizer=kwargs['sent_tokenizer'],
@@ -80,23 +87,22 @@ def ddr(**kwargs): # bom_method, sent_tokenizer, dictionary, comp_measure="cosin
                           similarity=sim), 
             {'alias': "_".join([kwargs['bom_method'], kwargs['dictionary']])})
 
-def lda(random_seed, sent_tokenizer, ngram_range, num_topics, num_iterations,
-        vocab_size, stop_list, ngrams):
-    return (LDAVectorizer(seed=random_seed,
-                          tokenizer=sent_tokenizer,
-                          num_topics=num_topics,
-                          num_iter=num_iterations,
-                          num_words=vocab_size,
-                          stop_words=stop_list,
-                          ngrams=ngrams),
+def lda(**kwargs):
+    return (LDAVectorizer(seed=kwargs["random_seed"],
+                          tokenizer=kwargs["sent_tokenizer"],
+                          num_topics=kwargs["num_topics"],
+                          num_iter=kwargs["num_iter"],
+                          num_words=kwargs["num_words"],
+                          stop_words=kwargs["stop_words"],
+                          ngrams=kwargs["ngrams"]),
             {'alias': "LDA_" + str(num_topics) + "topics"})
 
-def dictionary(dictionary):
-    return (DictionaryVectorizer(dictionary_name=dictionary), 
+def dictionary(**kwargs):
+    return (DictionaryVectorizer(dictionary_name=kwargs["dictionary"]), 
             {"alias": "Dictionary_" + dictionary})
 
-def fasttext(sent_tokenizer):
-    return (FastTextVectorizer(tokenizer=sent_tokenizer), 
+def fasttext(**kwargs):
+    return (FastTextVectorizer(tokenizer=kwargs["sent_tokenizer"]), 
             {'alias': "FastText_wiki"})
 
 def load_params(f):
@@ -106,6 +112,7 @@ def load_params(f):
 def collect_features(dataframe, params):
     doc_index = list(dataframe.index)
     sent_tokenizer = toks[params["tokenize"]]
+    stopword_list = stoplists[params["stopword_list"]]
 
     transformers = list()
     for method in params['feature_methods']:
@@ -114,7 +121,12 @@ def collect_features(dataframe, params):
                                            random_seed=params['random_seed'], 
                                            ngrams=params['ngrams'], 
                                            sent_tokenizer=sent_tokenizer,
-                                           comp_measure="cosine-sim")
+                                           comp_measure="cosine-sim",
+                                           num_topics=params["num_topics"],
+                                           num_iter=params["num_iter"],
+                                           num_words=params["vocab_size"],
+                                           stop_words=stopword_list
+                                           )
         transformers.append((params['text_col'], ) + transformation) if type(transformation) == tuple else (params['text_col'], transformation)
 
     if len(params['feature_cols']) > 0:  # continuous variables
@@ -131,6 +143,7 @@ def collect_features(dataframe, params):
     X = mapper.fit_transform(dataframe)
     lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
 
+    print(X)
     feature_df = pd.DataFrame(X, columns=mapper.transformed_names_)
     feature_df.index = doc_index
     return feature_df

@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import numpy as np
 
+
 """
 Take original dataframe (all texts, unstructured) and restructure them:
     - multiindex on (user, message)
@@ -43,6 +44,13 @@ def split_into_bags(text, num_bags):
     
     return [" ".join(part) for part in partitions]
 
+
+def get_row(dataframe, userid):
+    valid_columns = set(dataframe.columns) - {'userid', 'fb_status_msg'}
+    valid_columns = list(valid_columns)
+    subset = dataframe.loc[[int(userid),], valid_columns]
+    return subset.iloc[0]
+
 def make_concatenated(mindexed_df, num_bags=10, threshold=5):
     author_ids, doc_ids = zip(*(list(mindexed_df.index)))
     authors_uniq = list(set(author_ids))
@@ -54,21 +62,31 @@ def make_concatenated(mindexed_df, num_bags=10, threshold=5):
         if len(text_series) >= threshold:
             ### Leaving out sparse users; those who have less bags than threshold
             rebagged = split_into_bags(concat, num_bags)    
+            rest_of_row = get_row(mindexed_df, auth)
             for bag in rebagged:
-                bag_dict.append({"userid": auth, "fb_status_msg": bag})
-            concat_dict.append({"userid": auth, "fb_status_msg": concat})
+                new_bagged_row = {"userid": auth, "fb_status_msg": bag}
+                for key, value in rest_of_row.items():
+                    new_bagged_row[key] = value
+                bag_dict.append(new_bagged_row)
+            new_concat_row = {"userid": auth, "fb_status_msg": concat}
+            for k, v in rest_of_row.items():
+                new_concat_row[k] = v
+            concat_dict.append(new_concat_row)
     concat_df = pd.DataFrame(concat_dict)
     concat_df.index = concat_df["userid"]
     rebagged_df = pd.DataFrame(bag_dict)
     rebagged_df.index = rebagged_df["userid"]
 
-    ### Add user-level meta-information from source DF
-    # concat
-    author_ids = mindexed_df.loc[ concat_df['userid'].tolist(), :]
-    #for 
-
-
     return concat_df, rebagged_df
+
+
+def discretize(dataframe, columns, option):
+    for col in columns:
+        missing = dataframe.loc[dataframe[col] == -1.].index
+        nonnull = dataframe.loc[dataframe[col] != -1.].index
+        vector = dataframe[col].drop(missing).values
+        disc_vec = pd.qcut(vector, 4, labels=False)
+        dataframe.loc[ nonnull, col] = disc_vec
 
 if __name__ == '__main__':
     source_path = os.environ['SOURCE_PATH']
@@ -77,6 +95,9 @@ if __name__ == '__main__':
     with open(params_path, 'r') as fo:
         params = json.load(fo)
     source_df = pd.read_pickle(source_path)
+
+    if params["discretize"] is not None:
+        discretize(source_df, params['target_cols'], params["discretize"])
     make_multi_index(source_df)
     concat, rebagged = make_concatenated(source_df)
 
@@ -84,6 +105,8 @@ if __name__ == '__main__':
     bagging_option = params["group_by"]
     dataset_path = os.path.join(dataset_path, bagging_option + '.pkl')
     os.environ['DATASET_PATH'] = dataset_path  # has (at least) the text we're interested in, structured by spec.
+   
+
     if bagging_option == 'user':
         concat.to_pickle(dataset_path)
     elif bagging_option == 'user-bagged':

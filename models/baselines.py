@@ -15,7 +15,7 @@ def do_param_grid(grid, X_train, y_train, X_test, y_test, model):
         score_ = model.score(X_train, y_train)
         if score_ > best_score_:
             best_score = score_
-            best_grid_ = g
+            best_grid_ = g 
             predictions = model.predict(X_test)
     return best_grid_, predictions
 
@@ -82,7 +82,6 @@ class Classifier:
         return: dataframe indexed by class, columns by feature_names
         """
         dataframe = pd.DataFrame(features)
-        print(dataframe)
         dataframe.index = self.model.classes_
         dataframe.columns = feature_names
 
