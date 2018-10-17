@@ -10,14 +10,16 @@ import copy
 # import time
 import requests
 import tagme
+import pickle
 
 # alpha_re = re.compile(r"[^a-zA-Z\s]")
 # length_re = re.compile(r'\w{3,}')
 
 DEFAULT_LANG = 'en'
-DEFAULT_LONG_TEXT = 3
+DEFAULT_LONG_TEXT = 0
 DEFAULT_TAG_API = "https://tagme.d4science.org/tagme/tag"
 DEFAULT_RHO = 0.1  # suggested rho values between 0.1 and 0.3
+num_lines_processed = 0
 
 def preprocess_text(df,
                     col,
@@ -216,18 +218,21 @@ def add_abstract(title):
         'include_abstract': 'true',
         'gcube-token': "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
     }
-
     # Get wikipedia request
     res = requests.get(DEFAULT_TAG_API, params=parameters)
-    abstract = re.search('abstract\":\"(.*)\"id\"', res.text)
-    new_text = abstract.group(1).split('\",\"id\"')[0]
-
+    abstract = re.search(r"abstract\":\"(.*)\"id\"", res.text)
+    if abstract:
+        new_text = abstract.group(1).split('\",\"id\"')[0]
+    else:
+        # Will have to figure out how to handle these later
+        new_text = "N/A"
+        print("Can't get abstract for: ")
+        print(title)
     return new_text
 
 
 # Use TagMe API to perform entity linking
 def entity_linking(df, col):
-
     file_name = os.environ['ENTITY_PATH']
     if os.path.isfile(file_name):
         abstract_df = pd.read_pickle(file_name)
@@ -244,7 +249,6 @@ def entity_linking(df, col):
 
     texts = df[col].values.tolist()
     for text in texts:
-        # long_text = 0 to speed up tagme process
         text_ann = tagme.annotate(text, lang=DEFAULT_LANG, api=DEFAULT_TAG_API, long_text=DEFAULT_LONG_TEXT)
         # list of annotation titles
         ann_title = list()
@@ -255,7 +259,6 @@ def entity_linking(df, col):
         for ann in text_ann.get_annotations(DEFAULT_RHO):
             ann_title.append(ann.entity_title)
             ann_id.append(ann.entity_id)
-
             # If ID isn't in dictionary, add the corresponding abstract
             if ann.entity_id not in abstract_dict:
                 # Get wikipedia request
@@ -265,10 +268,8 @@ def entity_linking(df, col):
         ann_title_col.append(ann_title)
         ann_id_col.append(ann_id)
 
-    abstract_df = pd.Series(abstract_dict)
-    abstract_df.index.name = 'ID'
-    abstract_df.columns = ['Abstracts']
-    abstract_df.to_pickle(file_name)
+    with open(file_name, 'wb') as handle:
+        pickle.dump(abstract_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     df["entity title"] = pd.Series(ann_title_col, index=df.index)
     df["entity ID"] = pd.Series(ann_id_col, index=df.index)
@@ -294,5 +295,4 @@ if __name__ == '__main__':
         globals()[method](dataframe, text_col)
     if stopwords is not None:
         stop_words(dataframe, text_col, lower)
-
     dataframe.to_pickle(filename)
