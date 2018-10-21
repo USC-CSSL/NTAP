@@ -81,11 +81,19 @@ def make_concatenated(mindexed_df, num_bags=10, threshold=5):
 
 
 def discretize(dataframe, columns, option):
+    
     for col in columns:
         missing = dataframe.loc[dataframe[col] == -1.].index
         nonnull = dataframe.loc[dataframe[col] != -1.].index
         vector = dataframe[col].drop(missing).values
-        disc_vec = pd.qcut(vector, 4, labels=False)
+        
+        if option == 'quartiles':
+            disc_vec = pd.qcut(vector, 4, labels=False)
+        elif option == 'binarize':
+            disc_vec = pd.qcut(vector, 2, labels=False)
+        else:
+            raise ValueError("Invalid value given for discretization option: {}".format(option))
+            break
         dataframe.loc[ nonnull, col] = disc_vec
 
 if __name__ == '__main__':

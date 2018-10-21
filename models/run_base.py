@@ -7,7 +7,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
-from baselines import Classifier  #, Regressor
+from baselines import Classifier, Regressor
 
 param_path = os.environ['PARAMS']
 source_dir = os.environ['SOURCE_DIR']
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         predictions, param_sets, index_dict, features = predictor.cv_results(X, y)
         row_indices = {k:[instance_names[keys] for keys in v] for k,v in index_dict.items()}
         pred_series = predictor.format_results(predictions, 
-                                               y.astype(int), 
+                                               y, 
                                                row_indices)
         if not os.path.exists(os.path.join(prediction_path, target)):
             os.makedirs(os.path.join(prediction_path, target))

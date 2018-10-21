@@ -5,15 +5,15 @@ import os
 import pandas as pd
 
 def add_baseline_params(params):
-    params['prediction_task'] = 'classification'  # regression
-    params['prediction_method'] = 'svm'
+    params['prediction_task'] = 'regression'  # regression
+    params['prediction_method'] = 'elasticnet'
     params['target_cols'] = ['MFQ_INGROUP_AVG', 'MFQ_AUTHORITY_AVG', 'MFQ_PURITY_AVG', 
                              'MFQ_FAIRNESS_AVG', 'MFQ_HARM_AVG']
-    params['k_folds'] = 3
+    params['k_folds'] = 10
 
 def add_data_params(params, project="MFQ-facebook"):
     params['text_col'] = 'fb_status_msg'
-    params['extract'] = ["link", "mentions", "hashtags"]  # ["link", "mentions", "hashtag"]  # "emojis"
+    params['extract'] = ["link", "mentions", "hashtag"]  # ["link", "mentions", "hashtag"]  # "emojis"
     params['preprocess'] = [] # ['stem']  # 'lemmatize'
     ### Working: link, mentions, hashtag, stem
     ### Not Working: lemmatize, emojis
@@ -36,7 +36,7 @@ def add_feature_params(params):
 
     params['tokenize'] = 'wordpunc'
     # [min, max]: default = [0, 1]
-    params['ngrams'] = [0, 2]
+    params['ngrams'] = [1, 1]
 
     # LDA
     params['num_topics'] = 100

@@ -3,7 +3,7 @@
     "extract": [
         "link",
         "mentions",
-        "hashtags"
+        "hashtag"
     ],
     "preprocess": [],
     "lower": true,
@@ -20,15 +20,15 @@
     "random_seed": 51,
     "tokenize": "wordpunc",
     "ngrams": [
-        0,
-        2
+        1,
+        1
     ],
     "num_topics": 100,
     "num_iter": 500,
     "vocab_size": 10000,
     "feature_reduce": 0,
-    "prediction_task": "classification",
-    "prediction_method": "svm",
+    "prediction_task": "regression",
+    "prediction_method": "elasticnet",
     "target_cols": [
         "MFQ_INGROUP_AVG",
         "MFQ_AUTHORITY_AVG",
@@ -36,5 +36,5 @@
         "MFQ_FAIRNESS_AVG",
         "MFQ_HARM_AVG"
     ],
-    "k_folds": 3
+    "k_folds": 10
 }

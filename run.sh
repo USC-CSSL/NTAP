@@ -10,9 +10,9 @@ python get_params.py
 
 . set-vars.sh $WORKING_DIR $PROJ_NAME $INSTANCE_NAME
 
-./prep_data.sh
+#./prep_data.sh
 
-./gen_features.sh
+#./gen_features.sh
 
 ./train_baselines.sh
 

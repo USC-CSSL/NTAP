@@ -139,11 +139,11 @@ def collect_features(dataframe, params):
                     classes=[CategoricalImputer, LabelBinarizer]
                             )
 
-    mapper = DataFrameMapper(transformers, sparse=True, input_df=True)
+    mapper = DataFrameMapper(transformers, sparse=False, input_df=True)
     X = mapper.fit_transform(dataframe)
     lookup_dict = {i: feat for i, feat in enumerate(mapper.transformed_names_)}
 
-    print(X)
+    print(X.shape)
     feature_df = pd.DataFrame(X, columns=mapper.transformed_names_)
     feature_df.index = doc_index
     return feature_df
