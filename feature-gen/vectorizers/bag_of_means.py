@@ -16,8 +16,6 @@ def load_glove_from_file(fname, vocab=None):
 ### End Helper ###
 
 import sys
-sys.path.append("../..")
-
 
 import os, re, json
 import numpy as np
@@ -28,14 +26,15 @@ from sklearn.model_selection import GridSearchCV
 
 from gensim.models import KeyedVectors as kv
 class BoMVectorizer(BaseEstimator, TransformerMixin):
-    def __init__(self, embedding_type, tokenizer, ):
+    def __init__(self, embedding_type, tokenizer, stop_words):
         self.embedding_type = embedding_type
         self.tokenizer = tokenizer
+        self.stoplist = set(stop_words) if stop_words is not None else None
 
         if embedding_type == 'glove':
-            self.embeddings_path = glove_path
+            self.embeddings_path = os.environ["GLOVE_PATH"]
         else:
-            self.embeddings_path = word2vec_path
+            self.embeddings_path = os.environ["WORD2VEC_PATH"]
     
     def get_sentence_avg(self, tokens, embed_size=300, min_threshold=0):
         arrays = list()
@@ -86,6 +85,8 @@ class BoMVectorizer(BaseEstimator, TransformerMixin):
         avged_docs = list()
         for sentence in raw_docs:
             tokens = self.tokenizer(sentence)
+            if self.stoplist is not None:
+                tokens = list(set(tokens) - self.stoplist)
             sentence_mean, out_of_vocabulary = self.get_sentence_avg(tokens)
             avged_docs.append(sentence_mean)
         X = np.array(avged_docs)

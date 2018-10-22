@@ -5,11 +5,21 @@ import os
 import pandas as pd
 
 def add_baseline_params(params):
-    params['prediction_task'] = 'regression'  # regression
-    params['prediction_method'] = 'elasticnet'
+    params['prediction_task'] = 'classification'  # regression
+    params['prediction_method'] = 'svm'
+    """
     params['target_cols'] = ['MFQ_INGROUP_AVG', 'MFQ_AUTHORITY_AVG', 'MFQ_PURITY_AVG', 
                              'MFQ_FAIRNESS_AVG', 'MFQ_HARM_AVG']
-    params['k_folds'] = 10
+    """
+    params['target_cols'] = ['MFQ_math', 'MFQ_emotionally', 'MFQ_weak', 'MFQ_cruel',
+                             'MFQ_unfairly', 'MFQ_treated', 'MFQ_rights', 'MFQ_loyalty',
+                             'MFQ_betray', 'MFQ_lovecountry', 'MFQ_traditions', 'MFQ_respect',
+                             'MFQ_chaos', 'MFQ_disgusting', 'MFQ_traditions', 'MFQ_respect',
+                             'MFQ_animal', 'MFQ_kill', 'MFQ_compassion', 'MFQ_justice', 
+                             'MFQ_fairly', 'MFQ_rich', 'MFQ_team', 'MFQ_history', 
+                             'MFQ_family', 'MFQ_sexroles', 'MFQ_soldier', 'MFQ_kidrespect', 
+                             'MFQ_harmlessdg', 'MFQ_unnatural', 'MFQ_chastity']
+    params['k_folds'] = 3
 
 def add_data_params(params, project="MFQ-facebook"):
     params['text_col'] = 'fb_status_msg'
@@ -24,7 +34,7 @@ def add_data_params(params, project="MFQ-facebook"):
 
 def add_feature_params(params):
     # choices from ['tfidf', 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
-    params['feature_methods'] = [ 'tfidf']  #, 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
+    params['feature_methods'] = [ 'ddr']  #, 'lda', 'bagofmeans', 'ddr', 'fasttext', 'infersent', "dictionary"]
 
     # should be one of the dataframe's columns that contains the text
     params['feature_cols'] = list()

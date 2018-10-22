@@ -2,11 +2,6 @@ import os, json
 import pandas as pd
 import numpy as np
 
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-
 from baselines import Classifier, Regressor
 
 param_path = os.environ['PARAMS']
@@ -29,8 +24,6 @@ if __name__ == '__main__':
        
         X = features.values
         y = target_df[target].values
-        plt.hist(y, color='blue', edgecolor='black')
-        plt.savefig("thing.png")
         feature_names = features.columns.tolist()
         instance_names = list(features.index)
 
@@ -41,10 +34,13 @@ if __name__ == '__main__':
         else:
             raise ValueError("Invalid prediction_task; candidates: classification|regression")
         
-        predictions, param_sets, index_dict, features = predictor.cv_results(X, y)
+        predictions, param_sets, index_dict, features, baselines = predictor.cv_results(X, y)
+        
         row_indices = {k:[instance_names[keys] for keys in v] for k,v in index_dict.items()}
+        print(len(baselines))
+        print(len(y))
         pred_series = predictor.format_results(predictions, 
-                                               y, 
+                                               y, baselines,
                                                row_indices)
         if not os.path.exists(os.path.join(prediction_path, target)):
             os.makedirs(os.path.join(prediction_path, target))

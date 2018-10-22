@@ -8,9 +8,10 @@ import numpy as np
 from sklearn.model_selection import KFold, ParameterGrid
 from sklearn.linear_model import LogisticRegression, SGDRegressor
 from sklearn.svm import LinearSVC
+from scipy.stats import mode
 
 def do_param_grid(grid, X_train, y_train, X_test, y_test, model):
-    best_score_ = 0.
+    best_score_ = -1.  # for r2 
     best_grid_ = None
     predictions = None
     for g in ParameterGrid(grid):
@@ -38,7 +39,7 @@ class Regressor:
                                   tol=1e-3,
                                   shuffle=True,
                                   random_state=self.seed,
-                                  verbose=1)
+                                  verbose=0)
         kf = KFold(n_splits=self.kfolds, shuffle=True, random_state=self.seed)
 
         predictions = dict()
@@ -62,6 +63,7 @@ class Regressor:
 
     def format_results(self, predictions, true_vals, row_indices):
         ### Define a multi-index with (cv-num, doc_idx)
+        print(predictions)
         list_of_cvs = [[i] * len(predictions[i]) for i in list(predictions.keys())]
         cv_nums = [item for sublist in list_of_cvs for item in sublist]
         doc_idxs = [item for sublist in list(row_indices.values()) for item in sublist]
@@ -80,7 +82,6 @@ class Regressor:
         return: dataframe indexed by class, columns by feature_names
         """
         dataframe = pd.DataFrame(features)
-        print(dataframe)
         dataframe.index = feature_names
 
         # sort by the first column, just because
@@ -92,8 +93,10 @@ class Classifier:
         self.method = params["prediction_method"]
         self.kfolds = params["k_folds"]
         self.seed = params["random_seed"]
-        self.param_grid = {"class_weight": ['balanced', None],
-                           "C": np.arange(0.05, 0.5, 0.05)}
+        #self.param_grid = {"class_weight": ['balanced', None],
+        #                   "C": np.arange(0.05, 1.0, 0.05)}
+        self.param_grid = {"class_weight": [None]}
+
 
     def cv_results(self, X, y):
         ### k-fold cross-validation: train on 90%, test on 10%; report all results
@@ -105,18 +108,21 @@ class Classifier:
             class_type = 'ovr' if num_classes == 2 else 'multinomial'
             self.model = LogisticRegression(random_state=self.seed, solver='sag', 
                                             multi_class=class_type, verbose=0,
-                                            tol=1e-4, max_iter=60)
+                                            tol=1e-3, max_iter=60)
         elif self.method == 'svm':
-            self.model = LinearSVC(dual=False, random_state=self.seed)
+            self.model = LinearSVC(C=1.0, class_weight=None, 
+                                   dual=False, random_state=self.seed)
         kf = KFold(n_splits=self.kfolds, shuffle=True, random_state=self.seed)
 
         predictions = dict()
         parameters = dict()
         indices = dict()
+        baselines = dict()
         features = np.zeros( ( num_classes, X.shape[1]) )
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y_int[train_idx], y_int[test_idx]
+            naive_y = [mode(y_train).mode[0]] * len(y_test)
             parameter_iter, prediction_iter = do_param_grid(self.param_grid, 
                                                             X_train, y_train, 
                                                             X_test, y_test, 
@@ -125,23 +131,27 @@ class Classifier:
             predictions[idx] = prediction_iter
             parameters[idx] = parameter_iter
             indices[idx] = test_idx
+            baselines[idx] = naive_y
 
         features /= len(predictions)
 
-        return predictions, parameters, indices, features
+        return predictions, parameters, indices, features, baselines
 
-    def format_results(self, predictions, true_vals, row_indices):
+    def format_results(self, predictions, true_vals, baselines, row_indices):
         ### Define a multi-index with (cv-num, doc_idx)
         list_of_cvs = [[i] * len(predictions[i]) for i in list(predictions.keys())]
         cv_nums = [item for sublist in list_of_cvs for item in sublist]
         doc_idxs = [item for sublist in list(row_indices.values()) for item in sublist]
         vals = [item for sublist in list(predictions.values()) for item in sublist]
+        baseline_vals = [item for sublist in list(baselines.values()) for item in sublist]
         #doc_idxs = [item for sublist in list_of_ids for item in sublist]
         arrays = [cv_nums, doc_idxs]
         tuples = list(zip(*arrays))
         mindex = pd.MultiIndex.from_tuples(tuples, names=["CrossVal_fold", "Doc_index"])
 
-        list_of_dicts = [{"y": true_vals[i], "y_hat": vals[i]} for i in range(len(true_vals))]
+        list_of_dicts = [{"y": true_vals[i], 
+                          "y_hat": vals[i],
+                          "y_baseline": baseline_vals[i]} for i in range(len(true_vals))]
         return pd.DataFrame(list_of_dicts, index=mindex)
 
     def format_features(self, features,  feature_names):

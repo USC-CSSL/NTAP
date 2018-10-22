@@ -26,16 +26,16 @@ word2vec_path = os.environ["WORD2VEC_PATH"]
 mfd_path = os.environ["MFD_PATH"]
 
 class DDRVectorizer(BaseEstimator, TransformerMixin):
-    def __init__(self, embedding_type,
+    def __init__(self, embedding_type, stop_words,
                  tokenizer, dictionary, similarity):
         self.embedding_type = embedding_type
+        self.stoplist = set(stop_words) if stop_words is not None else None
         self.tokenizer = tokenizer
         self.dictionary = dictionary
         if embedding_type == 'glove':
             self.embeddings_path = glove_path
         else:
             self.embeddings_path = word2vec_path
-        print(mfd_path)
         dict_path = mfd_path if dictionary == 'mfd' else None
         try:
             with open(dict_path, 'r') as fo:
@@ -71,7 +71,7 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
             else:
                 raise ValueError("Incorrect embedding_type specified; only possibilities are 'skipgram and 'GloVe'")
         if count <= min_threshold:
-            return np.zeros(embed_size), oov
+            return np.random.rand(embed_size), oov
         sentence = np.array(arrays)
         mean = np.mean(sentence, axis=0)
         return mean, oov
@@ -102,7 +102,8 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
             concepts.append(concept_mean)
         ddr_vectors = list()
         for sentence in raw_docs:
-            tokens = self.tokenizer(sentence)
+            if self.stoplist is not None:
+                tokens = list(set(self.tokenizer(sentence)) - self.stoplist)
             sentence_mean, oov = self.get_document_avg(tokens)    
             outputs = [self.similarity(sentence_mean, concept) for concept in concepts]
             ddr_vectors.append(outputs)

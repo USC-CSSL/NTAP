@@ -7,11 +7,11 @@
     ],
     "preprocess": [],
     "lower": true,
-    "stopword_list": null,
+    "stopword_list": "nltk",
     "group_by": "user",
     "discretize": null,
     "feature_methods": [
-        "bagofmeans"
+        "ddr"
     ],
     "feature_cols": [],
     "categoricals": [],

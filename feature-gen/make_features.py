@@ -75,14 +75,16 @@ def tfidf(**kwargs):
 
 def bagofmeans(**kwargs):
     return (BoMVectorizer(embedding_type=kwargs['bom_method'],
-                          tokenizer=kwargs['sent_tokenizer'] 
+                          tokenizer=kwargs['sent_tokenizer'], 
+                          stop_words=kwargs['stop_words']
                           )
-            , {'alias': bom_method})
+            , {'alias': kwargs["bom_method"]})
 
 def ddr(**kwargs): 
     sim = cosine_similarity if kwargs['comp_measure'] == 'cosine-sim' else None
     return (DDRVectorizer(embedding_type=kwargs['bom_method'],
                           tokenizer=kwargs['sent_tokenizer'],
+                          stop_words=kwargs['stop_words'],
                           dictionary=kwargs['dictionary'],
                           similarity=sim), 
             {'alias': "_".join([kwargs['bom_method'], kwargs['dictionary']])})
@@ -102,7 +104,8 @@ def dictionary(**kwargs):
             {"alias": "Dictionary_" + dictionary})
 
 def fasttext(**kwargs):
-    return (FastTextVectorizer(tokenizer=kwargs["sent_tokenizer"]), 
+    return (FastTextVectorizer(tokenizer=kwargs["sent_tokenizer"],
+                               stop_words=kwargs["stop_words"]), 
             {'alias': "FastText_wiki"})
 
 def load_params(f):
@@ -112,7 +115,10 @@ def load_params(f):
 def collect_features(dataframe, params):
     doc_index = list(dataframe.index)
     sent_tokenizer = toks[params["tokenize"]]
-    stopword_list = stoplists[params["stopword_list"]]
+    try:
+        stopword_list = stoplists[params["stopword_list"]]
+    except KeyError:
+        stopword_list = None
 
     transformers = list()
     for method in params['feature_methods']:

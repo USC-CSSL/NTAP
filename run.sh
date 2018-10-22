@@ -2,9 +2,9 @@
 
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 
-export WORKING_DIR="/home/brendan/neural_profiles_datadir/"
+export WORKING_DIR="/home/brendan/Data/neural_profiles_datadir/"
 export PROJ_NAME="MFQ-facebook"
-export INSTANCE_NAME="classify_averages"
+export INSTANCE_NAME="classify_questions_ddr"
 
 python get_params.py
 
@@ -12,10 +12,10 @@ python get_params.py
 
 #./prep_data.sh
 
-#./gen_features.sh
+./gen_features.sh
 
 ./train_baselines.sh
 
-#./train_neural.sh
+./train_neural.sh
 
 ./evaluate.sh
