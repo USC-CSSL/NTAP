@@ -3,7 +3,9 @@ import os, json
 import numpy as np
 
 from neural.neural import Neural
-
+"""
+Massively deprecated :)
+"""
 
 
 param_path = os.environ['PARAMS']

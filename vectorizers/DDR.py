@@ -23,20 +23,22 @@ from sklearn.model_selection import GridSearchCV
 
 glove_path = os.environ["GLOVE_PATH"]
 word2vec_path = os.environ["WORD2VEC_PATH"]
-mfd_path = os.environ["MFD_PATH"]
+dictionary_path = os.environ["DICTIONARIES"]
 
 class DDRVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, embedding_type, stop_words,
                  tokenizer, dictionary, similarity):
         self.embedding_type = embedding_type
         self.stoplist = set(stop_words) if stop_words is not None else None
+        if self.stoplist is None:
+            print("WHY THE FUCK IS IT NONE")
         self.tokenizer = tokenizer
         self.dictionary = dictionary
         if embedding_type == 'glove':
             self.embeddings_path = glove_path
         else:
             self.embeddings_path = word2vec_path
-        dict_path = mfd_path if dictionary == 'mfd' else None
+        dict_path = os.path.join(dictionary_path, dictionary + '.json')
         try:
             with open(dict_path, 'r') as fo:
                 data = json.load(fo)

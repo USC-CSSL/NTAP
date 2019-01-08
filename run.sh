@@ -1,21 +1,14 @@
 #!/bin/bash
 
-export PYTHONPATH="$(pwd):${PYTHONPATH}"
+export RESOURCES=${HOME}/PipelineResources
 
-export WORKING_DIR="/home/brendan/Data/neural_profiles_datadir/"
-export PROJ_NAME="MFQ-facebook"
-export INSTANCE_NAME="classify_questions_ddr"
+export WORKSPACE=$1
+export sourcedata=$2
+. set-vars.sh
 
-python get_params.py
+#python process.py --input $sourcedata --output $data 
+#python features.py --input $data --output $features
+#python predict.py --data $data --features $features \
+#                  --results $predictions --topfeatures $topfeatures
 
-. set-vars.sh $WORKING_DIR $PROJ_NAME $INSTANCE_NAME
-
-#./prep_data.sh
-
-./gen_features.sh
-
-./train_baselines.sh
-
-./train_neural.sh
-
-./evaluate.sh
+python scoring.py --predictions $predictions
