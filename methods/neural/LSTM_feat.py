@@ -49,3 +49,6 @@ class ATTN():
 
     def run_model(self, batches, test_batches, weights):
         return run(self, batches, test_batches, weights)
+
+    def predict_labels(self, batches, data_batches, weights, savedir):
+        return run_pred(self, batches, data_batches, weights, savedir)

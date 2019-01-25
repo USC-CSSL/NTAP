@@ -52,30 +52,37 @@ class Neural:
         return finalDf
 
 
-    def run_model(self, X, y, data, weights):
-        self.nn.predict_labels(self.get_batches(X, y), self.get_batches(data), weights)
+    def run_model(self, X, y, data, weights, savedir):
+        self.nn.predict_labels(self.get_batches(X, y), self.get_batches(data), weights, savedir)
 
 
-    def cv_model(self, X, y, weights):
-        kf = KFold(n_splits=self.params["neural_kfolds"], shuffle=True, random_state=self.random_seed)
+    def cv_model(self, X, y, weights, savedir):
+        kf = KFold(n_splits=self.params["kfolds"], shuffle=True, random_state=self.random_seed)
         f1s = {target: list() for target in self.target_cols}
+        ps = {target: list() for target in self.target_cols}
+        rs = {target: list() for target in self.target_cols}
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             print("Cross validation, iteration", idx + 1)
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
-            f1_scores = self.nn.run_model(self.get_batches(X_train, y_train),
+            f1_scores, precision, recall = self.nn.run_model(self.get_batches(X_train, y_train),
                                           self.get_batches(X_test, y_test), weights)
-
             for target in self.target_cols:
                 f1s[target].append(f1_scores[target])
-        pd.DataFrame.from_dict(f1s).to_csv(".".join(t for t in self.target_cols) + ".csv")
+                ps[target].append(precision[target])
+                rs[target].append(recall[target])
+        for target in self.target_cols:
+            print("Overall F1 for", target, ":", sum(f1s[target]) / self.params["kfolds"])
+            print("Overall Precision for", target, ":", sum(ps[target]) / self.params["kfolds"])
+            print("Overall Recall for", target, ":", sum(rs[target]) / self.params["kfolds"])
+        #pd.DataFrame.from_dict(f1s).to_csv(savedir + "/" + ".".join(t for t in self.target_cols) + ".csv")
 
     def load_embeddings(self):
         if self.word_embedding == 'glove':
             self.load_glove()
 
     def load_glove(self):
-        if not os.path.isfile(self.embeddings_path):
+        if not os.path.isfile(self.glove_path):
             raise IOError("You're trying to access an embeddings file that doesn't exist")
         self.embeddings = dict()
         with open(self.embeddings_path, 'r') as fo:

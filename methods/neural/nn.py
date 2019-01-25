@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import operator
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score, recall_score
 import pandas as pd
 
 from nltk import tokenize as nltk_token
@@ -92,19 +92,20 @@ def run(model, batches, test_batches, weights):
         init.run()
         epoch = 1
         f1_scores = dict()
-        hate_pred = list()
+        precisions = dict()
+        recalls = dict()
         while True:
             test_predictions = {target: np.array([]) for target in model.target_cols}
             test_labels = {target: np.array([]) for target in model.target_cols}
             ## Train
             epoch_loss = float(0)
             acc_train = 0
-            epoch += 1
             for batch in batches:
                 feed_dict = feed_dictionary(model, batch, weights)
                 _, loss_val = model.sess.run([model.training_op, model.joint_loss], feed_dict= feed_dict)
                 acc_train += model.joint_accuracy.eval(feed_dict=feed_dict)
                 epoch_loss += loss_val
+            epoch += 1
             if epoch == model.epochs:
                 done = True
             ## Test
@@ -129,12 +130,23 @@ def run(model, batches, test_batches, weights):
                 for i in range(len(model.target_cols)):
                     score = f1_score(test_predictions[model.target_cols[i]],
                                      test_labels[model.target_cols[i]],
-                                     average = "weighted")
-                    print("F1", model.target_cols[i], score)
+                                     average = "macro")
+                    pres = precision_score(test_predictions[model.target_cols[i]],
+                                     test_labels[model.target_cols[i]],
+                                     average = "macro")
+                    rec = recall_score(test_predictions[model.target_cols[i]],
+                                     test_labels[model.target_cols[i]],
+                                     average = "macro")
+                    print("F1", model.target_cols[i], score,
+                          "Precision", model.target_cols[i], pres,
+                          "Recall", model.target_cols[i], rec)
+                    #print("Precision", mode)
                     f1_scores[model.target_cols[i]] = score
+                    precisions[model.target_cols[i]] = pres
+                    recalls[model.target_cols[i]] = rec
                 break
         #save_path = saver.save(model.sess, "/tmp/model.ckpt")
-    return f1_scores
+    return f1_scores, precisions, recalls
 
 def run_pred(model, batches, data_batches, weights, savedir):
     init = tf.global_variables_initializer()
