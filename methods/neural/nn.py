@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import operator
+from sklearn.metrics import f1_score
+import pandas as pd
 
 from nltk import tokenize as nltk_token
 
@@ -11,8 +13,7 @@ def splitY(model, y_data, feed_dict):
 
 def build_embedding(pretrain, train_embedding, embedding_size, vocab_size):
     if pretrain:
-        # TODO: Added a 1 into shape
-        embeddings_variable = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size, 1]),
+        embeddings_variable = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size]),
                                  trainable=train_embedding, name="W")
     else:
         embeddings_variable = tf.get_variable("embedding",
@@ -36,10 +37,14 @@ def multi_GRU(cell, hidden_size, keep_ratio, num_layers):
     network = tf.contrib.rnn.MultiRNNCell([cell_drop] * num_layers)
     return network
 
-def dynamic_rnn(model, network, embed, sequence_length):
-    if model == "LSTM" or model == "RCNN":
+def dynamic_rnn(cell, model, network, embed, sequence_length):
+    if model != "LSTM" or model == "RCNN":
         rnn_outputs, state = tf.nn.dynamic_rnn(network, embed,
                                                dtype=tf.float32, sequence_length=sequence_length)
+        if cell == "GRU":
+            state = state[0]
+        else:
+            state = state[0].h
     else:#elif model == "BiLSTM":
         bi_outputs, bi_states = tf.nn.bidirectional_dynamic_rnn(network, network, embed,
                                                                 dtype=tf.float32,
@@ -47,8 +52,10 @@ def dynamic_rnn(model, network, embed, sequence_length):
         fw_outputs, bw_outputs = bi_outputs
         fw_states, bw_states = bi_states
         rnn_outputs = tf.concat([fw_outputs, bw_outputs], 2)
-        state = tf.concat([fw_states, bw_states], 2)
-
+        if cell == "GRU":
+            state = tf.concat([fw_states[0], bw_states[0]], 1)
+        else:
+            state = tf.concat([fw_states[0].h, bw_states[0].h], 1)
     return rnn_outputs, state
 
 def multi_outputs(target_cols):
@@ -60,7 +67,7 @@ def multi_outputs(target_cols):
 
 
 def pred(hidden, n_outputs, weights, task_outputs):
-    logits = tf.layers.dense(inputs=hidden, units=n_outputs)
+    logits = tf.layers.dense(hidden, n_outputs)
 
     weight = tf.gather(weights, task_outputs)
     xentropy = tf.losses.sparse_softmax_cross_entropy(labels=task_outputs,
@@ -83,10 +90,57 @@ def run(model, batches, test_batches, weights):
     with tf.Session() as model.sess:
         done = False
         init.run()
-        print("Learning vocabulary of size %d" % (vocab_size))
         epoch = 1
-        test_predictions = {target: np.array([]) for target in model.target_cols}
+        f1_scores = dict()
         hate_pred = list()
+        while True:
+            test_predictions = {target: np.array([]) for target in model.target_cols}
+            test_labels = {target: np.array([]) for target in model.target_cols}
+            ## Train
+            epoch_loss = float(0)
+            acc_train = 0
+            epoch += 1
+            for batch in batches:
+                feed_dict = feed_dictionary(model, batch, weights)
+                _, loss_val = model.sess.run([model.training_op, model.joint_loss], feed_dict= feed_dict)
+                acc_train += model.joint_accuracy.eval(feed_dict=feed_dict)
+                epoch_loss += loss_val
+            if epoch == model.epochs:
+                done = True
+            ## Test
+            acc_test = 0
+            for batch in test_batches:
+                feed_dict = feed_dictionary(model, batch, weights)
+                acc_test += model.joint_accuracy.eval(feed_dict=feed_dict)
+                if done:
+                    for i in range(len(model.target_cols)):
+                        test_predictions[model.target_cols[i]] = np.append(test_predictions[model.target_cols[i]],
+                                                                           model.predict[model.target_cols[i]].eval(
+                                                                               feed_dict=feed_dict))
+                        test_labels[model.target_cols[i]] = np.append(test_labels[model.target_cols[i]],
+                                                                      feed_dict[
+                                                                          model.task_outputs[model.target_cols[i]]])
+
+            print(epoch, "Train accuracy:", acc_train / float(len(batches)),
+                  "Loss: ", epoch_loss / float(len(batches)),
+                  "Test accuracy: ", acc_test / float(len(test_batches)))
+            if done:
+                #test_predictions = np.transpose(np.array([test_predictions[target] for target in model.target_cols]))
+                for i in range(len(model.target_cols)):
+                    score = f1_score(test_predictions[model.target_cols[i]],
+                                     test_labels[model.target_cols[i]],
+                                     average = "weighted")
+                    print("F1", model.target_cols[i], score)
+                    f1_scores[model.target_cols[i]] = score
+                break
+        #save_path = saver.save(model.sess, "/tmp/model.ckpt")
+    return f1_scores
+
+def run_pred(model, batches, data_batches, weights, savedir):
+    init = tf.global_variables_initializer()
+    with tf.Session() as model.sess:
+        init.run()
+        epoch = 1
         while True:
             ## Train
             epoch_loss = float(0)
@@ -97,39 +151,40 @@ def run(model, batches, test_batches, weights):
                 _, loss_val = model.sess.run([model.training_op, model.joint_loss], feed_dict= feed_dict)
                 acc_train += model.joint_accuracy.eval(feed_dict=feed_dict)
                 epoch_loss += loss_val
-            if epoch >= model.epochs and acc_train / float(len(batches)) > 0.8:
-                #print(1)
-                done = True
-            if epoch == 200:
-                #print(3)
-                done = True
-            ## Test
             acc_test = 0
-            for batch in test_batches:
-                feed_dict = feed_dictionary(model, batch, weights)
-                acc_test += model.joint_accuracy.eval(feed_dict=feed_dict)
-                if done:
-                    for target in model.target_cols:
-                        test_predictions[target] = np.append(test_predictions[target],
-                                                             model.predict[target].eval(feed_dict=feed_dict))
-                    hate_pred.extend(list(model.predict["hate"].eval(feed_dict=feed_dict)))
-
             print(epoch, "Train accuracy:", acc_train / float(len(batches)),
-                  "Loss: ", epoch_loss / float(len(batches)),
-                  "Test accuracy: ", acc_test / float(len(test_batches)))
-
-            if done:
-                test_predictions = np.transpose(np.array([test_predictions[target] for target in model.target_cols]))
+                  "Loss: ", epoch_loss / float(len(batches)))
+            if epoch == model.epochs:
                 break
-        #save_path = saver.save(model.sess, "/tmp/model.ckpt")
-    return hate_pred, acc_test / float(len(test_batches))
+        label_predictions = {target: np.array([]) for target in model.target_cols}
+        print(len(data_batches))
+        for i in range(len(data_batches)):
+            feed_dict = feed_dictionary(model, data_batches[i], weights)
+            for j in range(len(model.target_cols)):
+                label_predictions[model.target_cols[j]] = np.append(label_predictions[model.target_cols[j]],
+                                                                   model.predict[model.target_cols[j]].eval(
+                                                                       feed_dict=feed_dict))
+            if i % 1000 == 0 and i > 0:
+                print(i)
+                results = pd.DataFrame.from_dict(label_predictions)
+                results.to_csv(savedir + "/predictions_" + str(i * model.batch_size) + ".csv")
+                label_predictions = {target: np.array([]) for target in model.target_cols}
+        results = pd.DataFrame.from_dict(label_predictions)
+        results.to_csv(savedir + "/predictions_" + str(i * model.batch_size) + ".csv")
+
 
 def feed_dictionary(model, batch, weights):
     X_batch, X_len, y_batch = batch
-    feed_dict = splitY(model, y_batch, {model.train_inputs: X_batch,
+    if len(y_batch) > 0:
+        feed_dict = splitY(model, y_batch, {model.train_inputs: X_batch,
                                         model.sequence_length: X_len,
-                                        model.keep_prob: model.keep_ratio})
-                                        # model.max_length: max(X_len)
+                                        model.keep_prob: model.keep_ratio,
+                                        model.max_len: max(X_len)})
+    else:
+        feed_dict = {model.train_inputs: X_batch,
+                    model.sequence_length: X_len,
+                    model.keep_prob: model.keep_ratio,
+                    model.max_len: max(X_len)}
     for t in model.target_cols:
         feed_dict[model.weights[t]] = weights[t]
     if model.pretrain:
@@ -150,16 +205,16 @@ def cnn(input, filter_sizes, num_filters, keep_ratio):
         pooled_outputs.append(pooled)
 
     num_filters_total = num_filters * len(filter_sizes)
-    h_pool = tf.concat(values=pooled_outputs, axis=3)
+    h_pool = tf.concat(pooled_outputs, 3)
     h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
 
     output = tf.nn.dropout(h_pool_flat, keep_ratio)
     return output
 
-def tokenize_data(corpus):
+def tokenize_data(corpus, max_length):
     #sent_tokenizer = toks[self.params["tokenize"]]
     tokenized_corpus = [nltk_token.WordPunctTokenizer().tokenize(sent.lower()) for sent in corpus]
-    return tokenized_corpus
+    return [sent[:min(max_length, len(sent))] for sent in tokenized_corpus]
 
 def learn_vocab(corpus, vocab_size):
     print("Learning vocabulary of size %d" % (vocab_size))
@@ -174,3 +229,20 @@ def learn_vocab(corpus, vocab_size):
     vocab = list(words[:vocab_size]) + ["<unk>", "<pad>"]
     return vocab
 
+def tokens_to_ids(corpus, vocab, learn_max=True):
+    print("Converting corpus of size %d to word indices based on learned vocabulary" % len(corpus))
+    if vocab is None:
+        raise ValueError("learn_vocab before converting tokens")
+
+    mapping = {word: idx for idx, word in enumerate(vocab)}
+    unk_idx = vocab.index("<unk>")
+    for i in range(len(corpus)):
+        row = corpus[i]
+        for j in range(len(row)):
+            try:
+                corpus[i][j] = mapping[corpus[i][j]]
+            except:
+                corpus[i][j] = unk_idx
+    if learn_max:
+        max_length = max([len(line) for line in corpus])
+    return corpus

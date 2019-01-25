@@ -30,8 +30,6 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
                  tokenizer, dictionary, similarity):
         self.embedding_type = embedding_type
         self.stoplist = set(stop_words) if stop_words is not None else None
-        if self.stoplist is None:
-            print("WHY THE FUCK IS IT NONE")
         self.tokenizer = tokenizer
         self.dictionary = dictionary
         if embedding_type == 'glove':
@@ -106,6 +104,8 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
         for sentence in raw_docs:
             if self.stoplist is not None:
                 tokens = list(set(self.tokenizer(sentence)) - self.stoplist)
+            else:
+                tokens = list(set(self.tokenizer(sentence)))
             sentence_mean, oov = self.get_document_avg(tokens)    
             outputs = [self.similarity(sentence_mean, concept) for concept in concepts]
             ddr_vectors.append(outputs)

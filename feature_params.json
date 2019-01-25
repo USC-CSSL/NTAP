@@ -1,0 +1,13 @@
+{
+    "kfolds": 10,
+    "stopwords": "None",
+    "num_words": 10000,
+    "sent_tokenizer": "wordpunc",
+    "ngrams": [0, 1],
+    "bom_method": "glove",
+    "num_topics": 50,
+    "num_iter": 300,
+    "num_trials": 1, 
+    "dictionary": "mfd", 
+    "random_seed": 123
+}

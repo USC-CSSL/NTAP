@@ -1,0 +1,12 @@
+{
+    "lrate": 0.005,
+    "batchsize": 20,
+    "maxepoch": 30,
+    "maxseqlen": 30,
+    "embeddingdim": 100,
+    "dictionary": "mfd",
+    "dict_linears": 5,
+    "h": 100,
+    "linears": 50,
+    "el_linears": 20
+}

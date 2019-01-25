@@ -2,61 +2,27 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 import os, math
-import operator
-from neural.LSTM import LSTM
-from neural.CNN import CNN
-from neural.RCNN import RCNN
+from methods.neural.LSTM import LSTM
+from methods.neural.CNN import CNN
+from methods.neural.RCNN import RCNN
+from methods.neural.Attn import ATTN
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
-from nltk import tokenize as nltk_token
+from sklearn.metrics import f1_score
+from collections import Counter
 
 class Neural:
-    def __init__(self, params):
+    def __init__(self, params, vocab):
         self.params = params
+        self.vocab = vocab
         for key in params:
             setattr(self, key, params[key])
         if self.word_embedding == 'glove':
-            #self.embeddings_path = glove_path
-            self.embeddings_path = os.environ['GLOVE_PATH']
+            self.embeddings_path = self.glove_path
+            #self.embeddings_path = os.environ['GLOVE_PATH']
         else:
-            #self.embeddings_path = word2vec_path
-            self.embeddings_path = os.environ['WORD2VEC_PATH']
-
-
-    def tokenize_data(self, corpus):
-        #sent_tokenizer = toks[self.params["tokenize"]]
-        tokenized_corpus = [nltk_token.WordPunctTokenizer().tokenize(sent.lower()) for sent in corpus]
-        return tokenized_corpus
-
-    def learn_vocab(self, corpus):
-        print("Learning vocabulary of size %d" % (self.vocab_size))
-        tokens = dict()
-        for sent in corpus:
-            for token in sent:
-                if token in tokens:
-                    tokens[token] += 1
-                else:
-                    tokens[token] = 1
-        words, counts = zip(*sorted(tokens.items(), key=operator.itemgetter(1), reverse=True))
-        self.vocab = list(words[:self.vocab_size]) + ["<unk>", "<pad>"]
-
-    def tokens_to_ids(self, corpus, learn_max=True):
-        print("Converting corpus of size %d to word indices based on learned vocabulary" % len(corpus))
-        if self.vocab is None:
-            raise ValueError("learn_vocab before converting tokens")
-
-        mapping = {word: idx for idx, word in enumerate(self.vocab)}
-        unk_idx = self.vocab.index("<unk>")
-        for i in range(len(corpus)):
-            row = corpus[i]
-            for j in range(len(row)):
-                try:
-                    corpus[i][j] = mapping[corpus[i][j]]
-                except:
-                    corpus[i][j] = unk_idx
-        if learn_max:
-            self.max_length = max([len(line) for line in corpus])
-        return corpus
+            self.embeddings_path = self.word2vec_path
+            #self.embeddings_path = os.environ['WORD2VEC_PATH']
 
 
     def build(self):
@@ -71,9 +37,11 @@ class Neural:
             if self.pretrain:
                 self.embeddings.reshape(self.embeddings.shape[0], self.embeddings.shape[1], 1)
             self.nn = CNN(self.params, self.max_length, self.vocab, self.embeddings)
-        else:
-            self.nn = RCNN(self.params, self.max_length, self.vocab, self.embeddings)
-
+        elif self.model == "RCNN":
+            self.nn = RCNN(self.params, self.vocab, self.embeddings)
+        elif self.model == "ATTN":
+            print("Running attention model")
+            self.nn = ATTN(self.params, self.vocab, self.embeddings)
         self.nn.build()
 
     def graph(self, vectors, labels):
@@ -84,61 +52,23 @@ class Neural:
         return finalDf
 
 
-    def run_model(self, X, y, labels):
-        vectors = self.nn.get_vectors(self.get_batches(X, y, padding=(self.model != "CNN")))
-        self.graph(vectors, labels)
+    def run_model(self, X, y, data, weights):
+        self.nn.predict_labels(self.get_batches(X, y), self.get_batches(data), weights)
 
 
-    def cv_model(self, X, y):
-        kf = KFold(n_splits=self.params["k_folds"], shuffle=True, random_state=self.random_seed)
-        predictions = dict()
-        f1s = dict()
-        vectors = dict()
-        indices = dict()
-        accuracy = dict()
+    def cv_model(self, X, y, weights):
+        kf = KFold(n_splits=self.params["neural_kfolds"], shuffle=True, random_state=self.random_seed)
+        f1s = {target: list() for target in self.target_cols}
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
+            print("Cross validation, iteration", idx + 1)
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
-            # train_idx, test_idx = np.array(indices)[train_index], np.array(indices)[test_index]
-            # TODO: For CNN get batches with no padding
-            predictions[idx], accuracy[idx] = self.nn.run_model(self.get_batches(X_train, y_train),
-                                                                  self.get_batches(X_test, y_test))
-            f1s[idx] = self.get_f1(predictions[idx], y_test)
-            #predictions[idx] = prediction_iter
-            #vectors[idx] = vectors_iter
-            #indices[idx] = test_idx
-        #print("Overall F1 for ")
-        #print(sum(f1s.values()) / len(f1s.values()))
+            f1_scores = self.nn.run_model(self.get_batches(X_train, y_train),
+                                          self.get_batches(X_test, y_test), weights)
 
-
-    def get_f1(self, predictions, labels):
-        for target in range(len(self.target_cols)):
-            print("Calculating F1 values for", self.target_cols[target])
-            true = dict()
-            false = dict()
-            all = dict()
-            precision = dict()
-            f1 = dict()
-            recall = dict()
-            for i in range(self.n_outputs):
-                true[i] = 0
-                all[i] = 0
-                false[i] = 0
-
-            for idx in range(len(predictions)):
-                if predictions[idx, target] == labels[idx, target]:
-                    true[predictions[idx, target]] += 1
-                else:
-                    false[predictions[idx, target]] += 1
-                all[predictions[idx, target]] += 1
-
-            for i in range(self.n_outputs):
-                precision[i] = float(true[i]) / float(true[i] + false[i]) if true[i] + false[i] != 0 else 0
-                recall[i] = float(true[i]) / float(all[i]) if all[i] != 0 else 0
-                f1[i] = 2 * precision[i] * recall[i] / (precision[i] + recall[i]) if precision[i] + recall[
-                    i] > 0 else 0
-                print(i, f1[i])
-            return f1
+            for target in self.target_cols:
+                f1s[target].append(f1_scores[target])
+        pd.DataFrame.from_dict(f1s).to_csv(".".join(t for t in self.target_cols) + ".csv")
 
     def load_embeddings(self):
         if self.word_embedding == 'glove':
@@ -181,13 +111,14 @@ class Neural:
             lengths = np.array([len(line) for line in text_batch])
             if padding:
                 text_batch = self.padding(text_batch)
-            batches.append((np.array([np.array(line) for line in text_batch]), lengths, np.array(labels_batch)))
+            if len(text_batch) > 0:
+                batches.append((np.array([np.array(line) for line in text_batch]), lengths, np.array(labels_batch)))
         return batches
 
     def padding(self, corpus):
         padd_idx = self.vocab.index("<pad>")
         for i in range(len(corpus)):
-            corpus[i] = corpus[i][:min(len(corpus[i]), self.max_length) - 1]
-            while len(corpus[i]) < self.max_length:
+            #corpus[i] = corpus[i][:min(len(corpus[i]), max(len(sent) for sent in corpus))]
+            while len(corpus[i]) < max(len(sent) for sent in corpus):
                 corpus[i].append(padd_idx)
         return corpus
