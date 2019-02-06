@@ -5,7 +5,7 @@ from nltk.stem import PorterStemmer
 from stanfordcorenlp import StanfordCoreNLP
 import requests
 from time import sleep
-corenlp_path = os.environ.get("CORENLP")
+corenlp_path = os.environ("CORENLP")
 
 link_re = re.compile(r"http(s)?[^\s]*")
 # link_re = re.compile(r"(http?://[^\s]*)")
