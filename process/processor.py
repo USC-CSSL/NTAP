@@ -1,11 +1,11 @@
 import re, os, json, sys, emoji
 import pandas as pd
-from progressbar import progressbar
+from progressbar import ProgressBar
 from nltk.stem import PorterStemmer
 from stanfordcorenlp import StanfordCoreNLP
 import requests
 from time import sleep
-corenlp_path = os.environ["CORENLP"]
+corenlp_path = os.environ.get("CORENLP")
 
 link_re = re.compile(r"http(s)?[^\s]+")
 hashtag_re = re.compile(r"#[a-zA-Z0-9]+")
@@ -71,7 +71,8 @@ class Preprocessor:
     def pos(self):
         processed, tokens = list(), list()
         self.corenlp_props['annotators'] = 'pos'
-        for doc in progressbar(self.data[self.text_col].values):
+        pbar = ProgressBar()
+        for doc in pbar(self.data[self.text_col].values):
             annotated = json.loads(self.corenlp.annotate(doc, 
                                         properties=self.corenlp_props))
             POSs, words = list(), list()
@@ -87,7 +88,8 @@ class Preprocessor:
     def ner(self):
         processed = list()
         self.corenlp_props['annotators'] = 'ner'
-        for doc in progressbar(self.data[self.text_col].values):
+        pbar = ProgressBar()
+        for doc in pbar(self.data[self.text_col].values):
             annotated = json.loads(self.corenlp.annotate(doc, 
                                 properties=self.corenlp_props))
             doc_ner = list()
@@ -129,7 +131,8 @@ class Preprocessor:
         request_str = "https://tagme.d4science.org/tagme/tag"
         count = 0
         try:
-            for doc in progressbar(self.data[self.text_col].values):
+            pbar = ProgressBar()
+            for doc in pbar(self.data[self.text_col].values):
                 count += 1
                 if count % 200 == 0:
                     sleep(5)  # sleep for 5 seconds
