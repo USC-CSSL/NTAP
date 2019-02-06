@@ -14,6 +14,7 @@ from process.processor import Preprocessor
 TAGME_QCODE = os.environ["TAGME"]
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Path to source file")
     parser.add_argument("--jobs", help="Options: clean pos ner deparse tagme", 
@@ -23,6 +24,7 @@ if __name__ == '__main__':
 
     processor = Preprocessor(args.output)
     try:
+        processor.load(args.input)
 
         name = input("What's the name of the text col? ")
         processor.load(args.input, name)
