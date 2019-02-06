@@ -7,15 +7,16 @@ import requests
 from time import sleep
 corenlp_path = os.environ["CORENLP"]
 
-link_re = re.compile(r"http(s)?[^\s]+")
-hashtag_re = re.compile(r"#[a-zA-Z0-9]+")
-mention_re = re.compile(r"@[a-zA-Z0-9]+")
+link_re = re.compile(r"http(s)?[^\s]*")
+# link_re = re.compile(r"(http?://[^\s]*)")
+hashtag_re = re.compile(r"#[a-zA-Z0-9_]+")
+mention_re = re.compile(r"@[a-zA-Z0-9_]+")
 emojis = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
 emoji_re = re.compile('|'.join(re.escape(p) for p in emojis))
 
-patterns = {"links":        link_re,
+patterns = {"mentions":     mention_re,
             "hashtags":     hashtag_re,
-            "mentions":     mention_re
+            "links":        link_re
             #"emojis":       emoji_re,
          #   "emoticons":    emoticon_re
            }
@@ -59,14 +60,16 @@ class Preprocessor:
                 notvalid = False
         return text_col
 
-    def clean(self, pat_type, remove=False):
-        p = patterns[pat_type]
+    def clean(self, pat_type, remove=True):
         source = self.data[self.text_col].values.tolist()
-        extracted = [p.findall(text) for text in source]
-        if remove:
-            removed = [p.sub("", text) for text in source]
-            self.data.loc[:, "text"] = pd.Series(removed, index=self.data.index)
-        self.data.loc[:, pat_type] = pd.Series(extracted, index=self.data.index)
+        removed = source
+        for pattern in pat_type:
+            p = patterns[pattern]
+            extracted = [p.findall(text) for text in source]
+            if remove:
+                removed = [p.sub("", text) for text in removed]
+            self.data.loc[:, pattern] = pd.Series(extracted, index=self.data.index)
+        self.data.loc[:, "text"] = pd.Series(removed, index=self.data.index)
 
     def pos(self):
         processed, tokens = list(), list()
