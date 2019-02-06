@@ -27,6 +27,7 @@ class LDAVectorizer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         docs = [simple_preprocess(doc) for doc in X]
         self.dictionary = corpora.Dictionary(docs)
+        return self  ## DEBUG -- LEIGH 2/5/19 (with Brendan)
 
     def transform(self, X, y=None):
         #TODO: Revise with user-specified tokenization

@@ -33,12 +33,15 @@ class Features:
         if not os.path.isdir(self.dest):
             os.makedirs(self.dest)
         self.data = pd.DataFrame()
-
+        with open(params) as fo:
+            self.params = json.load(fo)
+        """
         if type(params) == dict:
             self.params = params
         else:
             with open(params, 'r') as fo:
                 self.params = json.load(fo)
+        """
 
     def load(self, file_str):
         ending = file_str.split('.')[-1]
@@ -52,12 +55,11 @@ class Features:
             raise ValueError("Unsupported file type: {}".format(ending))
         cols = source.columns.tolist()
         #if text_col is None:  #TODO: load text_col from calling file
-        text_col = "fb_status_msg"  # HACK: self.__get_text_col(cols)
+        text_col = self.__get_text_col(cols)
         self.data[text_col] = source[text_col]
         self.text_col = text_col
 
     def __get_text_col(self, cols):
-        #return "text"
         print("...".join(cols))
         notvalid = True
         while notvalid:
@@ -115,7 +117,7 @@ class Features:
                                     stop_words=stopwords),
                                 {'alias': "LDA_" + str(self.params["num_topics"]) + "topics"})
         elif feature == 'dictionary':
-            self.transformer = (text_col, DictionaryVectorizer(
+            self.transformer = (self.text_col, DictionaryVectorizer(
                         dictionary_name=self.params["dictionary"]), 
                         {"alias": "Dictionary_" + self.params["dictionary"]})
 
@@ -128,7 +130,6 @@ class Features:
         doc_index = list(self.data.index)
         transformers = [self.transformer]
         mapper = DataFrameMapper(transformers, sparse=False, input_df=True)
-
         X = mapper.fit_transform(self.data)
         feature_df = pd.DataFrame(X, columns=mapper.transformed_names_)
         feature_df.index = doc_index
