@@ -25,17 +25,18 @@ if __name__ == '__main__':
     processor = Preprocessor(args.output)
     try:
         processor.load(args.input)
+
+        name = input("What's the name of the text col? ")
+        processor.load(args.input, name)
     except Exception as e:
         print(e)
         print("Could not load data from {}".format(args.input))
         exit(1)
    
     for job in args.jobs:
-    # for job in jobs:
         print("Processing job: {}".format(job))
         if job == 'clean':
-            for method in processing["clean"]:
-                processor.clean(method, remove=True)
+            processor.clean(processing["clean"], remove=True)
         if job == 'ner':
             processor.ner()
         if job == 'pos':
