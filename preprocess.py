@@ -24,13 +24,14 @@ if __name__ == '__main__':
 
     processor = Preprocessor(args.output)
     try:
-        processor.load(args.input, "fb_status_msg")
+        processor.load(args.input)
     except Exception as e:
         print(e)
         print("Could not load data from {}".format(args.input))
         exit(1)
    
     for job in args.jobs:
+    # for job in jobs:
         print("Processing job: {}".format(job))
         if job == 'clean':
             for method in processing["clean"]:
