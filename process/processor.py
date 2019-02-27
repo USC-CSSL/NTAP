@@ -7,8 +7,7 @@ import requests
 from time import sleep
 corenlp_path = os.environ.get("CORENLP")
 
-link_re = re.compile(r"http(s)?[^\s]*")
-# link_re = re.compile(r"(http?://[^\s]*)")
+link_re = re.compile(r"(http(s)?[^\s]*)|(pic.twitter.[^\s]*)")
 hashtag_re = re.compile(r"#[a-zA-Z0-9_]+")
 mention_re = re.compile(r"@[a-zA-Z0-9_]+")
 emojis = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
@@ -31,22 +30,43 @@ class Preprocessor:
         self.corenlp = StanfordCoreNLP(corenlp_path, memory='1g')
         self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
 
-    def load(self, file_str, text_col=None, index_col=None):
+    def load(self, file_str, text_col=None, target_col=None, index_col=None):
         ending = file_str.split('.')[-1]
         if ending == 'pkl':
             source = pd.read_pickle(file_str)
         if ending == 'csv':
             source = pd.read_csv(file_str, delimiter=',')
         if ending == 'tsv':
-            source = pd.read_csv(file_str, delimiter='\t')
+            source = pd.read_csv(file_str, delimiter='\t',quoting=3)
        
         cols = source.columns.tolist()
+        
+        if target_col is None:
+            target_col = self.__get_target_col(cols).split(',')
+
+        for target in target_col:
+            target = target.strip()
+            self.data.loc[:, target] = source[target]
+
         if text_col is None:
             text_col = self.__get_text_col(cols)
+        
         self.data.loc[:, text_col] = source[text_col]
         self.text_col = text_col
+        
         if index_col is not None:
             self.data.index = source[index_col].values()
+
+    def __get_target_col(self, cols):
+        print("...".join(cols))
+        notvalid = True
+        while notvalid:
+            target_col = input("Enter target col from those above: ")
+            if target_col.strip() not in cols:
+                print("Not a valid column name")
+            else:
+                notvalid = False
+        return target_col
 
     def __get_text_col(self, cols):
         
@@ -68,6 +88,8 @@ class Preprocessor:
             extracted = [p.findall(text) for text in source]
             if remove:
                 removed = [p.sub("", text) for text in removed]
+                removed = [' '.join(text.split()) for text in removed]
+                removed = [x.lower() for x in removed]
             self.data.loc[:, pattern] = pd.Series(extracted, index=self.data.index)
         self.data.loc[:, "text"] = pd.Series(removed, index=self.data.index)
 
