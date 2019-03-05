@@ -87,9 +87,14 @@ def run_method(method_string, train_data, params, data, save):
 
     neural.build()
 
-    if params["kfolds"] > 0:
+    if params["train"]:
+        if params["kfolds"]<=1:
+            raise Exception('Please set the parameter, kfolds greater than 1')
         neural.cv_model(X, y, weights, save)
-    else:
+
+    if params["predict"]:
+        if data is None:
+            raise Exception("Please specify the path to the data to be predicted")
         if data.endswith('.tsv'):
             all = pd.read_csv(data, sep='\t', quoting=3)
         elif data.endswith('.pkl'):

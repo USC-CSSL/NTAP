@@ -45,10 +45,12 @@ neural = {"learning_rate": 0.0001,
           "word_embedding": "glove",
           "glove_path": "", #Set the glove path here
           "word2vec_path": "", #Set word2vec path here
-          "kfolds": 0,
+          "kfolds": 2,
           "random_seed": 55,
           "max_length": 1000,
           "neural_kfolds": 5,
           "attention_size": 100,
+          "train": True,
+          "predict": True
 }
 
