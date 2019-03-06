@@ -11,7 +11,6 @@ corenlp_path = os.environ.get("CORENLP")
 import pandas as pd
 import threading
 from queue import Queue
-from dask.diagnostics import ProgressBar
 import time
 
 link_re = re.compile(r"(http(s)?[^\s]*)|(pic.twitter.[^\s]*)")
