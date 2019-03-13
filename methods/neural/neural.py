@@ -6,6 +6,8 @@ from methods.neural.LSTM import LSTM
 from methods.neural.CNN import CNN
 from methods.neural.RCNN import RCNN
 from methods.neural.Attn import ATTN
+from methods.neural.Attn_feat import ATTN_feat
+from methods.neural.LSTM_feat import LSTM_feat
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from sklearn.metrics import f1_score
@@ -40,8 +42,11 @@ class Neural:
         elif self.model == "RCNN":
             self.nn = RCNN(self.params, self.vocab, self.embeddings)
         elif self.model == "ATTN":
-            print("Running attention model")
             self.nn = ATTN(self.params, self.vocab, self.embeddings)
+        elif self.model == "ATTN_feat":
+            self.nn = ATTN_feat(self.params, self.vocab, self.embeddings)
+        elif self.model == "LSTM_feat":
+            self.nn = LSTM_feat(self.params, self.vocab, self.embeddings)
         self.nn.build()
 
     def graph(self, vectors, labels):
@@ -92,8 +97,6 @@ class Neural:
                 embedding = np.array(tokens[len(tokens) - self.embedding_size:], dtype=np.float32)
                 token = "".join(tokens[:len(tokens) - self.embedding_size])
                 glove[token] = embedding
-                # stdout.write("\r{} tokens read from file".format(len(glove)))
-                # stdout.flush
         unk_embedding = np.random.rand(self.embedding_size) * 2. - 1.
         if self.vocab is None:
             print("Error: Build vocab before loading GloVe vectors")
@@ -106,26 +109,33 @@ class Neural:
                 not_found += 1
                 self.embeddings[token] = unk_embedding
         print(" %d tokens not found in GloVe embeddings" % (not_found))
-        # self.embeddings = np.array(collections.OrderedDict(sorted(self.embeddings.items())).values())
         self.embeddings = np.array(list(self.embeddings.values()))
 
-    def get_batches(self, corpus_ids, labels=None, padding=True):
+    def get_batches(self, corpus_ids, labels=None, features=None, padding=True):
         batches = []
         for idx in range(len(corpus_ids) // self.batch_size + 1):
             labels_batch = labels[idx * self.batch_size: min((idx + 1) * self.batch_size,
-                                                        len(labels))] if labels is not None else []
-            text_batch = corpus_ids[idx * self.batch_size: min((idx + 1) * self.batch_size, len(corpus_ids))]
+                                len(labels))] if labels is not None else []
+
+            text_batch = corpus_ids[idx * self.batch_size: min((idx + 1) * self.batch_size,
+                                len(corpus_ids))]
+
+            features_batch = features[idx * self.batch_size: min((idx + 1) * self.batch_size,
+                                len(features))] if features is not None else []
+
             lengths = np.array([len(line) for line in text_batch])
             if padding:
                 text_batch = self.padding(text_batch)
             if len(text_batch) > 0:
-                batches.append((np.array([np.array(line) for line in text_batch]), lengths, np.array(labels_batch)))
+                batches.append({"text": np.array([np.array(line) for line in text_batch]),
+                                "sent_lens": lengths,
+                                "label": np.array(labels_batch),
+                                "feature": np.array(labels_batch)})
         return batches
 
     def padding(self, corpus):
         padd_idx = self.vocab.index("<pad>")
         for i in range(len(corpus)):
-            #corpus[i] = corpus[i][:min(len(corpus[i]), max(len(sent) for sent in corpus))]
             while len(corpus[i]) < max(len(sent) for sent in corpus):
                 corpus[i].append(padd_idx)
         return corpus

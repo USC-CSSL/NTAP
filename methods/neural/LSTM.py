@@ -5,6 +5,7 @@ class LSTM():
     def __init__(self, params, max_length, vocab, my_embeddings=None):
         self.params = params
         self.vocab = vocab
+        self.feature = False
         for key in params:
             setattr(self, key, params[key])
         self.max_length = max_length
@@ -25,7 +26,6 @@ class LSTM():
         self.weights = weight_placeholder(self.target_cols)
 
         self.keep_prob = tf.placeholder(tf.float32)
-        self.max_len = tf.placeholder(tf.int32)
 
         self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
 
