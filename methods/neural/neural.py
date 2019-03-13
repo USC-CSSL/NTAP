@@ -130,7 +130,7 @@ class Neural:
                 batches.append({"text": np.array([np.array(line) for line in text_batch]),
                                 "sent_lens": lengths,
                                 "label": np.array(labels_batch),
-                                "feature": np.array(labels_batch)})
+                                "feature": np.array(features_batch)})
         return batches
 
     def padding(self, corpus):
