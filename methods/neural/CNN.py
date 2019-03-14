@@ -5,6 +5,7 @@ class CNN():
     def __init__(self, params, max_length, vocab, my_embeddings=None):
         self.params = params
         self.vocab = vocab
+        self.feature = False
         for key in params:
             setattr(self, key, params[key])
         self.max_length = max_length

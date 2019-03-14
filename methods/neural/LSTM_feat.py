@@ -1,10 +1,11 @@
 from tensorflow.contrib.layers import fully_connected
 from methods.neural.nn import  *
 
-class ATTN():
+class LSTM_feat():
     def __init__(self, params, vocab, my_embeddings=None):
         self.params = params
         self.vocab = vocab
+        self.feature = True
         for key in params:
             setattr(self, key, params[key])
         if self.pretrain:
@@ -25,16 +26,15 @@ class ATTN():
         self.weights = weight_placeholder(self.target_cols)
 
         self.keep_prob = tf.placeholder(tf.float32)
-        self.max_len = tf.placeholder(tf.int32)
 
         self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
 
         rnn_outputs, state = dynamic_rnn(self.cell, self.model, self.network, self.embed, self.sequence_length)
 
-        drop_feat = tf.nn.dropout(fully_connected(self.features, self.hidden_size / 2), self.keep_prob)
-        drop_rnn = tf.nn.dropout(fully_connected(state, self.hidden_size / 2), self.keep_prob)
+        drop_feat = tf.nn.dropout(self.features, self.keep_prob)
+        drop_rnn = tf.nn.dropout(state, self.keep_prob)
 
-        attn_feat = tf.add(drop_feat, drop_rnn)
+        attn_feat = tf.concat([drop_feat, drop_rnn], axis=2)
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 

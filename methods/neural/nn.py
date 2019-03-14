@@ -87,6 +87,7 @@ def drop_padding(self, output, length):
 
 def run(model, batches, test_batches, weights):
     init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
     with tf.Session() as model.sess:
         done = False
         init.run()
@@ -130,44 +131,28 @@ def run(model, batches, test_batches, weights):
                 for i in range(len(model.target_cols)):
                     score = f1_score(test_predictions[model.target_cols[i]],
                                      test_labels[model.target_cols[i]],
-                                     average = "macro")
+                                     average = "macro" if model.n_outputs > 2 else "binary")
                     pres = precision_score(test_predictions[model.target_cols[i]],
                                      test_labels[model.target_cols[i]],
-                                     average = "macro")
+                                     average = "macro" if model.n_outputs > 2 else "binary")
                     rec = recall_score(test_predictions[model.target_cols[i]],
                                      test_labels[model.target_cols[i]],
-                                     average = "macro")
+                                     average = "macro" if model.n_outputs > 2 else "binary")
                     print("F1", model.target_cols[i], score,
                           "Precision", model.target_cols[i], pres,
                           "Recall", model.target_cols[i], rec)
-                    #print("Precision", mode)
                     f1_scores[model.target_cols[i]] = score
                     precisions[model.target_cols[i]] = pres
                     recalls[model.target_cols[i]] = rec
+                save_path = saver.save(model.sess, "")
                 break
         #save_path = saver.save(model.sess, "/tmp/model.ckpt")
     return f1_scores, precisions, recalls
 
 def run_pred(model, batches, data_batches, weights, savedir):
-    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
     with tf.Session() as model.sess:
-        init.run()
-        epoch = 1
-        while True:
-            ## Train
-            epoch_loss = float(0)
-            acc_train = 0
-            epoch += 1
-            for batch in batches:
-                feed_dict = feed_dictionary(model, batch, weights)
-                _, loss_val = model.sess.run([model.training_op, model.joint_loss], feed_dict= feed_dict)
-                acc_train += model.joint_accuracy.eval(feed_dict=feed_dict)
-                epoch_loss += loss_val
-            acc_test = 0
-            print(epoch, "Train accuracy:", acc_train / float(len(batches)),
-                  "Loss: ", epoch_loss / float(len(batches)))
-            if epoch == model.epochs:
-                break
+        saver.restore(model.sess, "")
         label_predictions = {target: np.array([]) for target in model.target_cols}
         print(len(data_batches))
         for i in range(len(data_batches)):
@@ -186,17 +171,18 @@ def run_pred(model, batches, data_batches, weights, savedir):
 
 
 def feed_dictionary(model, batch, weights):
-    X_batch, X_len, y_batch = batch
-    if len(y_batch) > 0:
-        feed_dict = splitY(model, y_batch, {model.train_inputs: X_batch,
-                                        model.sequence_length: X_len,
-                                        model.keep_prob: model.keep_ratio,
-                                        model.max_len: max(X_len)})
+    #X_batch, X_len, y_batch = batch
+    feed_dict = {model.train_inputs: batch["text"],
+                model.sequence_length: batch["sent_lens"],
+                model.keep_prob: model.keep_ratio}
+    if len(batch["label"]) > 0:
+        feed_dict = splitY(model, batch["label"], feed_dict)
     else:
-        feed_dict = {model.train_inputs: X_batch,
-                    model.sequence_length: X_len,
-                    model.keep_prob: model.keep_ratio,
-                    model.max_len: max(X_len)}
+        feed_dict[model.keep_prob] = 1
+
+    if model.feature:
+        feed_dict[model.features] = batch["feature"]
+
     for t in model.target_cols:
         feed_dict[model.weights[t]] = weights[t]
     if model.pretrain:
