@@ -205,9 +205,28 @@ class Preprocessor:
             return
         self.data.loc[:, "tagme_entities"] = pd.Series(extracted, index=self.data.index)
 
+    def concat_unique_entity(self, entities, abstract):
+        agg_entity = []
+        if entities == '':
+            return ''
+        for entity in entities:
+            id = entity[1]
+            record = abstract.loc[abstract['Id'] == id]
+            title = record['Abstract'].iloc[0]
+            if title not in agg_entity:
+                agg_entity.append(title)
+        agg_str = ' '.join(agg_entity)
+        return agg_str
+
+
+    def aggregate_entities(self, abstract_file_path):
+        source = pd.read_csv(abstract_file_path, delimiter='\t', quoting=3, names=['Id', 'Title', 'Abstract'])
+        self.data['tagme_aggregated_abstract'] = self.data['tagme_entities'].apply(self.concat_unique_entity, abstract=source)
+
     def tagme_helper(self, doc, request_str, params, abstract_file, category_file, entities, extracted, p):
         row = list()
-        params["text"] = doc
+        params["text"] = doc[1]
+        index = doc[0]
         res = requests.get(request_str, params=params)
         if res.status_code == 200:
             try:
@@ -225,7 +244,7 @@ class Preprocessor:
                             category_file.write("{}\t{}".format(filtered["id"], cat))
                             category_file.write("\n")
                     # write entity info to list, to save in self.data
-                    row.append((filtered["id"], filtered["start"], filtered["end"], filtered["link_probability"]))
+                    row.append((index, filtered["id"], filtered["start"], filtered["end"], filtered["link_probability"]))
             except Exception as e:
                 pass
         else:
@@ -272,8 +291,10 @@ class Preprocessor:
         request_str = "https://tagme.d4science.org/tagme/tag"
 
         start = time.time()
-        for doc in self.data[self.text_col].values:
-            queue.put(doc)
+        index = list(range(0, len(self.data[self.text_col])))
+        index_dict = dict(zip(index, self.data[self.text_col].values))
+        for key, value in index_dict.items():
+            queue.put((key, value))
 
         #intializing 4 threads
         try:
@@ -290,7 +311,11 @@ class Preprocessor:
             print("Interrupted; saved to file")
             saved_data.to_pickle(os.path.join(entity_dir, "saved.pkl"))
             return
-        self.data.loc[:, "tagme_entities"] = pd.Series(extracted)
+        self.data.loc[:, "tagme_entities"] = pd.Series(extracted, index=[i[0][0] for i in extracted])
+        self.data['tagme_entities'].fillna('', inplace=True)
+        abstract_file.close()
+        category_file.close()
+        self.aggregate_entities(abstract_file.name)
         print('Time taken by tagme job(sec):', time.time() - start)
 
 
