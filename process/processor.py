@@ -37,7 +37,8 @@ class Preprocessor:
         self.corenlp = StanfordCoreNLP(corenlp_path, memory='1g')
         self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
 
-    def load(self, file_str, text_col=None, target_col=None, index_col=None):
+    def load(self, file_str, text_col=None, target_cols=None, index_col=None):
+        normalize = True
         ending = file_str.split('.')[-1]
         if ending == 'pkl':
             source = pd.read_pickle(file_str)
@@ -48,16 +49,16 @@ class Preprocessor:
        
         cols = source.columns.tolist()
         
-        if target_col is None:
-            target_col = self.__get_target_col(cols).split(',')
-
-        for target in target_col:
-            target = target.strip()
+        if target_cols is None:
+            target_cols = self.__get_target_col(cols)
+        for target in target_cols:
             self.data.loc[:, target] = source[target]
-
+            if normalize:
+                zscored = ((self.data[target] -
+                    self.data[target].mean())/self.data[target].std(ddof=0))
+                self.data.loc[:, "{}_zscore".format(target)] = zscored
         if text_col is None:
             text_col = self.__get_text_col(cols)
-        
         self.data.loc[:, text_col] = source[text_col]
         self.text_col = text_col
         
@@ -66,14 +67,15 @@ class Preprocessor:
 
     def __get_target_col(self, cols):
         print("...".join(cols))
-        notvalid = True
-        while notvalid:
-            target_col = input("Enter target col from those above: ")
-            if target_col.strip() not in cols:
-                print("Not a valid column name")
-            else:
-                notvalid = False
-        return target_col
+        valid_cols = list()
+        while len(valid_cols) == 0:
+            targets_str = input("Enter target col from those above: ")
+            for col in targets_str.split():
+                if col not in cols:
+                    print("Not a valid column name: {}".format(col))
+                else:
+                    valid_cols.append(col)
+        return valid_cols
 
     def __get_text_col(self, cols):
         
@@ -98,7 +100,7 @@ class Preprocessor:
                 removed = [' '.join(text.split()) for text in removed]
                 removed = [x.lower() for x in removed]
             self.data.loc[:, pattern] = pd.Series(extracted, index=self.data.index)
-        self.data.loc[:, "text"] = pd.Series(removed, index=self.data.index)
+        self.data.loc[:, self.text_col] = pd.Series(removed, index=self.data.index)
 
     def pos(self):
         processed, tokens = list(), list()
