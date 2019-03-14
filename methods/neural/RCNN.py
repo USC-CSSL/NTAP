@@ -5,6 +5,7 @@ class RCNN():
     def __init__(self, params, vocab, my_embeddings=None):
         self.params = params
         self.vocab = vocab
+        self.feature = False
         for key in params:
             setattr(self, key, params[key])
         if self.pretrain:
@@ -22,7 +23,6 @@ class RCNN():
 
         self.weights = weight_placeholder(self.target_cols)
         self.keep_prob = tf.placeholder(tf.float32)
-        self.max_len = tf.placeholder(tf.float32)
 
         forward_network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
         backward_network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)

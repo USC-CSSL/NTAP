@@ -5,6 +5,7 @@ class ATTN():
     def __init__(self, params, vocab, my_embeddings=None):
         self.params = params
         self.vocab = vocab
+        self.feature = False
         for key in params:
             setattr(self, key, params[key])
         if self.pretrain:
@@ -23,7 +24,6 @@ class ATTN():
         self.weights = weight_placeholder(self.target_cols)
 
         self.keep_prob = tf.placeholder(tf.float32)
-        self.max_len = tf.placeholder(tf.int32)
 
         self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
 
@@ -33,23 +33,7 @@ class ATTN():
         self.alphas = tf.nn.softmax(tf.layers.dense(self.attn, 1, use_bias=False))
         word_attn = tf.reduce_sum(rnn_outputs * self.alphas, 1)
         drop = tf.nn.dropout(word_attn, self.keep_prob)
-        """
-        # shape: [batch_size, max_len, attention_size]
-        hiddens = tf.tile(tf.reshape(fully_connected(state, self.attention_size), [-1, 1, self.attention_size]),
-                          [1, self.max_len, 1])
 
-        # shape: [batch_size, max_len, attention_size]
-        summary = fully_connected(rnn_outputs, self.attention_size)
-
-        # sigmoid function on the linear transfer of the sum of hiddens, summary, first and second
-        # the production is the vector of attentions, a value between 0 and 1 is assigned to each word
-        # shape: [batch_size, max_len, 1]
-        attention = tf.reshape(
-            fully_connected(tf.add(hiddens, summary), 1, activation_fn=tf.sigmoid), [-1, self.max_len, 1])
-
-        # weighted sum of the hidden states, considering the attention values
-        attentioned_states = tf.reduce_sum(attention * rnn_outputs, axis=1)
-        """
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 
