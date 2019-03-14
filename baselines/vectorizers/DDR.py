@@ -1,6 +1,6 @@
 
 ### Helper function ###
-def load_glove_from_file(fname, vocab=None):
+def load_glove_from_file(fname, embed_size=300, vocab=None):
     # vocab is possibly a set of words in the raw text corpus
     if not os.path.isfile(fname):
         raise IOError("You're trying to access a GloVe embeddings file that doesn't exist")
@@ -8,11 +8,12 @@ def load_glove_from_file(fname, vocab=None):
     with open(fname, 'r') as fo:
         for line in fo:
             tokens = line.split()
+            word = "".join(tokens[0:len(tokens) - embed_size])
             if vocab is not None:
                 if tokens[0] not in vocab:
                     continue
-            if len(tokens) > 0:
-                embeddings[str(tokens[0])] = np.array(tokens[1:], dtype=np.float32)
+            vec = np.array(tokens[len(tokens) - embed_size:], dtype=np.float32)
+            embeddings[str(word)] = vec
     return embeddings
 
 import os, json

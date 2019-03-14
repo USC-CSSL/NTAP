@@ -14,19 +14,32 @@ from parameters import prediction as params
 def score_classification(predictions):
 
     cv_folds = set(predictions["cv_num"].values)
-    cv_metrics = list()
+    num_folds = len(cv_folds)
+    cv_metrics = {"Accuracy": 0.,
+                  "Precision": 0.,
+                  "Recall": 0.,
+                  "F1": 0.}
 
     for cv_fold in sorted(cv_folds):
         cv_data = predictions[predictions["cv_num"] == cv_fold]
-        num_correct, base_correct = 0, 0
-        scores = list()
-        for mess_id, row in cv_data.iterrows():
-            if row['y'] == row['y_hat']:
-                num_correct += 1
-        perf = ( 1. * num_correct) / len(cv_data)
-        cv_metrics.append({"acc": perf})
-    return cv_metrics
+        y = cv_data["y"].values
+        y_hat = cv_data["y_hat"].values
+        true_pos = np.sum(np.logical_and(y == 1, y_hat == 1))
+        true_neg = np.sum(np.logical_and(y == 0, y_hat == 0))
+        false_pos = np.sum(np.logical_and(y == 1, y_hat == 0))
+        false_neg = np.sum(np.logical_and(y == 0, y_hat == 1))
 
+        precision = true_pos / (true_pos + false_pos)
+        recall = true_pos / (true_pos + false_neg)
+
+        cv_metrics["Recall"] += true_pos / (true_pos + false_neg)
+        cv_metrics["Precision"] += true_pos / (true_pos + false_pos)
+        cv_metrics["Accuracy"] += (true_pos + true_neg) / len(y)
+        cv_metrics["F1"] += 2 * (precision * recall) / (precision + recall)
+
+    for metric in cv_metrics:
+        cv_metrics[metric] /= num_folds
+    return cv_metrics
 
 def score_regression(predictions):
 
@@ -47,22 +60,27 @@ def score_regression(predictions):
         cv_metrics.append({'r2': r2, 'r': r})
     return cv_metrics
 
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--predictions", help="Path to predictions dataframe")
+    parser.add_argument("--task", help="classification or regression")
     args = parser.parse_args()
-    task = params["prediction_task"] 
-    predictions = pd.read_pickle(args.predictions)
-
-    if task == 'classification':
-        scores = score_classification(predictions)
-        acc_avg = np.mean([fold["acc"] for fold in scores])
-        print("ACC: {}".format(acc_avg))
-    elif task == 'regression':
-        scores = score_regression(predictions)
-        print("r2: {}".format(np.mean([fold["r2"] for fold in scores])))
+    if args.predictions.endswith('csv'):
+        predictions = pd.read_csv(args.predictions)
+    elif args.predictions.endswith('pkl'):
+        predictions = pd.read_pickle(args.predictions)
     else:
-        raise ValueError("Invalid \'task\' parameter: {}".format(task))
+        raise ValueError("File must be of type .pkl or .csv")
+
+    if args.task == 'classification':
+        scores = score_classification(predictions)
+        print(json.dumps(scores, indent=4))  
+       
+    elif args.task == 'regression':  # TODO: Make better
+        scores = score_regression(predictions)
+        r2_avg = np.mean([fold["r2"] for fold in scores])
+        print("R2: {}".format(r2_avg))
+    else:
+        raise ValueError("Invalid \'task\' parameter: {}".format(args.task))
 

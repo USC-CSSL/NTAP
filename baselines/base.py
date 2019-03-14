@@ -50,6 +50,7 @@ class BasePredictor(ABC):
             ids = [self.row_ids[idx] for idx in test_idx]
             rows = zip(ids, [idx] * num_rows, y_test, pred)
             out.write('\n'.join([','.join([str(val) for val in row]) for row in rows]))
+            out.write('\n')
             out.flush()
         out.close()
     @abstractmethod

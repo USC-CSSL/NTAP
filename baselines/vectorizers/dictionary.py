@@ -1,12 +1,14 @@
-import re
+import re, os
 from sys import stdout
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
+DICT_PATH = os.environ["DICTIONARIES"]
+
 class DictionaryVectorizer(BaseEstimator, TransformerMixin):
-    def __init__(self, dictionary_name, data_path):
+    def __init__(self, dictionary_name):
         self.dictionary_name = dictionary_name
-        dictionary_path = os.path.join(data_path, 'dictionaries', dictionary_name)
+        dictionary_path = os.path.join(DICT_PATH, dictionary_name + '.dic')
         self.dictionary = dict()
         self.feature_names = dict()
         try:
