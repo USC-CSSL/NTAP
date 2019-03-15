@@ -61,7 +61,7 @@ class Neural:
         self.nn.predict_labels(self.get_batches(X, y), self.get_batches(data), weights, savedir)
 
 
-    def cv_model(self, X, y, weights, savedir):
+    def cv_model(self, X, y, weights, savedir, features):
         kf = KFold(n_splits=self.params["kfolds"], shuffle=True, random_state=self.random_seed)
         f1s = {target: list() for target in self.target_cols}
         ps = {target: list() for target in self.target_cols}
@@ -70,8 +70,9 @@ class Neural:
             print("Cross validation, iteration", idx + 1)
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
-            f1_scores, precision, recall = self.nn.run_model(self.get_batches(X_train, y_train),
-                                          self.get_batches(X_test, y_test), weights)
+            if self.nn.feature:
+                feat_train, feat_test = features[train_idx], features[test_idx]
+            f1_scores, precision, recall = self.nn.run_model(self.get_batches(X_train, y_train, feat_train), self.get_batches(X_test, y_test, feat_test), weights)
             for target in self.target_cols:
                 f1s[target].append(f1_scores[target])
                 ps[target].append(precision[target])

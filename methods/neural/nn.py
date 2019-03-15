@@ -38,7 +38,7 @@ def multi_GRU(cell, hidden_size, keep_ratio, num_layers):
     return network
 
 def dynamic_rnn(cell, model, network, embed, sequence_length):
-    if model != "LSTM" or model == "RCNN":
+    if model == "LSTM" or model == "RCNN":
         rnn_outputs, state = tf.nn.dynamic_rnn(network, embed,
                                                dtype=tf.float32, sequence_length=sequence_length)
         if cell == "GRU":
@@ -144,7 +144,7 @@ def run(model, batches, test_batches, weights):
                     f1_scores[model.target_cols[i]] = score
                     precisions[model.target_cols[i]] = pres
                     recalls[model.target_cols[i]] = rec
-                save_path = saver.save(model.sess, "")
+                save_path = saver.save(model.sess, "/tmp/model")
                 break
         #save_path = saver.save(model.sess, "/tmp/model.ckpt")
     return f1_scores, precisions, recalls

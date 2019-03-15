@@ -29,7 +29,8 @@ neural = {"learning_rate": 0.0001,
           "batch_size" : 100,
           "keep_ratio" : 0.66,
           "cell": "GRU", #choose from ["GRU", "LSTM"]
-          "model": "ATTN",  # choose from ["LSTM", "BiLSTM", "CNN", "RNN", "RCNN"
+          "model": "ATTN_feat",  # choose from ["LSTM", "BiLSTM", "CNN", "RNN", "RCNN"
+          "RNN": "BiLSTM",
           "vocab_size": 10000,
           "embedding_size": 300,
           "hidden_size": 256,

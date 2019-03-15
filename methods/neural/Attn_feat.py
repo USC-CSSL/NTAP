@@ -14,7 +14,7 @@ class ATTN_feat():
     def build(self):
         tf.reset_default_graph()
         self.train_inputs = tf.placeholder(tf.int32, shape=[None, None], name="inputs")
-        self.features = tf.placeholder(tf.int32, shape=[None, None], name="inputs")
+        self.features = tf.placeholder(tf.float32, shape=[None, None], name="inputs")
 
         self.embedding_placeholder = build_embedding(self.pretrain, self.train_embedding,
                                                      self.embedding_size, len(self.vocab))
@@ -38,11 +38,12 @@ class ATTN_feat():
         attention = tf.nn.dropout(word_attn, self.keep_prob)
         drop_feat = tf.nn.dropout(self.features, self.keep_prob)
 
-        attn_feat = tf.concat([drop_feat, attention], axis=2)
+        attn_feat = tf.reshape(tf.concat([drop_feat, attention], axis=1), [-1, self.feature_size + self.hidden_size])
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 
         for target in self.target_cols:
+            print(self.n_outputs)
             self.loss[target], self.predict[target], self.accuracy[target] = pred(attn_feat,
                                                                                           self.n_outputs,
                                                                                           self.weights[target],

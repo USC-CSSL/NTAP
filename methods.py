@@ -55,7 +55,7 @@ def __get_pred_col(cols):
     return targets
 
 
-def run_method(method_string, train_data, params, data, save):
+def run_method(method_string, train_data, params, data, save, features):
     missing_indices = list()
     weights = dict()
 
@@ -77,20 +77,29 @@ def run_method(method_string, train_data, params, data, save):
     text = train_data[text_col].values.tolist()
     text = tokenize_data(text, params["max_length"])
     vocab = learn_vocab(text, params["vocab_size"])
-    neural = Neural(params, vocab)
     # vocab_size = len(vocab)
     # method_class = load_method(method_string)
 
     X = np.array(tokens_to_ids(text, vocab))
     y = np.transpose(np.array([np.array(train_data[target].astype(int)) for target in params["target_cols"]]))
     # y = np.transpose(np.array(np.array(train_data[params["target_cols"]].astype(int))))
-
+    if params["model"][-4:] == "feat":
+        if features.endswith('.tsv'):
+            feat = pd.read_csv(features, sep='\t', quoting=3).values
+        elif features.endswith('.pkl'):
+            feat = pickle.load(open(features, 'rb')).values
+        elif features.endswith('.csv'):
+            feat  = pd.read_csv(features).values
+        params["feature_size"] = feat.shape[1]
+    else:
+        feat = []
+    neural = Neural(params, vocab)
     neural.build()
 
     if params["train"]:
         if params["kfolds"]<=1:
             raise Exception('Please set the parameter, kfolds greater than 1')
-        neural.cv_model(X, y, weights, save)
+        neural.cv_model(X, y, weights, save, feat)
 
     if params["predict"]:
         if data is None:
@@ -116,6 +125,7 @@ if __name__ == '__main__':
     parser.add_argument("--method", help="Method string; see README for complete list")
     parser.add_argument("--params", help="Path to parameter file; can be .txt, .json, .csv")
     parser.add_argument("--savedir", help="Directory to save results in")
+    parser.add_argument("--feature", help="Path to the features file")
 
     args = parser.parse_args()
 
@@ -130,6 +140,7 @@ if __name__ == '__main__':
     data = args.data
     method = args.method
     params = neural_params
+    features = args.feature
     save = args.savedir
     """
     params = args.params
@@ -143,7 +154,7 @@ if __name__ == '__main__':
         else:
             raise ValueError("Error: Incorrect extension for parameter file, must be a .txt, .json, or a .csv")
     """
-    run_method(method, train_data, params, data, save)
+    run_method(method, train_data, params, data, save, features)
 
     # call method constructors; build, train (using columns in args.train_data), and generate predictions
 
