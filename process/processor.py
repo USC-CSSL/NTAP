@@ -37,7 +37,8 @@ class Preprocessor:
         self.corenlp = StanfordCoreNLP(corenlp_path, memory='1g')
         self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
 
-    def load(self, file_str, text_col=None, target_col=None, index_col=None):
+    def load(self, file_str, text_col=None, target_cols=None, index_col=None):
+        normalize = True
         ending = file_str.split('.')[-1]
         if ending == 'pkl':
             source = pd.read_pickle(file_str)
@@ -48,16 +49,16 @@ class Preprocessor:
        
         cols = source.columns.tolist()
         
-        if target_col is None:
-            target_col = self.__get_target_col(cols).split(',')
-
-        for target in target_col:
-            target = target.strip()
+        if target_cols is None:
+            target_cols = self.__get_target_col(cols)
+        for target in target_cols:
             self.data.loc[:, target] = source[target]
-
+            if normalize:
+                zscored = ((self.data[target] -
+                    self.data[target].mean())/self.data[target].std(ddof=0))
+                self.data.loc[:, "{}_zscore".format(target)] = zscored
         if text_col is None:
             text_col = self.__get_text_col(cols)
-        
         self.data.loc[:, text_col] = source[text_col]
         self.text_col = text_col
         
@@ -66,14 +67,15 @@ class Preprocessor:
 
     def __get_target_col(self, cols):
         print("...".join(cols))
-        notvalid = True
-        while notvalid:
-            target_col = input("Enter target col from those above: ")
-            if target_col.strip() not in cols:
-                print("Not a valid column name")
-            else:
-                notvalid = False
-        return target_col
+        valid_cols = list()
+        while len(valid_cols) == 0:
+            targets_str = input("Enter target col from those above: ")
+            for col in targets_str.split():
+                if col not in cols:
+                    print("Not a valid column name: {}".format(col))
+                else:
+                    valid_cols.append(col)
+        return valid_cols
 
     def __get_text_col(self, cols):
         
@@ -98,7 +100,7 @@ class Preprocessor:
                 removed = [' '.join(text.split()) for text in removed]
                 removed = [x.lower() for x in removed]
             self.data.loc[:, pattern] = pd.Series(extracted, index=self.data.index)
-        self.data.loc[:, "text"] = pd.Series(removed, index=self.data.index)
+        self.data.loc[:, self.text_col] = pd.Series(removed, index=self.data.index)
 
     def pos(self):
         processed, tokens = list(), list()
@@ -205,9 +207,28 @@ class Preprocessor:
             return
         self.data.loc[:, "tagme_entities"] = pd.Series(extracted, index=self.data.index)
 
+    def concat_unique_entity(self, entities, abstract):
+        agg_entity = []
+        if entities == '':
+            return ''
+        for entity in entities:
+            id = entity[1]
+            record = abstract.loc[abstract['Id'] == id]
+            title = record['Abstract'].iloc[0]
+            if title not in agg_entity:
+                agg_entity.append(title)
+        agg_str = ' '.join(agg_entity)
+        return agg_str
+
+
+    def aggregate_entities(self, abstract_file_path):
+        source = pd.read_csv(abstract_file_path, delimiter='\t', quoting=3, names=['Id', 'Title', 'Abstract'])
+        self.data['tagme_aggregated_abstract'] = self.data['tagme_entities'].apply(self.concat_unique_entity, abstract=source)
+
     def tagme_helper(self, doc, request_str, params, abstract_file, category_file, entities, extracted, p):
         row = list()
-        params["text"] = doc
+        params["text"] = doc[1]
+        index = doc[0]
         res = requests.get(request_str, params=params)
         if res.status_code == 200:
             try:
@@ -225,7 +246,7 @@ class Preprocessor:
                             category_file.write("{}\t{}".format(filtered["id"], cat))
                             category_file.write("\n")
                     # write entity info to list, to save in self.data
-                    row.append((filtered["id"], filtered["start"], filtered["end"], filtered["link_probability"]))
+                    row.append((index, filtered["id"], filtered["start"], filtered["end"], filtered["link_probability"]))
             except Exception as e:
                 pass
         else:
@@ -272,8 +293,10 @@ class Preprocessor:
         request_str = "https://tagme.d4science.org/tagme/tag"
 
         start = time.time()
-        for doc in self.data[self.text_col].values:
-            queue.put(doc)
+        index = list(range(0, len(self.data[self.text_col])))
+        index_dict = dict(zip(index, self.data[self.text_col].values))
+        for key, value in index_dict.items():
+            queue.put((key, value))
 
         #intializing 4 threads
         try:
@@ -290,7 +313,11 @@ class Preprocessor:
             print("Interrupted; saved to file")
             saved_data.to_pickle(os.path.join(entity_dir, "saved.pkl"))
             return
-        self.data.loc[:, "tagme_entities"] = pd.Series(extracted)
+        self.data.loc[:, "tagme_entities"] = pd.Series(extracted, index=[i[0][0] for i in extracted])
+        self.data['tagme_entities'].fillna('', inplace=True)
+        abstract_file.close()
+        category_file.close()
+        self.aggregate_entities(abstract_file.name)
         print('Time taken by tagme job(sec):', time.time() - start)
 
 

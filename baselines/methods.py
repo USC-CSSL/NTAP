@@ -15,15 +15,15 @@ class ElasticNet(BasePredictor):
                  k_folds, param_grid=None):
         BasePredictor.__init__(self, save_dir, instance_names, k_folds)
         if param_grid is None:  # default
-            self.param_grid = {"alpha": 10.0 ** -np.arange(3, 7)}
+            self.param_grid = {}  #"alpha": 10.0 ** -np.arange(3, 7)}
         else:
             self.param_grid = param_grid
         
     
     def build(self):
-        self.model = SGDRegressor(loss='huber',
-                                  penalty='none',
-                                  tol=1e-4,
+        self.model = SGDRegressor(loss='squared_loss',
+                                  penalty='none', #'elasticnet', Just for DDR
+                                  tol=1e-3, # changed cuz it takes a long time
                                   shuffle=True,
                                   random_state=seed,
                                   verbose=10)
@@ -52,13 +52,13 @@ class SVM(BasePredictor):
         self.k_folds = k_folds
         self.n_classes = n_classes
         if param_grid is None:  # default
-            self.param_grid = {"class_weight": ['balanced', None],
-                               "C": np.arange(0.05, 1.0, 0.05)}
+            self.param_grid = {"class_weight": ['balanced'],
+                               "C": [1.0]}  #np.arange(0.05, 1.0, 0.05)}
         else:
             self.param_grid = param_grid
 
     def build(self):
-        self.model = LinearSVC(C=1.0, class_weight=None, 
+        self.model = LinearSVC(C=1.0, class_weight='balanced', 
                                dual=False, random_state=seed)
     
     def format_features(self, feature_names):
