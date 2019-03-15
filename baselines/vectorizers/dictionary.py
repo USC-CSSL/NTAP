@@ -54,9 +54,9 @@ class DictionaryVectorizer(BaseEstimator, TransformerMixin):
                 if len(word) == 0:
                     continue
                 if word[-1] == "*":
-                    self.dictionary_re[cat].append(re.compile("(" + word + "\w*)"))
+                    self.dictionary_re[cat].append(re.compile("(\\b" + word[:-1] + "+\w*\\b)"))
                 else:
-                    self.dictionary_re[cat].append(re.compile("(" + word + ")"))
+                    self.dictionary_re[cat].append(re.compile("(\\b" + word + "\\b)"))
         return self
 
     def transform(self, X, y=None):
