@@ -37,16 +37,19 @@ def multi_GRU(cell, hidden_size, keep_ratio, num_layers):
     network = tf.contrib.rnn.MultiRNNCell([cell_drop] * num_layers)
     return network
 
-def dynamic_rnn(cell, model, network, embed, sequence_length):
+def dynamic_rnn(cell, model, hidden, keep_prob, num_layers, embed, sequence_length):
     if model == "LSTM" or model == "RCNN":
+        network = multi_GRU(cell, hidden, keep_prob, num_layers)
         rnn_outputs, state = tf.nn.dynamic_rnn(network, embed,
                                                dtype=tf.float32, sequence_length=sequence_length)
         if cell == "GRU":
             state = state[0]
         else:
             state = state[0].h
-    else:#elif model == "BiLSTM":
-        bi_outputs, bi_states = tf.nn.bidirectional_dynamic_rnn(network, network, embed,
+    else:
+        f_network = multi_GRU(cell, hidden, keep_prob, num_layers)
+        b_network = multi_GRU(cell, hidden, keep_prob, num_layers)
+        bi_outputs, bi_states = tf.nn.bidirectional_dynamic_rnn(f_network, b_network, embed,
                                                                 dtype=tf.float32,
                                                                 sequence_length=sequence_length)
         fw_outputs, bw_outputs = bi_outputs

@@ -27,9 +27,11 @@ class LSTM():
 
         self.keep_prob = tf.placeholder(tf.float32)
 
-        self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
+        #self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
 
-        rnn_outputs, state = dynamic_rnn(self.cell, self.model, self.network, self.embed, self.sequence_length)
+        rnn_outputs, state = dynamic_rnn(self.cell, self.model, self.hidden_size,
+                                         self.keep_prob,self.num_layers,
+                                         self.embed, self.sequence_length)
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 

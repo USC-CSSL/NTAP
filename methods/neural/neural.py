@@ -3,8 +3,7 @@ import tensorflow as tf
 import pandas as pd
 import os, math
 from methods.neural.LSTM import LSTM
-from methods.neural.CNN import CNN
-from methods.neural.RCNN import RCNN
+from methods.neural.CNN import CNN  
 from methods.neural.Attn import ATTN
 from methods.neural.Attn_feat import ATTN_feat
 from methods.neural.LSTM_feat import LSTM_feat
@@ -39,8 +38,6 @@ class Neural:
             if self.pretrain:
                 self.embeddings.reshape(self.embeddings.shape[0], self.embeddings.shape[1], 1)
             self.nn = CNN(self.params, self.max_length, self.vocab, self.embeddings)
-        elif self.model == "RCNN":
-            self.nn = RCNN(self.params, self.vocab, self.embeddings)
         elif self.model == "ATTN":
             self.nn = ATTN(self.params, self.vocab, self.embeddings)
         elif self.model == "ATTN_feat":

@@ -27,9 +27,11 @@ class ATTN_feat():
 
         self.keep_prob = tf.placeholder(tf.float32)
 
-        self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
+        #self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
 
-        rnn_outputs, state = dynamic_rnn(self.cell, self.model, self.network, self.embed, self.sequence_length)
+        rnn_outputs, state = dynamic_rnn(self.cell, self.model, self.hidden_size,
+                                         self.keep_prob, self.num_layers,
+                                         self.embed, self.sequence_length)
 
         self.attn = tf.tanh(fully_connected(rnn_outputs, self.attention_size))
         self.alphas = tf.nn.softmax(tf.layers.dense(self.attn, 1, use_bias=False))
