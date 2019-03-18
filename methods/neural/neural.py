@@ -72,7 +72,11 @@ class Neural:
             y_train, y_test = y[train_idx], y[test_idx]
             if self.nn.feature:
                 feat_train, feat_test = features[train_idx], features[test_idx]
+            else:
+                feat_train, feat_test = list(), list()
+
             f1_scores, precision, recall = self.nn.run_model(self.get_batches(X_train, y_train, feat_train), self.get_batches(X_test, y_test, feat_test), weights)
+
             for target in self.target_cols:
                 f1s[target].append(f1_scores[target])
                 ps[target].append(precision[target])
