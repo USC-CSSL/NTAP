@@ -38,7 +38,7 @@ def multi_GRU(cell, hidden_size, keep_ratio, num_layers):
     return network
 
 def dynamic_rnn(cell, model, hidden, keep_prob, num_layers, embed, sequence_length):
-    if model == "LSTM" or model == "RCNN":
+    if model[:4] == "LSTM":
         network = multi_GRU(cell, hidden, keep_prob, num_layers)
         rnn_outputs, state = tf.nn.dynamic_rnn(network, embed,
                                                dtype=tf.float32, sequence_length=sequence_length)

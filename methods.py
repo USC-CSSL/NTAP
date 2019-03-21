@@ -70,7 +70,6 @@ def run_method(method_string, train_data, params, data, save, features):
         count_pre = Counter(train_data[target].tolist())
         count = sorted(count_pre.items())
         count = list(dict(count).values())
-        print(count)
         weights[target] = np.array([(sum(count) - c) / sum(count) for c in count])
     train_data = train_data.drop(missing_indices)
     print("Shape of train_dataframe after getting rid of the Nan values is", train_data.shape)

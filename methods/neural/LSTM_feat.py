@@ -12,10 +12,10 @@ class LSTM_feat():
             self.my_embeddings = my_embeddings
 
     def build(self):
-        self.features = tf.placeholder(tf.int32, shape=[None, None], name="inputs")
-
         tf.reset_default_graph()
         self.train_inputs = tf.placeholder(tf.int32, shape=[None, None], name="inputs")
+        self.features = tf.placeholder(tf.float32, shape=[None, None], name="inputs")
+
         self.embedding_placeholder = build_embedding(self.pretrain, self.train_embedding,
                                                      self.embedding_size, len(self.vocab))
         self.embed = tf.nn.embedding_lookup(self.embedding_placeholder, self.train_inputs)
@@ -27,19 +27,23 @@ class LSTM_feat():
 
         self.keep_prob = tf.placeholder(tf.float32)
 
+        #self.network = multi_GRU(self.cell, self.hidden_size, self.keep_prob, self.num_layers)
+
         rnn_outputs, state = dynamic_rnn(self.cell, self.model, self.hidden_size,
                                          self.keep_prob, self.num_layers,
                                          self.embed, self.sequence_length)
 
+
         drop_feat = tf.nn.dropout(self.features, self.keep_prob)
         drop_rnn = tf.nn.dropout(state, self.keep_prob)
 
-        attn_feat = tf.concat([drop_feat, drop_rnn], axis=2)
+        rnn_feat = tf.reshape(tf.concat([drop_feat, drop_rnn], axis=1), [-1, self.feature_size + self.hidden_size])
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 
         for target in self.target_cols:
-            self.loss[target], self.predict[target], self.accuracy[target] = pred(attn_feat,
+            print(self.n_outputs)
+            self.loss[target], self.predict[target], self.accuracy[target] = pred(rnn_feat,
                                                                                           self.n_outputs,
                                                                                           self.weights[target],
                                                                                           self.task_outputs[target])

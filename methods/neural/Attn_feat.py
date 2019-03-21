@@ -40,7 +40,7 @@ class ATTN_feat():
         attention = tf.nn.dropout(word_attn, self.keep_prob)
         drop_feat = tf.nn.dropout(self.features, self.keep_prob)
 
-        attn_feat = tf.reshape(tf.concat([drop_feat, attention], axis=1), [-1, self.feature_size + self.hidden_size])
+        attn_feat = tf.reshape(tf.concat([drop_feat, attention], axis=1), [-1, self.feature_size + (2 * self.hidden_size)])
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 
