@@ -12,6 +12,7 @@ from baselines.vectorizers.LDA import LDAVectorizer
 from baselines.vectorizers.DDR import DDRVectorizer
 from baselines.vectorizers.bag_of_means import BoMVectorizer
 from baselines.vectorizers.dictionary import DictionaryVectorizer
+from baselines.vectorizers.dictionarycount import DictionaryCountVectorizer
 #from baselines.vectorizers.fasttext import FastTextVectorizer
 from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
 from nltk.corpus import stopwords
@@ -119,6 +120,10 @@ class Features:
         elif feature == 'dictionary':
             self.transformer = (self.text_col, DictionaryVectorizer(
                         dictionary_name=self.params["dictionary"]), 
+                        {"alias": "Dictionary_" + self.params["dictionary"]})
+        elif feature == 'dictionarycount':
+            self.transformer = (self.text_col, DictionaryCountVectorizer(
+                        dictionary_name=self.params["dictionary"]),
                         {"alias": "Dictionary_" + self.params["dictionary"]})
 
     """
