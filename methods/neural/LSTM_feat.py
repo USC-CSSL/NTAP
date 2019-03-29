@@ -14,7 +14,7 @@ class LSTM_feat():
     def build(self):
         tf.reset_default_graph()
         self.train_inputs = tf.placeholder(tf.int32, shape=[None, None], name="inputs")
-        self.features = tf.placeholder(tf.float32, shape=[None, None], name="inputs")
+        self.features = tf.placeholder(tf.float32, shape=[None, self.feature_size], name="inputs")
 
         self.embedding_placeholder = build_embedding(self.pretrain, self.train_embedding,
                                                      self.embedding_size, len(self.vocab))
@@ -34,10 +34,10 @@ class LSTM_feat():
                                          self.embed, self.sequence_length)
 
 
-        drop_feat = tf.nn.dropout(self.features, self.keep_prob)
+        drop_feat = tf.nn.dropout(tf.layers.dense(self.features, self.feature_hidden_size), self.keep_prob)
         drop_rnn = tf.nn.dropout(state, self.keep_prob)
 
-        rnn_feat = tf.reshape(tf.concat([drop_feat, drop_rnn], axis=1), [-1, self.feature_size + self.hidden_size])
+        rnn_feat = tf.reshape(tf.concat([drop_feat, drop_rnn], axis=1), [-1, self.feature_hidden_size + self.hidden_size])
 
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 

@@ -26,6 +26,7 @@ DICT_PATH = os.environ["DICTIONARIES"]
 
 class SimilarCountVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, dictionary_name, embedding_type, tokenizer):
+        self.embedding_type = embedding_type
         self.dictionary_name = dictionary_name
         self.tokenizer = tokenizer
         dictionary_path = os.path.join(DICT_PATH, dictionary_name + '.dic')

@@ -60,8 +60,8 @@ def run_method(method_string, train_data, params, data, save, features):
     weights = dict()
 
     # TODO: Add exception handling
-    text_col = __get_text_col(train_data.columns.tolist())
-    params["target_cols"] = __get_target_col(train_data.columns.tolist())
+    text_col = "text"#__get_text_col(train_data.columns.tolist())
+    params["target_cols"] = ["hate"]#__get_target_col(train_data.columns.tolist())
     #params["pred_cols"] = __get_pred_col(train_data.columns.tolist())
     for target in params["target_cols"]:
         print("Removing missing values from", target, "column")
@@ -72,10 +72,13 @@ def run_method(method_string, train_data, params, data, save, features):
         count = list(dict(count).values())
         weights[target] = np.array([(sum(count) - c) / sum(count) for c in count])
     train_data = train_data.drop(missing_indices)
+    train_data = train_data.dropna(subset=[text_col])
     print("Shape of train_dataframe after getting rid of the Nan values is", train_data.shape)
 
+    train_data = tokenize_data(train_data, text_col, params["max_length"], params["min_length"])
     text = train_data[text_col].values.tolist()
-    text = tokenize_data(text, params["max_length"])
+
+    print(len(text), "text data remains in the dataset")
     vocab = learn_vocab(text, params["vocab_size"])
     # vocab_size = len(vocab)
     # method_class = load_method(method_string)
@@ -85,11 +88,12 @@ def run_method(method_string, train_data, params, data, save, features):
     # y = np.transpose(np.array(np.array(train_data[params["target_cols"]].astype(int))))
     if params["model"][-4:] == "feat":
         if features.endswith('.tsv'):
-            feat = pd.read_csv(features, sep='\t', quoting=3).values
+            feat1 = pd.read_csv(features, sep='\t', quoting=3).values
         elif features.endswith('.pkl'):
-            feat = pickle.load(open(features, 'rb')).values
+            feat1 = pickle.load(open(features, 'rb')).values
         elif features.endswith('.csv'):
-            feat  = pd.read_csv(features).values
+            feat1  = pd.read_csv(features)
+        feat = feat1.loc[:,["loyalty", "betrayal", "authority", "subversion", "purity", "degradation"]].values
         params["feature_size"] = feat.shape[1]
     else:
         feat = []
@@ -111,8 +115,9 @@ def run_method(method_string, train_data, params, data, save, features):
         elif data.endswith('.csv'):
             all = pd.read_csv(data)
 
-        all_text = all[__get_text_col(all.columns.tolist())].values.tolist()
-        all_text = tokenize_data(all_text, params["max_length"])
+        col = __get_text_col(all.columns.tolist())
+        all = tokenize_data(all, params["max_length"], params["min_length"])
+        all_text = all[col].values.tolist()
         data = np.array(tokens_to_ids(all_text, vocab))
 
         neural.run_model(X, y, data, weights, save)
@@ -132,7 +137,7 @@ if __name__ == '__main__':
     if args.train_data.endswith('.tsv'):
         train_data = pd.read_csv(args.train_data, sep='\t', quoting=3)
     elif args.train_data.endswith('.pkl'):
-        train_data = pickle.load(open(args.train_data, 'rb'))
+        train_data = pd.read_pickle(args.train_data)
     elif args.train_data.endswith('.csv'):
         train_data = pd.read_csv(args.train_data)
 

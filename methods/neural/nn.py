@@ -155,7 +155,7 @@ def run(model, batches, test_batches, weights):
 def run_pred(model, batches, data_batches, weights, savedir):
     saver = tf.train.Saver()
     with tf.Session() as model.sess:
-        saver.restore(model.sess, "")
+        saver.restore(model.sess, "/tmp/model")
         label_predictions = {target: np.array([]) for target in model.target_cols}
         print(len(data_batches))
         for i in range(len(data_batches)):
@@ -212,10 +212,17 @@ def cnn(input, filter_sizes, num_filters, keep_ratio):
     output = tf.nn.dropout(h_pool_flat, keep_ratio)
     return output
 
-def tokenize_data(corpus, max_length):
+def tokenize_data(corpus, text_col, max_length, min_length):
     #sent_tokenizer = toks[self.params["tokenize"]]
-    tokenized_corpus = [nltk_token.WordPunctTokenizer().tokenize(sent.lower()) for sent in corpus]
-    return [sent[:min(max_length, len(sent))] for sent in tokenized_corpus]
+    drop = list()
+    for i, row in corpus.iterrows():
+        tokens = nltk_token.WordPunctTokenizer().tokenize(row[text_col].lower())
+        corpus.at[i, text_col] = tokens[:min(max_length, len(tokens))]
+        if len(row[text_col].split()) < min_length:
+            drop.append(i)
+        #tokenized_corpus = [nltk_token.WordPunctTokenizer().tokenize(sent.lower()) for sent in corpus]
+    #corpus = corpus.drop(drop)
+    return corpus
 
 def learn_vocab(corpus, vocab_size):
     print("Learning vocabulary of size %d" % (vocab_size))

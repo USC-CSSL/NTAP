@@ -11,6 +11,7 @@ from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from sklearn.metrics import f1_score
 from collections import Counter
+import statistics
 
 class Neural:
     def __init__(self, params, vocab):
@@ -68,6 +69,7 @@ class Neural:
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
             if self.nn.feature:
+                print(features.shape)
                 feat_train, feat_test = features[train_idx], features[test_idx]
             else:
                 feat_train, feat_test = list(), list()
@@ -80,8 +82,11 @@ class Neural:
                 rs[target].append(recall[target])
         for target in self.target_cols:
             print("Overall F1 for", target, ":", sum(f1s[target]) / self.params["kfolds"])
+            print("Standard Deviation:", statistics.stdev(f1s[target]))
             print("Overall Precision for", target, ":", sum(ps[target]) / self.params["kfolds"])
+            print("Standard Deviation:", statistics.stdev(ps[target]))
             print("Overall Recall for", target, ":", sum(rs[target]) / self.params["kfolds"])
+            print("Standard Deviation:", statistics.stdev(rs[target]))
         #pd.DataFrame.from_dict(f1s).to_csv(savedir + "/" + ".".join(t for t in self.target_cols) + ".csv")
 
     def load_embeddings(self):
