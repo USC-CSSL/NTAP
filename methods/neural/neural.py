@@ -10,7 +10,7 @@ from methods.neural.LSTM_feat import LSTM_feat
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from sklearn.metrics import f1_score
-from collections import Counter
+from collections import Counter, defaultdict
 import statistics
 
 class Neural:
@@ -64,6 +64,7 @@ class Neural:
         f1s = {target: list() for target in self.target_cols}
         ps = {target: list() for target in self.target_cols}
         rs = {target: list() for target in self.target_cols}
+        scores = defaultdict(lambda: defaultdict(list))
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             print("Cross validation, iteration", idx + 1)
             X_train, X_test = X[train_idx], X[test_idx]
@@ -77,16 +78,21 @@ class Neural:
             f1_scores, precision, recall = self.nn.run_model(self.get_batches(X_train, y_train, feat_train), self.get_batches(X_test, y_test, feat_test), weights)
 
             for target in self.target_cols:
-                f1s[target].append(f1_scores[target])
-                ps[target].append(precision[target])
-                rs[target].append(recall[target])
-        for target in self.target_cols:
-            print("Overall F1 for", target, ":", sum(f1s[target]) / self.params["kfolds"])
-            print("Standard Deviation:", statistics.stdev(f1s[target]))
-            print("Overall Precision for", target, ":", sum(ps[target]) / self.params["kfolds"])
-            print("Standard Deviation:", statistics.stdev(ps[target]))
-            print("Overall Recall for", target, ":", sum(rs[target]) / self.params["kfolds"])
-            print("Standard Deviation:", statistics.stdev(rs[target]))
+                scores[target]['f1'].append(f1_scores[target])
+                scores[target]['precision'].append(precision[target])
+                scores[target]['recall'].append(recall[target])
+                # f1s[target].append(f1_scores[target])
+                # ps[target].append(precision[target])
+                # rs[target].append(recall[target])
+        for k, v in scores.items():
+            pd.DataFrame.from_dict(v).to_csv(savedir + "/" + k + ".csv")
+        # for target in self.target_cols:
+        #     print("Overall F1 for", target, ":", sum(f1s[target]) / self.params["kfolds"])
+        #     print("Standard Deviation:", statistics.stdev(f1s[target]))
+        #     print("Overall Precision for", target, ":", sum(ps[target]) / self.params["kfolds"])
+        #     print("Standard Deviation:", statistics.stdev(ps[target]))
+        #     print("Overall Recall for", target, ":", sum(rs[target]) / self.params["kfolds"])
+        #     print("Standard Deviation:", statistics.stdev(rs[target]))
         #pd.DataFrame.from_dict(f1s).to_csv(savedir + "/" + ".".join(t for t in self.target_cols) + ".csv")
 
     def load_embeddings(self):
