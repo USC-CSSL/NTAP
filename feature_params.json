@@ -8,6 +8,6 @@
     "num_topics": 50,
     "num_iter": 1000,
     "num_trials": 1, 
-    "dictionary": "mfd",
+    "dictionary": "mfd2.0",
     "random_seed": 123
 }

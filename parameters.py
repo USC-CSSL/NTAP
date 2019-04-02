@@ -45,8 +45,10 @@ neural = {"learning_rate": 0.0001,
           "save_vectors": False,
           "epochs": 50,
           "word_embedding": "glove",
-          "glove_path": "/home/aida/neural_profiles_datadir/word_embeddings/GloVe/glove.840B.300d.txt", #Set the glove path here
+          "glove_path": "", #Set the glove path here
           "word2vec_path": "", #Set word2vec path here
+          "dictionary_path":"",
+          "mallet_path":"",
           "kfolds": 10,
           "random_seed": 55,
           "max_length": 1000,
