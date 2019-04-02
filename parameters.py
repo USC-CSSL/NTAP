@@ -3,7 +3,7 @@ file: parameters.py
 """
 
 processing = {
-              "clean": ["links", "mentions", "hashtags"],
+              "clean": ["links"], #, "mentions", "hashtags"],
               "preprocess": ["lowercase"]  #["stem"],
              }
 
@@ -29,29 +29,31 @@ neural = {"learning_rate": 0.0001,
           "batch_size" : 100,
           "keep_ratio" : 0.66,
           "cell": "GRU", #choose from ["GRU", "LSTM"]
-          "model": "ATTN_feat",  # choose from ["LSTM", "BiLSTM", "CNN", "RNN", "RCNN"
+          "model": "LSTM_feat",  # choose from ["LSTM", "BiLSTM", "CNN", "RNN", "RCNN"
           "RNN": "BiLSTM",
-          "vocab_size": 10000,
+          "vocab_size": 20000,
           "embedding_size": 300,
-          "hidden_size": 256,
-          "pretrain": False,
+          "hidden_size": 100,
+          "feature_hidden_size": 100,
+          "pretrain": True,
           "train_embedding": False,
           "num_layers": 1,
-          "n_outputs": 3,
+          "n_outputs": 2,
           "filter_sizes": [2, 3, 4],
           "num_filters": 2,
           "loss": "Mean",  #choose from ["Mean", "Weighted"]
           "save_vectors": False,
-          "epochs": 5,
+          "epochs": 50,
           "word_embedding": "glove",
-          "glove_path": "", #Set the glove path here
+          "glove_path": "/home/aida/neural_profiles_datadir/word_embeddings/GloVe/glove.840B.300d.txt", #Set the glove path here
           "word2vec_path": "", #Set word2vec path here
-          "kfolds": 2,
+          "kfolds": 10,
           "random_seed": 55,
           "max_length": 1000,
+          "min_length": 2,
           "neural_kfolds": 5,
           "attention_size": 100,
           "train": True,
-          "predict": True
+          "predict": False
 }
 
