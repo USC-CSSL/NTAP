@@ -88,7 +88,7 @@ class SimilarCountVectorizer(BaseEstimator, TransformerMixin):
             self.dictionary_embeddings[cat] = list()
             for word in words:
                 try:
-                    self.dictionary_embeddings[cat].append(self.embedding_vectors[word])
+                    self.dictionary_embeddings[cat].append(self.embedding_vectors[word.replace("*", "")])
                 except Exception:
                     print(word, "does not exist in the embedding file")
         return self
@@ -96,6 +96,7 @@ class SimilarCountVectorizer(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         docs = list()
         for sentence in X:
+            print(sentence)
             tokens = self.tokenizer(sentence)
             token_embeddings = [self.embedding_vectors[tok.lower()] for tok in tokens
                                 if tok in self.embedding_vectors.keys()]
@@ -109,8 +110,9 @@ class SimilarCountVectorizer(BaseEstimator, TransformerMixin):
         for cat in sorted(self.dictionary_embeddings.keys()):
             count = 0
             for word in sent_embeddings:
-                if self.cosine(word, cat) > 0.6:
-                    count += 1
+                for keyword in self.dictionary_embeddings[cat]:
+                    if self.cosine(word, keyword) > 0.6:
+                        count += 1
             vector.append(count)
         return vector
 
