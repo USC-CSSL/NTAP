@@ -88,12 +88,12 @@ def run_method(method_string, train_data, params, data, save, features):
     # y = np.transpose(np.array(np.array(train_data[params["target_cols"]].astype(int))))
     if params["model"][-4:] == "feat":
         if features.endswith('.tsv'):
-            feat1 = pd.read_csv(features, sep='\t', quoting=3).values
+            feat = pd.read_csv(features, sep='\t', quoting=3).values
         elif features.endswith('.pkl'):
-            feat1 = pickle.load(open(features, 'rb')).values
+            feat = pickle.load(open(features, 'rb')).values
         elif features.endswith('.csv'):
             feat1  = pd.read_csv(features)
-        feat = feat1.loc[:,["loyalty", "betrayal", "authority", "subversion", "purity", "degradation"]].values
+            feat = feat1.loc[:,["care", "harm", "fairness", "cheating"]].values
         params["feature_size"] = feat.shape[1]
     else:
         feat = []
@@ -116,7 +116,7 @@ def run_method(method_string, train_data, params, data, save, features):
             all = pd.read_csv(data)
 
         col = __get_text_col(all.columns.tolist())
-        all = tokenize_data(all, params["max_length"], params["min_length"])
+        all = tokenize_data(all, col, params["max_length"], params["min_length"])
         all_text = all[col].values.tolist()
         data = np.array(tokens_to_ids(all_text, vocab))
 
