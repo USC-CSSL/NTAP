@@ -26,15 +26,15 @@ from sklearn.model_selection import GridSearchCV
 
 from gensim.models import KeyedVectors as kv
 class BoMVectorizer(BaseEstimator, TransformerMixin):
-    def __init__(self, embedding_type, tokenizer, stop_words):
+    def __init__(self, embedding_type, tokenizer, stop_words, glove_path, word2vec_path):
         self.embedding_type = embedding_type
         self.tokenizer = tokenizer
         self.stoplist = set(stop_words) if stop_words is not None else None
 
         if embedding_type == 'glove':
-            self.embeddings_path = os.environ["GLOVE_PATH"]
+            self.embeddings_path = glove_path
         else:
-            self.embeddings_path = os.environ["WORD2VEC_PATH"]
+            self.embeddings_path = word2vec_path
     
     def get_sentence_avg(self, tokens, embed_size=300, min_threshold=0):
         arrays = list()

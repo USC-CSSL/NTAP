@@ -17,6 +17,7 @@ from baselines.vectorizers.similarcount import SimilarCountVectorizer
 #from baselines.vectorizers.fasttext import FastTextVectorizer
 from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
 from nltk.corpus import stopwords
+from parameters import path as path_params
 
 def cosine_similarity(x, y):
     return 1 - spatial.distance.cosine(x, y)
@@ -37,6 +38,7 @@ class Features:
         self.data = pd.DataFrame()
         with open(params) as fo:
             self.params = json.load(fo)
+        self.path_params = path_params
         """
         if type(params) == dict:
             self.params = params
@@ -92,7 +94,8 @@ class Features:
                             BoMVectorizer(
                                 embedding_type=self.params['bom_method'],
                                 tokenizer=tokenizer,
-                                stop_words=stopwords
+                                stop_words=stopwords, glove_path=self.path_params["glove_path"],
+                                word2vec_path=self.path_params["word2vec_path"]
                                )
                                , {'alias': self.params["bom_method"]})
 
@@ -103,7 +106,10 @@ class Features:
                                     tokenizer=tokenizer,
                                     stop_words=stopwords,
                                     dictionary=self.params['dictionary'],
-                                    similarity=sim), 
+                                    similarity=sim,
+                                    dict_path=self.path_params["dictionary_path"],
+                                    glove_path=self.path_params["glove_path"],
+                                    word2vec_path=self.path_params["word2vec_path"]),
                                {'alias': "_".join([self.params['bom_method'], 
                                                    self.params['dictionary']])})
 
@@ -112,6 +118,7 @@ class Features:
                                 LDAVectorizer(
                                     save_dir=self.dest,
                                     tokenizer=tokenizer,
+                                    mallet_path=self.path_params["mallet_path"],
                                     num_topics=self.params["num_topics"],
                                     num_iter=self.params["num_iter"],
                                     seed=self.params["random_seed"],
@@ -120,17 +127,18 @@ class Features:
                                 {'alias': "LDA_" + str(self.params["num_topics"]) + "topics"})
         elif feature == 'dictionary':
             self.transformer = (self.text_col, DictionaryVectorizer(
-                        dictionary_name=self.params["dictionary"]), 
+                        dictionary_name=self.params["dictionary"], dict_path=self.path_params["dictionary_path"]),
                         {"alias": "Dictionary_" + self.params["dictionary"]})
         elif feature == 'dictionarycount':
             self.transformer = (self.text_col, DictionaryCountVectorizer(
-                        dictionary_name=self.params["dictionary"]),
+                        dictionary_name=self.params["dictionary"], dict_path=self.path_params["dictionary_path"]),
                         {"alias": "Dictionary_" + self.params["dictionary"]})
         elif feature == 'simcount':
             self.transformer = (self.text_col, SimilarCountVectorizer(
                                 dictionary_name=self.params["dictionary"],
                                 embedding_type=self.params['bom_method'],
-                                tokenizer=tokenizer),
+                                tokenizer=tokenizer, dict_path=self.path_params["dictionary_path"],
+                                glove_path=self.path_params["glove_path"], word2vec_path=self.path_params["word2vec_path"]),
                         {"alias": "Dictionary_" + self.params["dictionary"]})
 
     """

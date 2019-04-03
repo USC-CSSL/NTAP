@@ -11,7 +11,7 @@ import argparse, os
 from parameters import processing
 from process.processor import Preprocessor
 
-TAGME_QCODE = os.environ["TAGME"]
+# TAGME_QCODE = os.environ["TAGME"]
 
 if __name__ == '__main__':
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         if job == 'depparse':
             processor.depparse()
         if job == 'tagme':
-            processor.tagme(TAGME_QCODE)
+            processor.tagme()
     ftype = ".pkl"
     processor.write(ftype)
 

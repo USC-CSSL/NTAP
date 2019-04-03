@@ -6,13 +6,13 @@ import re
 import requests
 from progressbar import ProgressBar
 from stanfordcorenlp import StanfordCoreNLP
-
-corenlp_path = os.environ.get("CORENLP")
+from parameters import path as path_params
 import pandas as pd
 import threading
 from queue import Queue
 import time
 
+# corenlp_path = os.environ.get("CORENLP")
 link_re = re.compile(r"(http(s)?[^\s]*)|(pic.twitter.[^\s]*)")
 hashtag_re = re.compile(r"#[a-zA-Z0-9_]+")
 mention_re = re.compile(r"@[a-zA-Z0-9_]+")
@@ -34,8 +34,9 @@ class Preprocessor:
             os.makedirs(self.dest)
         self.source = pd.DataFrame()
         self.data = pd.DataFrame()
-        self.corenlp = StanfordCoreNLP(corenlp_path, memory='1g')
+        self.corenlp = StanfordCoreNLP(path_params["corenlp_path"], memory='1g')
         self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
+        self.tagme_token = path_params["tagme_token"]
 
     def load(self, file_str, text_col=None, target_cols=None, index_col=None):
         normalize = True
@@ -138,7 +139,7 @@ class Preprocessor:
         print("Not Implemented (dependency parsing)")
 
     #tagme version 1
-    def tagme_v1(self, token, p=0.1):
+    def tagme_v1(self, p=0.1):
         #NOTES: 
         #       - If parallelizing, limit to 4 concurrent calls
         #       - Pause (10s) periodically on each thread
@@ -150,7 +151,7 @@ class Preprocessor:
             os.makedirs(entity_dir)
         entities = dict()
         extracted = list()
-        params = {'gcube-token': token,
+        params = {'gcube-token': self.tagme_token,
                   'lang': 'en',
                   'include_abstract': 'true',
                   'include_categories': 'true'
@@ -271,13 +272,13 @@ class Preprocessor:
             queue.task_done()
 
     # tagme version 2
-    def tagme(self, token, p=0.1):
+    def tagme(self, p=0.1):
         entity_dir = os.path.join(self.dest, "tagme")
         if not os.path.isdir(entity_dir):
             os.makedirs(entity_dir)
         entities = dict()
         extracted = list()
-        params = {'gcube-token': token,
+        params = {'gcube-token': self.tagme_token,
                   'lang': 'en',
                   'include_abstract': 'true',
                   'include_categories': 'true'

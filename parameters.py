@@ -43,12 +43,8 @@ neural = {"learning_rate": 0.0001,
           "num_filters": 2,
           "loss": "Mean",  #choose from ["Mean", "Weighted"]
           "save_vectors": False,
-          "epochs": 50,
+          "epochs": 100,
           "word_embedding": "glove",
-          "glove_path": "", #Set the glove path here
-          "word2vec_path": "", #Set word2vec path here
-          "dictionary_path":"",
-          "mallet_path":"",
           "kfolds": 10,
           "random_seed": 55,
           "max_length": 1000,
@@ -57,5 +53,14 @@ neural = {"learning_rate": 0.0001,
           "attention_size": 100,
           "train": True,
           "predict": False
+}
+
+path = {
+    "glove_path": "/Users/neetikasinghal/CSSL/glove.6B/glove.6B.300d.txt", #Set the glove path here
+    "word2vec_path": "/Users/neetikasinghal/CSSL/GoogleNews-vectors-negative300.bin.gz", #Set word2vec path here
+    "dictionary_path": "/Users/neetikasinghal/CSSL/",
+    "mallet_path": "/Users/neetikasinghal/CSSL/mallet-2.0.8/bin/mallet",
+    "corenlp_path": "/Users/neetikasinghal/CSSL/stanford-corenlp-full-2018-10-05/",
+    "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
 }
 

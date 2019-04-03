@@ -22,13 +22,13 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import GridSearchCV
 
-glove_path = os.environ["GLOVE_PATH"]
-word2vec_path = os.environ["WORD2VEC_PATH"]
-dictionary_path = os.environ["DICTIONARIES"]
+# glove_path = os.environ["GLOVE_PATH"]
+# word2vec_path = os.environ["WORD2VEC_PATH"]
+# dict_path = os.environ["DICTIONARIES"]
 
 class DDRVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, embedding_type, stop_words,
-                 tokenizer, dictionary, similarity):
+                 tokenizer, dictionary, similarity, dict_path, glove_path, word2vec_path):
         self.embedding_type = embedding_type
         self.stoplist = set(stop_words) if stop_words is not None else None
         self.tokenizer = tokenizer
@@ -37,13 +37,13 @@ class DDRVectorizer(BaseEstimator, TransformerMixin):
             self.embeddings_path = glove_path
         else:
             self.embeddings_path = word2vec_path
-        dict_path = os.path.join(dictionary_path, dictionary + '.json')
+        dictionary_path = os.path.join(dict_path, dictionary + '.json')
         try:
-            with open(dict_path, 'r') as fo:
+            with open(dictionary_path, 'r') as fo:
                 data = json.load(fo)
                 self.dictionary = data.items()
         except FileNotFoundError:
-            print("Could not load dictionary %s from %s" % (self.dictionary, dict_path))
+            print("Could not load dictionary %s from %s" % (self.dictionary, dictionary_path))
             exit(1)
         self.similarity = similarity
 

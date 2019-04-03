@@ -22,14 +22,14 @@ from numpy.linalg import norm
 from sklearn.base import BaseEstimator, TransformerMixin
 from gensim.models import KeyedVectors as kv
 
-DICT_PATH = os.environ["DICTIONARIES"]
+# DICT_PATH = os.environ["DICTIONARIES"]
 
 class SimilarCountVectorizer(BaseEstimator, TransformerMixin):
-    def __init__(self, dictionary_name, embedding_type, tokenizer):
+    def __init__(self, dictionary_name, embedding_type, tokenizer, dict_path, glove_path, word2vec_path):
         self.embedding_type = embedding_type
         self.dictionary_name = dictionary_name
         self.tokenizer = tokenizer
-        dictionary_path = os.path.join(DICT_PATH, dictionary_name + '.dic')
+        dictionary_path = os.path.join(dict_path, dictionary_name + '.dic')
         self.dictionary = dict()
         self.feature_names = dict()
         try:
@@ -67,9 +67,9 @@ class SimilarCountVectorizer(BaseEstimator, TransformerMixin):
             exit(1)
 
         if embedding_type == 'glove':
-            self.embeddings_path = os.environ["GLOVE_PATH"]
+            self.embeddings_path = glove_path
         else:
-            self.embeddings_path = os.environ["WORD2VEC_PATH"]
+            self.embeddings_path = word2vec_path
 
     def fit(self, X, y=None):
         if not os.path.exists(self.embeddings_path):
