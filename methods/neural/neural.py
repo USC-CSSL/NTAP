@@ -12,11 +12,14 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import f1_score
 from collections import Counter, defaultdict
 import statistics
+from parameters import path as path_params
 
 class Neural:
     def __init__(self, params, vocab):
         self.params = params
         self.vocab = vocab
+        self.glove_path = path_params['glove_path']
+        self.word2vec_path = path_params['word2vec_path']
         for key in params:
             setattr(self, key, params[key])
         if self.word_embedding == 'glove':
