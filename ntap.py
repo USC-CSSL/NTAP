@@ -46,7 +46,7 @@ class Ntap:
 
         processor = Preprocessor(self.preprocessed_dir)
         try:
-            processor.load(self.base_dir)
+            processor.load(self.preprocessed_file)
         except Exception as e:
             print(e)
             print("Could not load data from {}".format(self.base_dir))
