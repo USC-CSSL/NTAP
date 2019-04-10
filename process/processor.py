@@ -339,7 +339,7 @@ class Preprocessor:
         if formatting == '.stata':
             self.data.to_stata(dest)
         if formatting == '.hdf5':
-            self.data.to_hdf(data)
+            self.data.to_hdf(dest)
         if formatting == '.excel':
             self.data.to_excel()
         if formatting == '.sql':

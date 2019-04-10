@@ -1,0 +1,71 @@
+{
+  "processing": {
+      "jobs":["clean"],
+      "input_path": "/Users/neetikasinghal/CSSL/datasets/BLM/data.pkl"
+  },
+
+  "baseline": {
+      "features": ["dictionary"],
+      "targets": [""],
+      "method": ""
+  },
+
+  "feature_params":{
+    "kfolds": 10,
+    "stopwords": "None",
+    "num_words": 10000,
+    "sent_tokenizer": "wordpunc",
+    "ngrams": [0, 1],
+    "bom_method": "glove",
+    "num_topics": 50,
+    "num_iter": 1000,
+    "num_trials": 1,
+    "dictionary": "mfd2.0",
+    "random_seed": 123
+  },
+
+  "model": {
+      "test_filepath":"",
+      "feature": "dictionary"
+  },
+
+  "neural_params": {
+      "learning_rate": 0.0001,
+      "batch_size": 100,
+      "keep_ratio": 0.66,
+      "cell": "GRU",
+      "model": "LSTM_feat",
+      "RNN": "BiLSTM",
+      "vocab_size": 20000,
+      "embedding_size": 300,
+      "hidden_size": 100,
+      "feature_hidden_size": 100,
+      "pretrain": "True",
+      "train_embedding": "False",
+      "num_layers": 1,
+      "n_outputs": 2,
+      "filter_sizes": [2, 3, 4],
+      "num_filters": 2,
+      "loss": "Mean",
+      "save_vectors": "False",
+      "epochs": 100,
+      "word_embedding": "glove",
+      "kfolds": 10,
+      "random_seed": 55,
+      "max_length": 1000,
+      "min_length": 2,
+      "neural_kfolds": 5,
+      "attention_size": 100,
+      "train": "True",
+      "predict": "False"
+  },
+
+  "path": {
+    "glove_path": "/Users/neetikasinghal/CSSL/glove.6B/glove.6B.300d.txt",
+    "word2vec_path": "/Users/neetikasinghal/CSSL/GoogleNews-vectors-negative300.bin.gz",
+    "dictionary_path": "/Users/neetikasinghal/CSSL/",
+    "mallet_path": "/Users/neetikasinghal/CSSL/mallet-2.0.8/bin/mallet",
+    "corenlp_path": "/Users/neetikasinghal/CSSL/stanford-corenlp-full-2018-10-05/",
+    "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
+  }
+}

@@ -19,6 +19,20 @@ features = {"tokenizer": 'wordpunc',
             "sent_tokenizer": "tweet"
            }
 
+feature_params = {
+    "kfolds": 10,
+    "stopwords": None,
+    "num_words": 10000,
+    "sent_tokenizer": 'wordpunc',
+    "ngrams": [0, 1],
+    "bom_method": 'glove',
+    "num_topics": 50,
+    "num_iter": 1000,
+    "num_trials": 1,
+    "dictionary": 'mfd2.0',
+    "random_seed": 123
+  }
+
 prediction = {"prediction_task": 'classification',
               "method_string": 'svm',  # svm, elasticnet
               "num_trials": 1,  # run k-fold x-validation num_trials times

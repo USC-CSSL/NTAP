@@ -36,9 +36,8 @@ class Features:
         if not os.path.isdir(self.dest):
             os.makedirs(self.dest)
         self.data = pd.DataFrame()
-        with open(params) as fo:
-            self.params = json.load(fo)
-        self.path_params = path_params
+        self.params = params['feature_params']
+        self.path_params = params['path']
         """
         if type(params) == dict:
             self.params = params

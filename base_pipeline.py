@@ -17,15 +17,21 @@ if __name__ == '__main__':
     parser.add_argument("--config", help="Path to config file (json/txt/csv)")
     args = parser.parse_args()
 
+    try:
+        with open(args.config, 'r') as fo:
+            params = json.load(fo)
+    except Exception as e:
+        print("Bad parameter file: {}".format(args.config))
+
     if args.features is not None:
-        feature_pipeline = Features(args.destdir, args.config)
+        feature_pipeline = Features(args.destdir, params)
         feature_pipeline.load(args.input)
         for feat_str in args.features:
             feature_pipeline.fit(feat_str)
             feature_pipeline.transform()  # writes to file
 
     if args.method is not None:
-        baseline_pipeline = Baseline(args.destdir, args.config)
+        baseline_pipeline = Baseline(args.destdir, params)
         if args.targets is None:
             baseline_pipeline.load_data(args.input)
         else:

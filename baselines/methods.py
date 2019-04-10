@@ -82,18 +82,14 @@ class SVM(BasePredictor):
         return f
 
 class Baseline:
-    def __init__(self, dir_, param_file):
+    def __init__(self, dir_, params):
         self.feat_dir = os.path.join(dir_, "features")
         if not os.path.isdir(self.feat_dir):
             raise ValueError("Cannot read features from {}".format(self.feat_dir))
         self.dest_dir = os.path.join(dir_, "models")
+        self.params = params['feature_params']
         if not os.path.isdir(self.dest_dir):
             os.makedirs(self.dest_dir)
-        try:
-            with open(param_file, 'r') as fo:
-                self.params = json.load(fo)
-        except Exception as e:
-            print("Bad parameter file: {}".format(param_file))
     
     def __load_file(self, path):
         _, ext = os.path.splitext(path)
