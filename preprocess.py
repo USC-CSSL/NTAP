@@ -8,8 +8,8 @@ Params:
 """
 import pandas as pd
 import argparse, os
-from parameters import processing
 from process.processor import Preprocessor
+import json
 
 # TAGME_QCODE = os.environ["TAGME"]
 
@@ -22,7 +22,10 @@ if __name__ == '__main__':
     parser.add_argument("--output", help="Path to destination directory")
     args = parser.parse_args()
 
-    processor = Preprocessor(args.output)
+    with open('params.json') as f:
+        params = json.load(f)
+
+    processor = Preprocessor(args.output, params)
     try:
         processor.load(args.input)
     except Exception as e:
@@ -33,7 +36,7 @@ if __name__ == '__main__':
     for job in args.jobs:
         print("Processing job: {}".format(job))
         if job == 'clean':
-            processor.clean(processing["clean"], remove=True)
+            processor.clean(params["processing"]["clean"], remove=True)
         if job == 'ner':
             processor.ner()
         if job == 'pos':

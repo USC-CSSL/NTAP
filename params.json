@@ -1,7 +1,9 @@
 {
   "processing": {
       "jobs":["clean"],
-      "input_path": "/Users/neetikasinghal/CSSL/datasets/BLM/data.pkl"
+      "input_path": "/Users/neetikasinghal/CSSL/datasets/BLM/data.pkl",
+      "clean": ["links"],
+      "preprocess": ["lowercase"]
   },
 
   "baseline": {

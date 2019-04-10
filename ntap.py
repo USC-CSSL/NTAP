@@ -1,7 +1,6 @@
 import fnmatch
 
 from process.processor import Preprocessor
-from parameters import processing
 import json
 import os
 from baselines.features import Features
@@ -44,7 +43,7 @@ class Ntap:
     def preprocess(self, params):
         jobs = params['processing']['jobs']
 
-        processor = Preprocessor(self.preprocessed_dir)
+        processor = Preprocessor(self.preprocessed_dir, self.params)
         try:
             processor.load(self.preprocessed_file)
         except Exception as e:
@@ -55,7 +54,8 @@ class Ntap:
         for job in jobs:
             print("Processing job: {}".format(job))
             if job == 'clean':
-                processor.clean(processing["clean"], remove=True)
+                processor.clean(params["processing"]["clean"], remove=True)
+
             if job == 'ner':
                 processor.ner()
             if job == 'pos':
@@ -173,7 +173,7 @@ class Ntap:
             neural_params["feature_size"] = feat.shape[1]
         else:
             feat = []
-        neural = Neural(neural_params, vocab)
+        neural = Neural(params, vocab)
         neural.build()
 
         if neural_params["train"]:

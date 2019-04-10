@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr
 
-from parameters import prediction as params
 
 def score_classification(predictions):
 

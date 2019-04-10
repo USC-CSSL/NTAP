@@ -1,12 +1,12 @@
 #TODO: Add CNN and RNN models to files cnns.py and rnns.py
 from methods.neural.nn import *
 from methods.neural.neural import Neural
-from parameters import neural as neural_params
 import pandas as pd
 import pickle
 import argparse
 import numpy as np
 from collections import Counter
+import json
 
 
 """
@@ -141,10 +141,12 @@ if __name__ == '__main__':
     elif args.train_data.endswith('.csv'):
         train_data = pd.read_csv(args.train_data)
 
+    with open('params.json') as f:
+        params = json.load(f)
 
     data = args.data
     method = args.method
-    params = neural_params
+    params = params['neural_params']
     features = args.feature
     save = args.savedir
     """

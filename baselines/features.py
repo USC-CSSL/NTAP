@@ -17,7 +17,6 @@ from baselines.vectorizers.similarcount import SimilarCountVectorizer
 #from baselines.vectorizers.fasttext import FastTextVectorizer
 from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
 from nltk.corpus import stopwords
-from parameters import path as path_params
 
 def cosine_similarity(x, y):
     return 1 - spatial.distance.cosine(x, y)

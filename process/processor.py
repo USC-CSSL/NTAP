@@ -6,7 +6,6 @@ import re
 import requests
 from progressbar import ProgressBar
 from stanfordcorenlp import StanfordCoreNLP
-from parameters import path as path_params
 import pandas as pd
 import threading
 from queue import Queue
@@ -28,15 +27,15 @@ patterns = {"mentions":     mention_re,
 print_lock = threading.Lock()
 queue = Queue()
 class Preprocessor:
-    def __init__(self, dest_dir):
+    def __init__(self, dest_dir, params):
         self.dest = dest_dir
         if not os.path.isdir(self.dest):
             os.makedirs(self.dest)
         self.source = pd.DataFrame()
         self.data = pd.DataFrame()
-        self.corenlp = StanfordCoreNLP(path_params["corenlp_path"], memory='1g')
+        self.corenlp = StanfordCoreNLP(params["path"]["corenlp_path"], memory='1g')
         self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
-        self.tagme_token = path_params["tagme_token"]
+        self.tagme_token = params["path"]["tagme_token"]
 
     def load(self, file_str, text_col=None, target_cols=None, index_col=None):
         normalize = True
