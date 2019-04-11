@@ -15,18 +15,16 @@ import statistics
 
 class Neural:
     def __init__(self, params, vocab):
-        self.params = params
+        self.params = params['neural_params']
         self.vocab = vocab
         self.glove_path = params['path']['glove_path']
         self.word2vec_path = params['path']['word2vec_path']
-        for key in params:
-            setattr(self, key, params[key])
+        for key in self.params:
+            setattr(self, key, self.params[key])
         if self.word_embedding == 'glove':
             self.embeddings_path = self.glove_path
-            #self.embeddings_path = os.environ['GLOVE_PATH']
         else:
             self.embeddings_path = self.word2vec_path
-            #self.embeddings_path = os.environ['WORD2VEC_PATH']
 
 
     def build(self):

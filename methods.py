@@ -97,7 +97,9 @@ def run_method(method_string, train_data, params, data, save, features):
         params["feature_size"] = feat.shape[1]
     else:
         feat = []
-    neural = Neural(params, vocab)
+    with open('params.json') as f:
+        all_params = json.load(f)
+    neural = Neural(all_params, vocab)
     neural.build()
 
     if params["train"]:
