@@ -43,15 +43,15 @@
       "hidden_size": 100,
       "feature_hidden_size": 100,
       "feature_size":10,
-      "pretrain": "True",
-      "train_embedding": "False",
+      "pretrain": true,
+      "train_embedding": false,
       "target_cols":["authority","care","fairness","loyalty","purity","moral"],
       "num_layers": 1,
       "n_outputs": 2,
       "filter_sizes": [2, 3, 4],
       "num_filters": 2,
       "loss": "Mean",
-      "save_vectors": "False",
+      "save_vectors": false,
       "epochs": 100,
       "word_embedding": "glove",
       "kfolds": 10,
@@ -60,8 +60,8 @@
       "min_length": 2,
       "neural_kfolds": 5,
       "attention_size": 100,
-      "train": "True",
-      "predict": "False"
+      "train": true,
+      "predict": false
   },
 
   "path": {
