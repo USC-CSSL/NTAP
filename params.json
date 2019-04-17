@@ -28,7 +28,8 @@
 
   "model": {
       "test_filepath":"",
-      "feature": "dictionary"
+      "feature": "dictionary",
+      "method": ""
   },
 
   "neural_params": {
