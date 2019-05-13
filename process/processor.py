@@ -36,6 +36,9 @@ class Preprocessor:
         self.corenlp = StanfordCoreNLP(params["path"]["corenlp_path"], memory='1g')
         self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
         self.tagme_token = params["path"]["tagme_token"]
+        self.target_cols=params["neural_params"]["target_cols"]
+        self.base_dir,self.filename = os.path.split(params['processing']['input_path'])
+        self.filename = self.filename.split(".")[0]
 
     def load(self, file_str, text_col=None, target_cols=None, index_col=None):
         normalize = True
@@ -46,11 +49,9 @@ class Preprocessor:
             source = pd.read_csv(file_str, delimiter=',')
         if ending == 'tsv':
             source = pd.read_csv(file_str, delimiter='\t',quoting=3)
-       
-        cols = source.columns.tolist()
-        
+
         if target_cols is None:
-            target_cols = self.__get_target_col(cols)
+            target_cols = self.target_cols
         for target in target_cols:
             self.data.loc[:, target] = source[target]
             if normalize:
@@ -58,7 +59,7 @@ class Preprocessor:
                     self.data[target].mean())/self.data[target].std(ddof=0))
                 self.data.loc[:, "{}_zscore".format(target)] = zscored
         if text_col is None:
-            text_col = self.__get_text_col(cols)
+            text_col = "text"
         self.data.loc[:, text_col] = source[text_col]
         self.text_col = text_col
         
@@ -326,7 +327,7 @@ class Preprocessor:
         dest: string or file stream object
         formatting options: json pandas csv tsv
         """
-        dest = os.path.join(self.dest, "data" + formatting)
+        dest = os.path.join(self.dest, self.filename + formatting)
         if formatting == '.json':
             self.data.to_json(dest)
         if formatting == '.csv':  

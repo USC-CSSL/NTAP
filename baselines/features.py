@@ -57,7 +57,7 @@ class Features:
             raise ValueError("Unsupported file type: {}".format(ending))
         cols = source.columns.tolist()
         #if text_col is None:  #TODO: load text_col from calling file
-        text_col = self.__get_text_col(cols)
+        text_col ="text"
         self.data[text_col] = source[text_col]
         self.text_col = text_col
 

@@ -1,12 +1,10 @@
 import fnmatch
-
-from process.processor import Preprocessor
 import json
 import os
-from baselines.features import Features
-from baselines.methods import Baseline
 import pandas as pd
-
+from process.processor import Preprocessor
+from baselines.methods import Baseline
+from baselines.features import Features
 from run_methods import Methods
 
 
@@ -14,14 +12,15 @@ class Ntap:
 
     def __init__(self, params):
         self.params = params
-        self.base_dir = os.path.dirname(params['processing']['input_path'])
-        self.pre_filename = "data"
-        self.pre_ftype = ".pkl"
+        self.base_dir,self.filename = os.path.split(params['processing']['input_path'])
+
         self.preprocessed_dir = os.path.join(self.base_dir, "preprocessed")
-        if not os.path.isdir(self.preprocessed_dir):
-            os.makedirs(self.preprocessed_dir)
         self.feature_dir = os.path.join(self.base_dir, "features")
-        self.preprocessed_file = os.path.join(self.preprocessed_dir, self.pre_filename + self.pre_ftype)
+        self.filetype="."+ self.filename.split(".")[1]
+        if not os.path.isdir(self.feature_dir):
+            os.makedirs(self.feature_dir)
+        self.preprocessed_file = os.path.join(self.preprocessed_dir, self.filename )
+        self.input_file = os.path.join(self.base_dir, self.filename )
         self.data = None
         self.test_filepath = params['model']['test_filepath']
         self.model_path = os.path.join(self.base_dir, "models")
@@ -42,17 +41,16 @@ class Ntap:
 
         processor = Preprocessor(self.preprocessed_dir, self.params)
         try:
-            processor.load(self.preprocessed_file)
+            processor.load(self.input_file)
         except Exception as e:
             print(e)
-            print("Could not load data from {}".format(self.base_dir))
+            print("Could not load data from 1 {}".format(self.base_dir))
             exit(1)
 
         for job in jobs:
             print("Processing job: {}".format(job))
             if job == 'clean':
                 processor.clean(params["processing"]["clean"], remove=True)
-
             if job == 'ner':
                 processor.ner()
             if job == 'pos':
@@ -61,7 +59,7 @@ class Ntap:
                 processor.depparse()
             if job == 'tagme':
                 processor.tagme()
-        processor.write(self.pre_ftype)
+        processor.write(self.filetype)
         self.data = processor.data
 
     def baseline(self):
@@ -96,14 +94,15 @@ class Ntap:
         method.run_method(params['model']['method'], self.data, params['neural_params'], self.test_filepath,
                           self.model_path, feature_file)
 
-
 if __name__ == '__main__':
     with open('params.json') as f:
         params = json.load(f)
     ntap = Ntap(params)
-    if not os.listdir(ntap.preprocessed_dir):
-        ntap.preprocess(params)
+
+    if not os.path.isdir(ntap.preprocessed_dir):
+         os.makedirs(ntap.preprocessed_dir)
+         ntap.preprocess(params)
     else:
-        ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
+         ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
     ntap.baseline()
     ntap.run()

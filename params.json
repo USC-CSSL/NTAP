@@ -1,7 +1,7 @@
 {
   "processing": {
       "jobs":["clean"],
-      "input_path": "/Users/neetikasinghal/CSSL/datasets/BLM/data.pkl",
+      "input_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/data_alm.pkl",
       "clean": ["links"],
       "preprocess": ["lowercase"]
   },
@@ -46,7 +46,7 @@
       "feature_size":10,
       "pretrain": true,
       "train_embedding": false,
-      "target_cols":["authority","care","fairness","loyalty","purity","moral"],
+      "target_cols":["authority","care","fairness","loyalty","purity","Moral"],
       "num_layers": 1,
       "n_outputs": 2,
       "filter_sizes": [2, 3, 4],
@@ -66,11 +66,11 @@
   },
 
   "path": {
-    "glove_path": "/Users/neetikasinghal/CSSL/glove.6B/glove.6B.300d.txt",
-    "word2vec_path": "/Users/neetikasinghal/CSSL/GoogleNews-vectors-negative300.bin.gz",
-    "dictionary_path": "/Users/neetikasinghal/CSSL/",
-    "mallet_path": "/Users/neetikasinghal/CSSL/mallet-2.0.8/bin/mallet",
-    "corenlp_path": "/Users/neetikasinghal/CSSL/stanford-corenlp-full-2018-10-05/",
+    "glove_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/glove.6B/glove.6B.300d.txt",
+    "word2vec_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/GoogleNews-vectors-negative300.bin.gz",
+    "dictionary_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL",
+    "mallet_path": "/Users/praveen/PycharmProjects/NTAP/mallet-2.0.8/bin/mallet",
+    "corenlp_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/stanford-corenlp-full-2018-10-05/",
     "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
   }
 }

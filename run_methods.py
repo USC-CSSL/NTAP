@@ -61,7 +61,7 @@ class Methods:
 
         # TODO: Add exception handling
         text_col = "text"#__get_text_col(train_data.columns.tolist())
-        params["target_cols"] = self.__get_target_col(train_data.columns.tolist())
+        #params["target_cols"] = self.__get_target_col(train_data.columns.tolist())
         #params["pred_cols"] = __get_pred_col(train_data.columns.tolist())
         for target in params["target_cols"]:
             print("Removing missing values from", target, "column")
