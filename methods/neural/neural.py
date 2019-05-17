@@ -3,7 +3,7 @@ import tensorflow as tf
 import pandas as pd
 import os, math
 from methods.neural.LSTM import LSTM
-from methods.neural.CNN import CNN  
+from methods.neural.CNN import CNN
 from methods.neural.Attn import ATTN
 from methods.neural.Attn_feat import ATTN_feat
 from methods.neural.LSTM_feat import LSTM_feat
@@ -14,13 +14,14 @@ from collections import Counter, defaultdict
 import statistics
 
 class Neural:
-    def __init__(self, params, vocab):
-        self.params = params['neural_params']
+    def __init__(self, all_params, vocab):
+        self.all_params = all_params
+        self.neural_params = self.all_params['neural_params']
         self.vocab = vocab
-        self.glove_path = params['path']['glove_path']
-        self.word2vec_path = params['path']['word2vec_path']
-        for key in self.params:
-            setattr(self, key, self.params[key])
+        self.glove_path = all_params['path']['glove_path']
+        self.word2vec_path = all_params['path']['word2vec_path']
+        for key in self.neural_params:
+            setattr(self, key, self.neural_params[key])
         if self.word_embedding == 'glove':
             self.embeddings_path = self.glove_path
         else:
@@ -34,17 +35,17 @@ class Neural:
             self.embeddings = None
 
         if self.model == "LSTM" or self.model == "BiLSTM":
-            self.nn = LSTM(self.params, self.max_length, self.vocab, self.embeddings)
+            self.nn = LSTM(self.all_params, self.max_length, self.vocab, self.embeddings)
         elif self.model == "CNN":
             if self.pretrain:
                 self.embeddings.reshape(self.embeddings.shape[0], self.embeddings.shape[1], 1)
-            self.nn = CNN(self.params, self.max_length, self.vocab, self.embeddings)
+            self.nn = CNN(self.all_params, self.max_length, self.vocab, self.embeddings)
         elif self.model == "ATTN":
-            self.nn = ATTN(self.params, self.vocab, self.embeddings)
+            self.nn = ATTN(self.all_params, self.vocab, self.embeddings)
         elif self.model == "ATTN_feat":
-            self.nn = ATTN_feat(self.params, self.vocab, self.embeddings)
+            self.nn = ATTN_feat(self.all_params, self.vocab, self.embeddings)
         elif self.model == "LSTM_feat":
-            self.nn = LSTM_feat(self.params, self.vocab, self.embeddings)
+            self.nn = LSTM_feat(self.all_params, self.vocab, self.embeddings)
         self.nn.build()
 
     def graph(self, vectors, labels):
@@ -60,7 +61,7 @@ class Neural:
 
 
     def cv_model(self, X, y, weights, savedir, features):
-        kf = KFold(n_splits=self.params["kfolds"], shuffle=True, random_state=self.random_seed)
+        kf = KFold(n_splits=self.neural_params["kfolds"], shuffle=True, random_state=self.random_seed)
         f1s = {target: list() for target in self.target_cols}
         ps = {target: list() for target in self.target_cols}
         rs = {target: list() for target in self.target_cols}
@@ -87,11 +88,11 @@ class Neural:
         for k, v in scores.items():
             pd.DataFrame.from_dict(v).to_csv(savedir + "/" + k + ".csv")
         # for target in self.target_cols:
-        #     print("Overall F1 for", target, ":", sum(f1s[target]) / self.params["kfolds"])
+        #     print("Overall F1 for", target, ":", sum(f1s[target]) / self.neural_params["kfolds"])
         #     print("Standard Deviation:", statistics.stdev(f1s[target]))
-        #     print("Overall Precision for", target, ":", sum(ps[target]) / self.params["kfolds"])
+        #     print("Overall Precision for", target, ":", sum(ps[target]) / self.neural_params["kfolds"])
         #     print("Standard Deviation:", statistics.stdev(ps[target]))
-        #     print("Overall Recall for", target, ":", sum(rs[target]) / self.params["kfolds"])
+        #     print("Overall Recall for", target, ":", sum(rs[target]) / self.neural_params["kfolds"])
         #     print("Standard Deviation:", statistics.stdev(rs[target]))
         #pd.DataFrame.from_dict(f1s).to_csv(savedir + "/" + ".".join(t for t in self.target_cols) + ".csv")
 
@@ -103,7 +104,7 @@ class Neural:
         if not os.path.isfile(self.glove_path):
             raise IOError("You're trying to access an embeddings file that doesn't exist")
         self.embeddings = dict()
-        with open(self.embeddings_path, 'r') as fo:
+        with open(self.embeddings_path, 'r', encoding='utf-8') as fo:
             glove = dict()
             for line in fo:
                 tokens = line.split()
