@@ -2,12 +2,13 @@ from methods.neural.nn import *
 
 
 class LSTM():
-    def __init__(self, params, max_length, vocab, my_embeddings=None):
-        self.params = params
+    def __init__(self, all_params, max_length, vocab, my_embeddings=None):
+        self.all_params = all_params
+        self.neural_params = all_params['neural_params']
         self.vocab = vocab
         self.feature = False
-        for key in params:
-            setattr(self, key, params[key])
+        for key in self.neural_params:
+            setattr(self, key, self.neural_params[key])
         self.max_length = max_length
         if self.pretrain:
             self.my_embeddings = my_embeddings
@@ -45,7 +46,7 @@ class LSTM():
         self.training_op = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.joint_loss)
 
     def run_model(self, batches, test_batches, weights):
-        return run(self, batches, test_batches, weights)
+        return run(self, batches, test_batches, weights, self.all_params)
 
     def predict_labels(self, batches, data_batches, weights, savedir):
-        return run_pred(self, batches, data_batches, weights, savedir)
+        return run_pred(self, batches, data_batches, weights, savedir, self.all_params)
