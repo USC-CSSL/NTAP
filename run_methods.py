@@ -55,15 +55,16 @@ class Methods:
         return targets
 
 
-    def run_method(self, method_string, train_data, params, data, save, features):
+    def run_method(self, all_params, train_data, data, save, features):
         missing_indices = list()
         weights = dict()
-
+        method_string = all_params['model']['method']
+        neural_params = all_params['neural_params']
         # TODO: Add exception handling
         text_col = "text"#__get_text_col(train_data.columns.tolist())
         #params["target_cols"] = self.__get_target_col(train_data.columns.tolist())
         #params["pred_cols"] = __get_pred_col(train_data.columns.tolist())
-        for target in params["target_cols"]:
+        for target in neural_params["target_cols"]:
             print("Removing missing values from", target, "column")
             missing_indices.extend(train_data[train_data[target] == -1.].index)
             print("Statistics of", target)
@@ -75,18 +76,18 @@ class Methods:
         train_data = train_data.dropna(subset=[text_col])
         print("Shape of train_dataframe after getting rid of the Nan values is", train_data.shape)
 
-        train_data = tokenize_data(train_data, text_col, params["max_length"], params["min_length"])
+        train_data = tokenize_data(train_data, text_col, neural_params["max_length"], neural_params["min_length"])
         text = train_data[text_col].values.tolist()
 
         print(len(text), "text data remains in the dataset")
-        vocab = learn_vocab(text, params["vocab_size"])
+        vocab = learn_vocab(text, neural_params["vocab_size"])
         # vocab_size = len(vocab)
         # method_class = load_method(method_string)
 
         X = np.array(tokens_to_ids(text, vocab))
-        y = np.transpose(np.array([np.array(train_data[target].astype(int)) for target in params["target_cols"]]))
-        # y = np.transpose(np.array(np.array(train_data[params["target_cols"]].astype(int))))
-        if params["model"][-4:] == "feat":
+        y = np.transpose(np.array([np.array(train_data[target].astype(int)) for target in neural_params["target_cols"]]))
+        # y = np.transpose(np.array(np.array(train_data[neural_params["target_cols"]].astype(int))))
+        if neural_params["model"][-4:] == "feat":
             if features.endswith('.tsv'):
                 feat = pd.read_csv(features, sep='\t', quoting=3).values
             elif features.endswith('.pkl'):
@@ -94,20 +95,18 @@ class Methods:
             elif features.endswith('.csv'):
                 feat1  = pd.read_csv(features)
                 feat = feat1.loc[:,["care", "harm", "fairness", "cheating"]].values
-            params["feature_size"] = feat.shape[1]
+            neural_params["feature_size"] = feat.shape[1]
         else:
             feat = []
-        with open('params.json') as f:
-            all_params = json.load(f)
         neural = Neural(all_params, vocab)
         neural.build()
 
-        if params["train"]:
-            if params["kfolds"]<=1:
+        if neural_params["train"]:
+            if neural_params["kfolds"]<=1:
                 raise Exception('Please set the parameter, kfolds greater than 1')
             neural.cv_model(X, y, weights, save, feat)
 
-        if params["predict"]:
+        if neural_params["predict"]:
             if data is None:
                 raise Exception("Please specify the path to the data to be predicted")
             if data.endswith('.tsv'):
@@ -118,7 +117,7 @@ class Methods:
                 all = pd.read_csv(data)
 
             col = self.__get_text_col(all.columns.tolist())
-            all = tokenize_data(all, col, params["max_length"], params["min_length"])
+            all = tokenize_data(all, col, neural_params["max_length"], neural_params["min_length"])
             all_text = all[col].values.tolist()
             data = np.array(tokens_to_ids(all_text, vocab))
 
@@ -167,4 +166,3 @@ if __name__ == '__main__':
     method.run_method(method, train_data, params, data, save, features)
 
     # call method constructors; build, train (using columns in args.train_data), and generate predictions
-
