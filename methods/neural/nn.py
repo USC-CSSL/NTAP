@@ -3,7 +3,7 @@ import numpy as np
 import operator
 from sklearn.metrics import f1_score, precision_score, recall_score
 import pandas as pd
-
+import os
 from nltk import tokenize as nltk_token
 
 def splitY(model, y_data, feed_dict):
@@ -88,7 +88,7 @@ def drop_padding(self, output, length):
     relevant = tf.gather(output, length, axis = 1)
     return relevant
 
-def run(model, batches, test_batches, weights):
+def run(model, batches, test_batches, weights, all_params):
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     with tf.Session() as model.sess:
@@ -147,15 +147,19 @@ def run(model, batches, test_batches, weights):
                     f1_scores[model.target_cols[i]] = score
                     precisions[model.target_cols[i]] = pres
                     recalls[model.target_cols[i]] = rec
-                save_path = saver.save(model.sess, "/tmp/model")
+                if not os.path.isdir(all_params["path"]["dictionary_path"]+"/best_model"):
+                    os.makedirs(all_params["path"]["dictionary_path"]+"/best_model")
+                    save_path = saver.save(model.sess, all_params["path"]["dictionary_path"]+"/best_model/model")
                 break
-        #save_path = saver.save(model.sess, "/tmp/model.ckpt")
     return f1_scores, precisions, recalls
 
-def run_pred(model, batches, data_batches, weights, savedir):
+def run_pred(model, batches, data_batches, weights, savedir, all_params):
     saver = tf.train.Saver()
     with tf.Session() as model.sess:
-        saver.restore(model.sess, "/tmp/model")
+        if not os.path.isdir(all_params["path"]["dictionary_path"]+"/best_model"):
+            print("No saved model. Train a model before prediction")
+        else:
+            saver.restore(model.sess, all_params["path"]["dictionary_path"]+"/best_model/model")
         label_predictions = {target: np.array([]) for target in model.target_cols}
         print(len(data_batches))
         for i in range(len(data_batches)):
