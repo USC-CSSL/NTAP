@@ -3,8 +3,8 @@ import json
 import os
 import pandas as pd
 from process.processor import Preprocessor
-from baselines.methods import Baseline
-from baselines.features import Features
+from methods.baselines.methods import Baseline
+from features.features import Features
 from run_methods import Methods
 
 
@@ -23,7 +23,7 @@ class Ntap:
         self.input_file = os.path.join(self.base_dir, self.filename )
         self.data = None
         self.test_filepath = params['model']['test_filepath']
-        self.model_path = os.path.join(self.base_dir, "models")
+        self.model_path = os.path.join(self.base_dir, "model_performance")
         if not os.path.isdir(self.model_path):
             os.makedirs(self.model_path)
 
