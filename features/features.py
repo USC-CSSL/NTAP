@@ -8,13 +8,13 @@ from sklearn.decomposition import LatentDirichletAllocation
 from sklearn_pandas import DataFrameMapper
 from scipy import sparse, spatial
 
-from baselines.vectorizers.LDA import LDAVectorizer
-from baselines.vectorizers.DDR import DDRVectorizer
-from baselines.vectorizers.bag_of_means import BoMVectorizer
-from baselines.vectorizers.dictionary import DictionaryVectorizer
-from baselines.vectorizers.dictionarycount import DictionaryCountVectorizer
-from baselines.vectorizers.similarcount import SimilarCountVectorizer
-#from baselines.vectorizers.fasttext import FastTextVectorizer
+from features.vectorizers.LDA import LDAVectorizer
+from features.vectorizers.DDR import DDRVectorizer
+from features.vectorizers.bag_of_means import BoMVectorizer
+from features.vectorizers.dictionary import DictionaryVectorizer
+from features.vectorizers.dictionarycount import DictionaryCountVectorizer
+from features.vectorizers.similarcount import SimilarCountVectorizer
+#from Features.vectorizers.fasttext import FastTextVectorizer
 from tokenization.tokenizers import wordpunc_tokenize, happiertokenize, tweettokenize
 from nltk.corpus import stopwords
 
