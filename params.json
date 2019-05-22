@@ -1,7 +1,7 @@
 {
   "processing": {
       "jobs":["clean"],
-      "input_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/data.pkl",
+      "input_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/data_alm.pkl",
       "clean": ["links"],
       "preprocess": ["lowercase"]
   },
@@ -34,7 +34,7 @@
 
   "neural_params": {
       "learning_rate": 0.0001,
-      "batch_size": 100,
+      "batch_size": 10,
       "keep_ratio": 0.66,
       "cell": "GRU",
       "model": "LSTM",
@@ -46,7 +46,7 @@
       "feature_size":10,
       "pretrain": true,
       "train_embedding": false,
-      "target_cols":["authority","care","fairness","loyalty","purity","moral"],
+      "target_cols":["authority","care","fairness","loyalty","purity","Moral"],
       "num_layers": 1,
       "n_outputs": 2,
       "filter_sizes": [2, 3, 4],
@@ -66,11 +66,11 @@
   },
 
   "path": {
-    "glove_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/glove.6B/glove.6B.300d.txt",
-    "word2vec_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/GoogleNews-vectors-negative300.bin.gz",
-    "dictionary_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data",
-    "mallet_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/mallet-2.0.8/bin/mallet",
-    "corenlp_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/stanford-corenlp-full-2018-10-05/",
+    "glove_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/glove.6B/glove.6B.300d.txt",
+    "word2vec_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/GoogleNews-vectors-negative300.bin.gz",
+    "dictionary_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL",
+    "mallet_path": "/Users/praveen/PycharmProjects/NTAP/mallet-2.0.8/bin/mallet",
+    "corenlp_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/stanford-corenlp-full-2018-10-05/",
     "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
   }
 }

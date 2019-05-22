@@ -6,7 +6,7 @@ import os, json
 from sklearn.linear_model import SGDRegressor, Lasso
 from sklearn.svm import LinearSVC
 
-from baselines.base import BasePredictor
+from methods.baselines.base import BasePredictor
 
 seed = 123
 
