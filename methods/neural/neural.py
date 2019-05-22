@@ -2,11 +2,8 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 import os, math
-from methods.neural.LSTM import LSTM
-from methods.neural.CNN import CNN
-from methods.neural.Attn import ATTN
-from methods.neural.Attn_feat import ATTN_feat
-from methods.neural.LSTM_feat import LSTM_feat
+
+from methods.neural.NeuralModel import *
 from sklearn.model_selection import KFold
 from sklearn.decomposition import PCA
 from sklearn.metrics import f1_score
@@ -38,27 +35,15 @@ class Neural:
             self.nn = LSTM(self.all_params, self.max_length, self.vocab, self.embeddings)
         elif self.model == "CNN":
             if self.pretrain:
-                self.embeddings.reshape(self.embeddings.shape[0], self.embeddings.shape[1], 1)
+                self.embeddings = self.embeddings.reshape(self.embeddings.shape[0], self.embeddings.shape[1], 1)
             self.nn = CNN(self.all_params, self.max_length, self.vocab, self.embeddings)
         elif self.model == "ATTN":
-            self.nn = ATTN(self.all_params, self.vocab, self.embeddings)
+            self.nn = ATTN(self.all_params,  self.max_length, self.vocab, self.embeddings)
         elif self.model == "ATTN_feat":
-            self.nn = ATTN_feat(self.all_params, self.vocab, self.embeddings)
+            self.nn = ATTN_feat(self.all_params, self.max_length, self.vocab, self.embeddings)
         elif self.model == "LSTM_feat":
-            self.nn = LSTM_feat(self.all_params, self.vocab, self.embeddings)
+            self.nn = LSTM_feat(self.all_params, self.max_length, self.vocab, self.embeddings)
         self.nn.build()
-
-    def graph(self, vectors, labels):
-        pca = PCA(n_components=2)
-        vec_components = pca.fit_transform(vectors)
-        df = pd.DataFrame(data=vec_components, columns=['component 1', 'component 2'])
-        finalDf = pd.concat([df, labels], axis=1)
-        return finalDf
-
-
-    def run_model(self, X, y, data, weights, savedir):
-        self.nn.predict_labels(self.get_batches(X, y), self.get_batches(data), weights, savedir)
-
 
     def cv_model(self, X, y, weights, savedir, features):
         kf = KFold(n_splits=self.neural_params["kfolds"], shuffle=True, random_state=self.random_seed)
@@ -96,6 +81,35 @@ class Neural:
         #     print("Standard Deviation:", statistics.stdev(rs[target]))
         #pd.DataFrame.from_dict(f1s).to_csv(savedir + "/" + ".".join(t for t in self.target_cols) + ".csv")
 
+    def get_batches(self, corpus_ids, labels=None, features=None, padding=True):
+        batches = []
+        for idx in range(len(corpus_ids) // self.batch_size + 1):
+            labels_batch = labels[idx * self.batch_size: min((idx + 1) * self.batch_size,
+                                len(labels))] if labels is not None else []
+
+            text_batch = corpus_ids[idx * self.batch_size: min((idx + 1) * self.batch_size,
+                                len(corpus_ids))]
+
+            features_batch = features[idx * self.batch_size: min((idx + 1) * self.batch_size,
+                                len(features))] if features is not None else []
+
+            lengths = np.array([len(line) for line in text_batch])
+            if padding:
+                text_batch = self.padding(text_batch)
+            if len(text_batch) > 0:
+                batches.append({"text": np.array([np.array(line) for line in text_batch]),
+                                "sent_lens": lengths,
+                                "label": np.array(labels_batch),
+                                "feature": np.array(features_batch)})
+        return batches
+
+    def graph(self, vectors, labels):
+        pca = PCA(n_components=2)
+        vec_components = pca.fit_transform(vectors)
+        df = pd.DataFrame(data=vec_components, columns=['component 1', 'component 2'])
+        finalDf = pd.concat([df, labels], axis=1)
+        return finalDf
+
     def load_embeddings(self):
         if self.word_embedding == 'glove':
             self.load_glove()
@@ -125,27 +139,6 @@ class Neural:
         print(" %d tokens not found in GloVe embeddings" % (not_found))
         self.embeddings = np.array(list(self.embeddings.values()))
 
-    def get_batches(self, corpus_ids, labels=None, features=None, padding=True):
-        batches = []
-        for idx in range(len(corpus_ids) // self.batch_size + 1):
-            labels_batch = labels[idx * self.batch_size: min((idx + 1) * self.batch_size,
-                                len(labels))] if labels is not None else []
-
-            text_batch = corpus_ids[idx * self.batch_size: min((idx + 1) * self.batch_size,
-                                len(corpus_ids))]
-
-            features_batch = features[idx * self.batch_size: min((idx + 1) * self.batch_size,
-                                len(features))] if features is not None else []
-
-            lengths = np.array([len(line) for line in text_batch])
-            if padding:
-                text_batch = self.padding(text_batch)
-            if len(text_batch) > 0:
-                batches.append({"text": np.array([np.array(line) for line in text_batch]),
-                                "sent_lens": lengths,
-                                "label": np.array(labels_batch),
-                                "feature": np.array(features_batch)})
-        return batches
 
     def padding(self, corpus):
         padd_idx = self.vocab.index("<pad>")
@@ -153,3 +146,6 @@ class Neural:
             while len(corpus[i]) < max(len(sent) for sent in corpus):
                 corpus[i].append(padd_idx)
         return corpus
+
+    def run_model(self, X, y, data, weights, savedir):
+        self.nn.predict_labels(self.get_batches(X, y), self.get_batches(data), weights, savedir)
