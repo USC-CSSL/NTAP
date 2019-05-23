@@ -27,6 +27,33 @@ class Ntap:
         if not os.path.isdir(self.model_path):
             os.makedirs(self.model_path)
 
+    def baseline(self):
+        feature_list = self.params['baseline']['features']
+        if feature_list:
+            feature_to_fit = []
+            for feat_str in feature_list:
+                feat_files = fnmatch.filter(os.listdir(self.feature_dir), feat_str + '.*')
+                if not feat_files:
+                    feature_to_fit.append(feat_str)
+            if feature_to_fit:
+                feature_pipeline = Features(self.base_dir, self.params)
+                feature_pipeline.load(self.preprocessed_file)
+                for feat_str in feature_to_fit:
+                    feature_pipeline.fit(feat_str)
+                    feature_pipeline.transform()  # writes to file
+        method = self.params['baseline']['method']
+        if method:
+            baseline_pipeline = Baseline(self.base_dir, self.params)
+            targets = self.params['baseline']['targets']
+            if not targets:
+                baseline_pipeline.load_data(self.preprocessed_file)
+            else:
+                baseline_pipeline.load_data(self.preprocessed_file, targets)
+            baseline_pipeline.load_features()
+            baseline_pipeline.load_method(method)
+            baseline_pipeline.go()
+
+            
     def load_preprocessed_data(self, file):
         if file.endswith('.tsv'):
             target = pd.read_csv(file, sep='\t', quoting=3)
@@ -62,31 +89,7 @@ class Ntap:
         processor.write(self.filetype)
         self.data = processor.data
 
-    def baseline(self):
-        feature_list = self.params['baseline']['features']
-        if feature_list:
-            feature_to_fit = []
-            for feat_str in feature_list:
-                feat_files = fnmatch.filter(os.listdir(self.feature_dir), feat_str + '.*')
-                if not feat_files:
-                    feature_to_fit.append(feat_str)
-            if feature_to_fit:
-                feature_pipeline = Features(self.base_dir, self.params)
-                feature_pipeline.load(self.preprocessed_file)
-                for feat_str in feature_to_fit:
-                    feature_pipeline.fit(feat_str)
-                    feature_pipeline.transform()  # writes to file
-        method = self.params['baseline']['method']
-        if method:
-            baseline_pipeline = Baseline(self.base_dir, self.params)
-            targets = self.params['baseline']['targets']
-            if not targets:
-                baseline_pipeline.load_data(self.preprocessed_file)
-            else:
-                baseline_pipeline.load_data(self.preprocessed_file, targets)
-            baseline_pipeline.load_features()
-            baseline_pipeline.load_method(method)
-            baseline_pipeline.go()
+
 
     def run(self):
         method = Methods()

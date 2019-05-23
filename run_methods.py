@@ -107,16 +107,19 @@ class Methods:
             neural.cv_model(X, y, weights, save, feat)
 
         if neural_params["predict"]:
+            data = all_params["processing"]["input_path"]
             if data is None:
                 raise Exception("Please specify the path to the data to be predicted")
             if data.endswith('.tsv'):
                 all = pd.read_csv(data, sep='\t', quoting=3)
             elif data.endswith('.pkl'):
                 all = pickle.load(open(data, 'rb'))
-            elif data.endswith('.csv'):
+            #elif data.endswith('.csv'):
+            else:
                 all = pd.read_csv(data)
 
-            col = self.__get_text_col(all.columns.tolist())
+            #col = self.__get_text_col(all.columns.tolist())
+            col = "text"
             all = tokenize_data(all, col, neural_params["max_length"], neural_params["min_length"])
             all_text = all[col].values.tolist()
             data = np.array(tokens_to_ids(all_text, vocab))
