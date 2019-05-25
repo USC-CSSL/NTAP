@@ -1,4 +1,3 @@
-
 import re, sys, json, os, argparse
 import pandas as pd
 
@@ -82,7 +81,7 @@ class Features:
         tokenizer = toks[self.params["sent_tokenizer"]]
         if feature == 'tfidf':
             self.transformer = (self.text_col, TfidfVectorizer(
-                        max_features=self.params["num_words"], 
+                        max_features=self.params["num_words"],
                         stop_words=stopwords,
                         tokenizer=tokenizer,
                         ngram_range=self.params["ngrams"]), {'alias': 'tfidf'})
@@ -98,7 +97,7 @@ class Features:
                                , {'alias': self.params["bom_method"]})
 
         elif feature == 'ddr':
-            sim = cosine_similarity 
+            sim = cosine_similarity
             self.transformer = (self.text_col,
                                 DDRVectorizer(embedding_type=self.params['bom_method'],
                                     tokenizer=tokenizer,
@@ -108,7 +107,7 @@ class Features:
                                     dict_path=self.path_params["dictionary_path"],
                                     glove_path=self.path_params["glove_path"],
                                     word2vec_path=self.path_params["word2vec_path"]),
-                               {'alias': "_".join([self.params['bom_method'], 
+                               {'alias': "_".join([self.params['bom_method'],
                                                    self.params['dictionary']])})
 
         elif feature == 'lda':
@@ -152,7 +151,7 @@ class Features:
         feature_df = pd.DataFrame(X, columns=mapper.transformed_names_)
         feature_df.index = doc_index
         self.__write(feature_df)
-    
+
     """
     features is a dataframe of features, with valid index and column names
     outputs dataframe
@@ -167,4 +166,3 @@ class Features:
             features.to_csv(fname, sep='\t')
         else:
             raise ValueError("Invalid file format: {}".format(formatting))
-        
