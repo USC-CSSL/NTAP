@@ -1,5 +1,5 @@
 #TODO: Add CNN and RNN models to files cnns.py and rnns.py
-from methods.neural.nn import *
+from helperFunctions import *
 from methods.neural.neural import Neural
 import pandas as pd
 import pickle
@@ -80,7 +80,7 @@ class Methods:
         text = train_data[text_col].values.tolist()
 
         print(len(text), "text data remains in the dataset")
-        vocab = learn_vocab(text, neural_params["vocab_size"])
+        vocab = learnVocab(text, neural_params["vocab_size"])
         # vocab_size = len(vocab)
         # method_class = load_method(method_string)
 
@@ -104,7 +104,7 @@ class Methods:
         if neural_params["train"]:
             if neural_params["kfolds"]<=1:
                 raise Exception('Please set the parameter, kfolds greater than 1')
-            neural.cv_model(X, y, weights, save, feat)
+            neural.trainModelUsingCV(X, y, weights, save, feat)
 
         if neural_params["predict"]:
             data = all_params["processing"]["input_path"]
@@ -124,7 +124,7 @@ class Methods:
             all_text = all[col].values.tolist()
             data = np.array(tokens_to_ids(all_text, vocab))
 
-            neural.run_model(X, y, data, weights, save)
+            neural.predictModel(X, y, data, weights, save)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

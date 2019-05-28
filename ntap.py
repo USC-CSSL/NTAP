@@ -53,7 +53,7 @@ class Ntap:
             baseline_pipeline.load_method(method)
             baseline_pipeline.go()
 
-            
+
     def load_preprocessed_data(self, file):
         if file.endswith('.tsv'):
             target = pd.read_csv(file, sep='\t', quoting=3)
@@ -94,9 +94,6 @@ class Ntap:
     def run(self):
         method = Methods()
         feature_file = os.path.join(self.feature_dir, params['model']['feature'] + '.tsv')
-        """method.run_method(params['model']['method'], self.data, params['neural_params'], self.test_filepath,
-                          self.model_path, feature_file)"""
-
         method.run_method(params, self.data, self.test_filepath, self.model_path, feature_file)
 
 if __name__ == '__main__':
