@@ -1,5 +1,4 @@
-from methods.neural.nn import *
-from methods.neural.baseModel import *
+from methods.neural.baseModel import baseModel
 from tensorflow.contrib.layers import fully_connected
 
 class ATTN_feat(baseModel):

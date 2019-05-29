@@ -1,5 +1,5 @@
 #TODO: Add CNN and RNN models to files cnns.py and rnns.py
-from helperFunctions import *
+from helperFunctions import learnVocab, tokenize_data, tokens_to_ids
 from methods.neural.neural import Neural
 import pandas as pd
 import pickle

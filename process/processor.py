@@ -5,7 +5,7 @@ import re
 
 import requests
 from progressbar import ProgressBar
-from stanfordcorenlp import StanfordCoreNLP
+#from stanfordcorenlp import StanfordCoreNLP
 import pandas as pd
 import threading
 from queue import Queue
@@ -33,8 +33,8 @@ class Preprocessor:
             os.makedirs(self.dest)
         self.source = pd.DataFrame()
         self.data = pd.DataFrame()
-        self.corenlp = StanfordCoreNLP(params["path"]["corenlp_path"], memory='1g')
-        self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}
+        """self.corenlp = StanfordCoreNLP(params["path"]["corenlp_path"], memory='1g')
+        self.corenlp_props = {'pipelineLanguage':'en', 'outputFormat':'json'}"""
         self.tagme_token = params["path"]["tagme_token"]
         self.target_cols=params["neural_params"]["target_cols"]
         self.base_dir,self.filename = os.path.split(params['processing']['input_path'])
@@ -62,7 +62,7 @@ class Preprocessor:
             text_col = "text"
         self.data.loc[:, text_col] = source[text_col]
         self.text_col = text_col
-        
+
         if index_col is not None:
             self.data.index = source[index_col].values()
 
@@ -79,7 +79,7 @@ class Preprocessor:
         return valid_cols
 
     def __get_text_col(self, cols):
-        
+
         print("...".join(cols))
         notvalid = True
         while notvalid:
@@ -103,12 +103,12 @@ class Preprocessor:
             self.data.loc[:, pattern] = pd.Series(extracted, index=self.data.index)
         self.data.loc[:, self.text_col] = pd.Series(removed, index=self.data.index)
 
-    def pos(self):
+    """def pos(self):
         processed, tokens = list(), list()
         self.corenlp_props['annotators'] = 'pos'
         pbar = ProgressBar()
         for doc in pbar(self.data[self.text_col].values):
-            annotated = json.loads(self.corenlp.annotate(doc, 
+            annotated = json.loads(self.corenlp.annotate(doc,
                                         properties=self.corenlp_props))
             POSs, words = list(), list()
             for sent in annotated["sentences"]:
@@ -125,7 +125,7 @@ class Preprocessor:
         self.corenlp_props['annotators'] = 'ner'
         pbar = ProgressBar()
         for doc in pbar(self.data[self.text_col].values):
-            annotated = json.loads(self.corenlp.annotate(doc, 
+            annotated = json.loads(self.corenlp.annotate(doc,
                                 properties=self.corenlp_props))
             doc_ner = list()
             for sent in annotated["sentences"]:
@@ -136,11 +136,11 @@ class Preprocessor:
         self.data.loc[:, 'ner'] = pd.Series(processed, index=self.data.index)
 
     def depparse(self):
-        print("Not Implemented (dependency parsing)")
+        print("Not Implemented (dependency parsing)")"""
 
     #tagme version 1
     def tagme_v1(self, p=0.1):
-        #NOTES: 
+        #NOTES:
         #       - If parallelizing, limit to 4 concurrent calls
         #       - Pause (10s) periodically on each thread
         """
@@ -163,7 +163,7 @@ class Preprocessor:
             if len(line.strip()) > 0:
                 id_, title, _ = line.split('\t')
                 entities[id_] = title
-        
+
         request_str = "https://tagme.d4science.org/tagme/tag"
         count = 0
         try:
@@ -181,13 +181,13 @@ class Preprocessor:
                 if res.status_code == 200:
                     try:
                         ann = res.json()["annotations"]
-                        filt = [entry for entry in ann if entry["link_probability"] > p] 
+                        filt = [entry for entry in ann if entry["link_probability"] > p]
                         for filtered in filt:
                             if filtered["id"] not in entities:
                                 entities[filtered["id"]] = filtered["title"]
                                 # write entity to file with abstract
                                 abstract_file.write("{}\t{}\t{}".format(
-                                        filtered["id"], filtered["title"], 
+                                        filtered["id"], filtered["title"],
                                         filtered["abstract"].replace('\t', '')))
                                 abstract_file.write('\n')
                                 for cat in filtered["dbpedia_categories"]:
@@ -330,7 +330,7 @@ class Preprocessor:
         dest = os.path.join(self.dest, self.filename + formatting)
         if formatting == '.json':
             self.data.to_json(dest)
-        if formatting == '.csv':  
+        if formatting == '.csv':
             self.data.to_csv(dest)
         if formatting == '.tsv':
             self.data.to_csv(dest, sep='\t')

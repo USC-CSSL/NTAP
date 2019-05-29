@@ -30,7 +30,7 @@ def execute_training_process(model, batches, test_batches, weights, all_params):
         save_path = saver.save(model.sess, get_model_dicrectory(all_params)+"/model")
 
     return f1_scores, precisions, recalls
-    
+
 def execute_prediction_process(model, batches, data_batches, weights, savedir, all_params):
     saver = tf.train.Saver()
     with tf.Session() as model.sess:
@@ -75,7 +75,7 @@ def feed_dictionary(model, batch, weights):
         feed_dict[model.embedding_placeholder] = model.my_embeddings
     return feed_dict
 
-def get_model_dicrectory(all_params):
+def get_model_directory(all_params):
     return all_params["path"]["dictionary_path"]+"/NTAP_model"
 
 def get_precision_recall_f1_scores(model, test_predictions, test_labels):

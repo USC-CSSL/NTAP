@@ -78,12 +78,12 @@ class Ntap:
             print("Processing job: {}".format(job))
             if job == 'clean':
                 processor.clean(params["processing"]["clean"], remove=True)
-            if job == 'ner':
+            """if job == 'ner':
                 processor.ner()
             if job == 'pos':
                 processor.pos()
             if job == 'depparse':
-                processor.depparse()
+                processor.depparse()"""
             if job == 'tagme':
                 processor.tagme()
         processor.write(self.filetype)
