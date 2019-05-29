@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", help="Path to source file")
-    parser.add_argument("--jobs", help="Options: clean pos ner deparse tagme", 
+    parser.add_argument("--jobs", help="Options: clean pos ner deparse tagme",
                         nargs='+')
     parser.add_argument("--output", help="Path to destination directory")
     args = parser.parse_args()
@@ -32,19 +32,18 @@ if __name__ == '__main__':
         print(e)
         print("Could not load data from {}".format(args.input))
         exit(1)
-   
+
     for job in args.jobs:
         print("Processing job: {}".format(job))
         if job == 'clean':
             processor.clean(params["processing"]["clean"], remove=True)
-        if job == 'ner':
+        """if job == 'ner':
             processor.ner()
         if job == 'pos':
             processor.pos()
         if job == 'depparse':
-            processor.depparse()
+            processor.depparse()"""
         if job == 'tagme':
             processor.tagme()
     ftype = ".pkl"
     processor.write(ftype)
-

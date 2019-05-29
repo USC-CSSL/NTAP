@@ -1,5 +1,4 @@
-from methods.neural.nn import *
-from methods.neural.baseModel import *
+from methods.neural.baseModel import baseModel
 
 class LSTM(baseModel):
     def __init__(self, all_params, max_length, vocab, my_embeddings=None):

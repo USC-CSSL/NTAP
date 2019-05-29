@@ -1,6 +1,7 @@
-#NeuralModel.py has implementation of a super-class "NeuralModel" and a bunch of sub-classes extending it like "LSTM", "LSTM_feat", "CNN", "ATTN" and "ATTN_feat"
+#NeuralModel.py has implementation of a super-class "baseModel"
 
-from methods.neural.nn import *
+from methods.neural.nn import execute_training_process, execute_prediction_process
+import tensorflow as tf
 
 class baseModel():
     def __init__(self, all_params, max_length, vocab, my_embeddings=None):
