@@ -27,7 +27,7 @@ def execute_training_process(model, batches, test_batches, weights, all_params):
             epoch += 1
 
         f1_scores, precisions, recalls = get_precision_recall_f1_scores(model, test_predictions, test_labels)
-        save_path = saver.save(model.sess, get_model_dicrectory(all_params)+"/model")
+        save_path = saver.save(model.sess, get_model_directory(all_params)+"/model")
 
     return f1_scores, precisions, recalls
 
@@ -35,7 +35,7 @@ def execute_prediction_process(model, batches, data_batches, weights, savedir, a
     saver = tf.train.Saver()
     with tf.Session() as model.sess:
         try:
-            saver.restore(model.sess, get_model_dicrectory(all_params)+"/model")
+            saver.restore(model.sess, get_model_directory(all_params)+"/model")
         except Exception as e:
             print(e)
             print("No saved model. Train a model before prediction")
