@@ -1,7 +1,7 @@
 {
   "processing": {
       "jobs":["clean"],
-      "input_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/data_alm.pkl",
+      "input_path": "/var/lib/jenkins/workspace/ntap_data/data_alm.pkl",
       "clean": ["links"],
       "preprocess": ["lowercase"]
   },
@@ -66,11 +66,9 @@
   },
 
   "path": {
-    "glove_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/glove.6B/glove.6B.300d.txt",
-    "word2vec_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/GoogleNews-vectors-negative300.bin.gz",
-    "dictionary_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL",
-    "mallet_path": "/Users/praveen/PycharmProjects/NTAP/mallet-2.0.8/bin/mallet",
-    "corenlp_path": "/Users/praveen/Desktop/MyProjects/NLP_Project/CSSL/stanford-corenlp-full-2018-10-05/",
+    "glove_path": "/var/lib/jenkins/workspace/ntap_data/glove.6B/glove.6B.300d.txt",
+    "word2vec_path": "/var/lib/jenkins/workspace/ntap_data/GoogleNews-vectors-negative300.bin.gz",
+    "dictionary_path": "/var/lib/jenkins/workspace/ntap_data/",
     "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
   }
 }
