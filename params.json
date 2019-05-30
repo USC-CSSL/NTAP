@@ -55,7 +55,7 @@
       "save_vectors": false,
       "epochs": 100,
       "word_embedding": "glove",
-      "kfolds": 2,
+      "kfolds": 10,
       "random_seed": 55,
       "max_length": 1000,
       "min_length": 2,
