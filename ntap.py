@@ -10,7 +10,6 @@ from features.features import Features
 from run_methods import Methods
 import shutil
 
-
 class Ntap:
 
     def __init__(self, params):
@@ -93,28 +92,31 @@ class Ntap:
         self.data = processor.data
 
 
-
     def run(self):
         method = Methods()
         feature_file = os.path.join(self.feature_dir, params['model']['feature'] + '.tsv')
         method.run_method(params, self.data, self.test_filepath, self.model_path, feature_file)
 
 if __name__ == '__main__':
-    with open('params.json') as f:
-        params = json.load(f)
-    ntap = Ntap(params)
-    if not os.path.isdir(ntap.preprocessed_dir):
-        os.makedirs(ntap.preprocessed_dir)
-        ntap.preprocess(params)
-    elif os.path.isdir(ntap.preprocessed_dir) and os.listdir(ntap.preprocessed_dir)[0] != ntap.filename:
-        shutil.rmtree(ntap.preprocessed_dir)
-        shutil.rmtree(ntap.feature_dir)
-        shutil.rmtree(ntap.model_path)
-        os.makedirs(ntap.feature_dir)
-        os.makedirs(ntap.model_path)
-        os.makedirs(ntap.preprocessed_dir)
-        ntap.preprocess(params)
-    else:
-         ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
-    ntap.baseline()
-    ntap.run()
+    try:
+        with open('params.json') as f:
+            params = json.load(f)
+        ntap = Ntap(params)
+        if not os.path.isdir(ntap.preprocessed_dir):
+            os.makedirs(ntap.preprocessed_dir)
+            ntap.preprocess(params)
+        elif os.path.isdir(ntap.preprocessed_dir) and os.listdir(ntap.preprocessed_dir)[0] != ntap.filename:
+            shutil.rmtree(ntap.preprocessed_dir)
+            shutil.rmtree(ntap.feature_dir)
+            shutil.rmtree(ntap.model_path)
+            os.makedirs(ntap.feature_dir)
+            os.makedirs(ntap.model_path)
+            os.makedirs(ntap.preprocessed_dir)
+            ntap.preprocess(params)
+        else:
+            ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
+        ntap.baseline()
+        ntap.run()
+    except Exception as e:
+        print(" Exception raised in the ntap main method :" + str(e))
+        exit(1)
