@@ -98,10 +98,7 @@ class Ntap:
 
     def search_preprocessed_files(self):
         try:
-            files = os.listdir(ntap.preprocessed_dir)
-            files=set(files)
-            for i in files:
-                print(i)
+            files=set(os.listdir(ntap.preprocessed_dir))
             if self.filename in files:
                 return True
             return False
@@ -116,14 +113,11 @@ if __name__ == '__main__':
                 params = json.load(f)
             ntap = Ntap(params)
             if not os.path.isdir(ntap.preprocessed_dir):
-                print("Inside if ")
                 os.makedirs(ntap.preprocessed_dir)
                 ntap.preprocess(params)
             elif not ntap.search_preprocessed_files():
-                print("Inside else if , exiting the else if")
                 ntap.preprocess(params)
             else:
-                print("Inside else")
                 ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
             ntap.baseline()
             ntap.run()
