@@ -8,14 +8,13 @@ from process.processor import Preprocessor
 from methods.baselines.methods import Baseline
 from features.features import Features
 from run_methods import Methods
-import shutil
+import traceback
 
 class Ntap:
 
     def __init__(self, params):
         self.params = params
         self.base_dir,self.filename = os.path.split(params['processing']['input_path'])
-
         self.preprocessed_dir = os.path.join(self.base_dir, "preprocessed")
         self.feature_dir = os.path.join(self.base_dir, "features")
         self.filetype="."+ self.filename.split(".")[1]
@@ -97,26 +96,31 @@ class Ntap:
         feature_file = os.path.join(self.feature_dir, params['model']['feature'] + '.tsv')
         method.run_method(params, self.data, self.test_filepath, self.model_path, feature_file)
 
+    def search_preprocessed_files(self):
+        try:
+            files=set(os.listdir(ntap.preprocessed_dir))
+            if self.filename in files:
+                return True
+            return False
+        except Exception as e:
+            print("Exception while searching the preprocessed files : "+str(e.args))
+            raise e
+
+
 if __name__ == '__main__':
-    try:
-        with open('params.json') as f:
-            params = json.load(f)
-        ntap = Ntap(params)
-        if not os.path.isdir(ntap.preprocessed_dir):
-            os.makedirs(ntap.preprocessed_dir)
-            ntap.preprocess(params)
-        elif os.path.isdir(ntap.preprocessed_dir) and os.listdir(ntap.preprocessed_dir)[0] != ntap.filename:
-            shutil.rmtree(ntap.preprocessed_dir)
-            shutil.rmtree(ntap.feature_dir)
-            shutil.rmtree(ntap.model_path)
-            os.makedirs(ntap.feature_dir)
-            os.makedirs(ntap.model_path)
-            os.makedirs(ntap.preprocessed_dir)
-            ntap.preprocess(params)
-        else:
-            ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
-        ntap.baseline()
-        ntap.run()
-    except Exception as e:
-        print(" Exception raised in the ntap main method :" + str(e))
-        exit(1)
+        try:
+            with open('params.json') as f:
+                params = json.load(f)
+            ntap = Ntap(params)
+            if not os.path.isdir(ntap.preprocessed_dir):
+                os.makedirs(ntap.preprocessed_dir)
+                ntap.preprocess(params)
+            elif not ntap.search_preprocessed_files():
+                ntap.preprocess(params)
+            else:
+                ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
+            ntap.baseline()
+            ntap.run()
+        except Exception as e:
+            print("Caught exception in main method : "+str(e))
+            traceback.print_exc()
