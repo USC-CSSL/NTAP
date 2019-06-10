@@ -7,12 +7,14 @@ from methods.baselines.methods import Baseline
 from features.features import Features
 from run_methods import Methods
 import traceback
+from helperFunctions import getBaseDirAndFilename, getBaselineFeaturesList, getBaselineMethod, getBaselineTargets, getPreProcessingJobList, getPreProcessingCleanList, getFeatureFileName, getInputFilePath, getTargetColumnNames, getModel
 
 class Ntap:
 
     def __init__(self, params):
         self.params = params
-        self.base_dir,self.filename = os.path.split(params['processing']['input_path'])
+        self.base_dir,self.filename = os.path.split(getInputFilePath(params))
+        self.model_dir = os.path.join(self.base_dir, "models")
         self.preprocessed_dir = os.path.join(self.base_dir, "preprocessed")
         self.feature_dir = os.path.join(self.base_dir, "features")
         self.filetype="."+ self.filename.split(".")[1]
@@ -22,12 +24,15 @@ class Ntap:
         self.input_file = os.path.join(self.base_dir, self.filename )
         self.data = None
         self.test_filepath = params['model']['test_filepath']
-        self.model_path = os.path.join(self.base_dir, "model_performance")
-        if not os.path.isdir(self.model_path):
-            os.makedirs(self.model_path)
+        self.model_performance_path = os.path.join(self.model_dir, self.filename.split(".")[0]+"/"+ getModel(params)+"/model_performance")
+        self.predictions_path = os.path.join(self.model_dir, self.filename.split(".")[0]+"/"+ getModel(params)+"/predictions")
+        if not os.path.isdir(self.model_performance_path):
+            os.makedirs(self.model_performance_path)
+        if not os.path.isdir(self.predictions_path):
+            os.makedirs(self.predictions_path)
 
     def baseline(self):
-        feature_list = self.params['baseline']['features']
+        feature_list = getBaselineFeaturesList(self.params)
         if feature_list:
             feature_to_fit = []
             for feat_str in feature_list:
@@ -40,10 +45,10 @@ class Ntap:
                 for feat_str in feature_to_fit:
                     feature_pipeline.fit(feat_str)
                     feature_pipeline.transform()  # writes to file
-        method = self.params['baseline']['method']
+        method = getBaselineMethod(self.params)
         if method:
             baseline_pipeline = Baseline(self.base_dir, self.params)
-            targets = self.params['baseline']['targets']
+            targets = getBaselineTargets(self.params)
             if not targets:
                 baseline_pipeline.load_data(self.preprocessed_file)
             else:
@@ -63,8 +68,7 @@ class Ntap:
         return target
 
     def preprocess(self, params):
-        jobs = params['processing']['jobs']
-
+        jobs = getPreProcessingJobList(params)
         processor = Preprocessor(self.preprocessed_dir, self.params)
         try:
             processor.load(self.input_file)
@@ -76,7 +80,7 @@ class Ntap:
         for job in jobs:
             print("Processing job: {}".format(job))
             if job == 'clean':
-                processor.clean(params["processing"]["clean"], remove=True)
+                processor.clean(getPreProcessingCleanList(params), remove=True)
             """if job == 'ner':
                 processor.ner()
             if job == 'pos':
@@ -91,8 +95,8 @@ class Ntap:
 
     def run(self):
         method = Methods()
-        feature_file = os.path.join(self.feature_dir, params['model']['feature'] + '.tsv')
-        method.run_method(params, self.data, self.test_filepath, self.model_path, feature_file)
+        feature_file = os.path.join(self.feature_dir, getFeatureFileName(params) + '.tsv')
+        method.run_method(params, self.data, self.test_filepath, self.predictions_path, self.model_performance_path, feature_file)
 
     def search_preprocessed_files(self):
         try:
