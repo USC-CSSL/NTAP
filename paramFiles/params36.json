@@ -1,0 +1,95 @@
+{
+    "processing": {
+        "jobs": [
+            "clean"
+        ],
+        "input_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/baltimore_data.pkl",
+        "clean": [
+            "links"
+        ],
+        "preprocess": [
+            "lowercase"
+        ],
+        "text_col": "text"
+    },
+    "baseline": {
+        "features": [
+            "dictionary"
+        ],
+        "targets": [
+            ""
+        ],
+        "method": ""
+    },
+    "feature_params": {
+        "kfolds": 10,
+        "stopwords": null,
+        "num_words": 10000,
+        "sent_tokenizer": "wordpunc",
+        "ngrams": [
+            0,
+            1
+        ],
+        "bom_method": "glove",
+        "num_topics": 50,
+        "num_iter": 1000,
+        "num_trials": 1,
+        "dictionary": "mfd2.0",
+        "random_seed": 123
+    },
+    "model": {
+        "test_filepath": "",
+        "feature": "dictionary",
+        "method": ""
+    },
+    "neural_params": {
+        "learning_rate": 0.0001,
+        "batch_size": 100,
+        "keep_ratio": 0.66,
+        "cell": "LSTM",
+        "model": "ATTN_feat",
+        "vocab_size": 10000,
+        "embedding_size": 300,
+        "pretrain": true,
+        "train_embedding": false,
+        "target_cols": [
+            "authority",
+            "care",
+            "fairness",
+            "loyalty",
+            "purity",
+            "moral"
+        ],
+        "hidden_layers": [
+            256,
+            256
+        ],
+        "filter_sizes": [
+            2,
+            3,
+            4
+        ],
+        "num_filters": 2,
+        "epochs": 100,
+        "word_embedding": "glove",
+        "kfolds": 10,
+        "task": "predict",
+        "feature_hidden_size": 100,
+        "feature_size": 10,
+        "random_seed": 55,
+        "max_length": 1000,
+        "min_length": 2,
+        "neural_kfolds": 10,
+        "attention_size": 100,
+        "RNN": "BiLSTM",
+        "n_outputs": 2,
+        "loss": "Mean",
+        "save_vectors_list": false
+    },
+    "path": {
+        "glove_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/glove.6B/glove.6B.300d.txt",
+        "word2vec": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/GoogleNews-vectors-negative300.bin.gz",
+        "dictionary_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data",
+        "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
+    }
+}
