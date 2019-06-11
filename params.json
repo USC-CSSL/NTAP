@@ -3,7 +3,8 @@
       "jobs":["clean"],
       "input_path": "/var/lib/jenkins/workspace/ntap_data/data_alm.pkl",
       "clean": ["links"],
-      "preprocess": ["lowercase"]
+      "preprocess": ["lowercase"],
+      "text_col":"text"
   },
 
   "baseline": {
@@ -34,20 +35,19 @@
 
   "neural_params": {
       "learning_rate": 0.0001,
-      "batch_size": 10,
+      "batch_size": 100,
       "keep_ratio": 0.66,
       "cell": "GRU",
-      "model": "LSTM",
+      "model": "ATTN_feat",
       "RNN": "BiLSTM",
-      "vocab_size": 20000,
+      "vocab_size": 10000,
       "embedding_size": 300,
-      "hidden_size": 100,
       "feature_hidden_size": 100,
       "feature_size":10,
       "pretrain": true,
       "train_embedding": false,
-      "target_cols":["authority","care","fairness","loyalty","purity","Moral"],
-      "num_layers": 1,
+      "target_cols":["authority","care","fairness","loyalty","purity","moral"],
+      "hidden_layers": [10],
       "n_outputs": 2,
       "filter_sizes": [2, 3, 4],
       "num_filters": 2,
@@ -59,10 +59,9 @@
       "random_seed": 55,
       "max_length": 1000,
       "min_length": 2,
-      "neural_kfolds": 5,
+      "neural_kfolds": 10,
       "attention_size": 100,
-      "train": true,
-      "predict": false
+      "task":"train"
   },
 
   "path": {

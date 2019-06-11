@@ -8,8 +8,7 @@ class LSTM(baseModel):
 
     def build(self):
         self.initialise()
-        rnn_outputs, state = self.dynamic_rnn(self.cell, self.model, self.hidden_size,
-                                         self.keep_prob,self.num_layers,
-                                         self.embed, self.sequence_length)
+        rnn_outputs, state = self.dynamic_rnn(self.cell, self.model, self.hidden_layers,
+                                         self.keep_prob, self.embed, self.sequence_length)
         self.state = state
-        self.buildOptimizer()
+        self.buildPredictor()

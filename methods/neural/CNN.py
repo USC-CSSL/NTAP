@@ -10,4 +10,4 @@ class CNN(baseModel):
         self.initialise()
         cnnOutputs = self.build_CNN(self.embed, self.filter_sizes, self.num_filters, self.keep_prob)
         self.state = cnnOutputs
-        self.buildOptimizer()
+        self.buildPredictor()
