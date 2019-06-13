@@ -157,24 +157,6 @@ class baseModel():
         self.weights = self.weightPlaceholder(self.target_cols)
         self.keep_prob = tf.placeholder(tf.float32)
 
-    """# a helper function called during the execution of the traning process
-    def model_testing(self, test_batches, weights, done):
-        acc_test = 0
-        test_predictions = {target: np.array([]) for target in self.target_cols}
-        test_labels = {target: np.array([]) for target in self.target_cols}
-        for batch in test_batches:
-            feed_dict = self.feed_dictionary(batch, weights)
-            acc_test += self.joint_accuracy.eval(feed_dict=feed_dict)
-            if done:
-                for i in range(len(self.target_cols)):
-                    test_predictions[self.target_cols[i]] = np.append(test_predictions[self.target_cols[i]],
-                                                                       self.predict[self.target_cols[i]].eval(
-                                                                           feed_dict=feed_dict))
-                    test_labels[self.target_cols[i]] = np.append(test_labels[self.target_cols[i]],
-                                                                  feed_dict[
-                                                                      self.task_outputs[self.target_cols[i]]])
-        return acc_test, test_predictions, test_labels"""
-
     # a helper function called during the execution of the traning process
     def model_testing(self, test_batches, weights):
         acc_test = 0
@@ -262,56 +244,23 @@ class baseModel():
             feed_dict[self.task_outputs[self.target_cols[i]]] = y_data[:, i]
         return feed_dict
 
-    """# a function to train a model
-    def trainModel(self, batches, test_batches, weights):
-        init = tf.global_variables_initializer()
-        saver = tf.train.Saver()
-        with tf.Session() as self.sess:
-            done = False
-            init.run()
-            epoch = 1
-            while epoch<=self.epochs:
-                ## Train
-                acc_train, epoch_loss = self.model_training(batches, weights)
-                if epoch == self.epochs:
-                    done = True
-                ## Test
-                acc_test, test_predictions, test_labels = self.model_testing(test_batches, weights, done)
-                print(test_predictions)
-
-                print(epoch, "Train accuracy:", acc_train / float(len(batches)),
-                      "Train Loss: ", epoch_loss / float(len(batches)),
-                      "Test accuracy: ", acc_test / float(len(test_batches)))
-                epoch += 1
-
-            f1_scores, precisions, recalls = self.get_precision_recall_f1_scores(test_predictions, test_labels)
-            model_path = getModelDirectory(self.all_params)
-            save_path = saver.save(self.sess, model_path+"/model")
-
-        return f1_scores, precisions, recalls"""
-
     # a function to train a model
     def trainModel(self, batches, test_batches, weights):
         init = tf.global_variables_initializer()
         saver = tf.train.Saver()
         patience = 3
         model_path = getModelDirectory(self.all_params)
-        if not os.path.isdir(model_path+"/tempModels"):
-            os.makedirs(model_path+"/tempModels")
         monitor_test_acc, monitor_test_predictions, monitor_test_labels = [], [], []
         with tf.Session() as self.sess:
             done = False
             init.run()
             epoch = 1
-            i = 1
             while epoch<=self.epochs:
                 final_epoch = epoch
                 ## Train
                 acc_train, epoch_loss = self.model_training(batches, weights)
                 ## Test
                 acc_test, test_predictions, test_labels = self.model_testing(test_batches, weights)
-                if i%(patience+1)==0:
-                    i = 1
                 monitor_test_acc.append(acc_test)
                 monitor_test_predictions.append(test_predictions)
                 monitor_test_labels.append(test_labels)
@@ -319,25 +268,26 @@ class baseModel():
                       "Train Loss: ", epoch_loss / float(len(batches)),
                       "Test accuracy: ", acc_test / float(len(test_batches)))
                 # Early Stopping
-                if epoch>=patience:
-                    final_epoch = epoch-patience+1
-                    if final_epoch%patience==0:
-                        restore = patience
-                    else:
-                        restore = final_epoch%patience
-                    saver.save(self.sess, model_path+"/tempModels/"+"model"+str(i))
-                    if (max(monitor_test_acc[epoch-patience:epoch])==monitor_test_acc[epoch-patience]):
-                        print("Invoking Early Stopping")
-                        print("Storing model parameters after Epoch: "+str(final_epoch))
-                        print("Restoring model: "+str(restore))
-                        saver.restore(self.sess, model_path+"/tempModels/"+"model"+str(restore))
-                        saver.save(self.sess, model_path+"/finalModel")
-                        break
+                if epoch==1:
+                    final_acc = acc_test
+                    print("Saving the model at epoch:", epoch)
+                    saver.save(self.sess, model_path+"/model")
+                    i = 1
                 else:
-                    saver.save(self.sess, model_path+"/tempModels/"+"model"+str(i))
+                    if final_acc>=acc_test:
+                        i+=1
+                        if i>patience:
+                            final_epoch = epoch-patience
+                            print("Invoking Early Stopping")
+                            print("Final model stored after epoch: "+str(final_epoch))
+                            break
 
+                    else:
+                        i = 1
+                        final_acc = acc_test
+                        print("Saving the model at epoch:", epoch)
+                        saver.save(self.sess, model_path+"/model")
                 epoch += 1
-                i+=1
 
             f1_scores, precisions, recalls = self.get_precision_recall_f1_scores(monitor_test_predictions[final_epoch-1], monitor_test_labels[final_epoch-1])
 

@@ -95,6 +95,9 @@ def getTrainParam(params):
 
 def getTextColName(params):
     return params['processing']['text_col']
+
+def getTestFilePath(params):
+    return params['model']['test_filepath']
 # a function to get the vocab size specified
 def getVocabSize(params):
     neural_params = getNeuralParams(params)
