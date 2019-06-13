@@ -7,13 +7,13 @@ from methods.baselines.methods import Baseline
 from features.features import Features
 from run_methods import Methods
 import traceback
-from helperFunctions import getBaseDirAndFilename, getBaselineFeaturesList, getBaselineMethod, getBaselineTargets, getPreProcessingJobList, getPreProcessingCleanList, getFeatureFileName, getInputFilePath, getTargetColumnNames, getModel
+from helperFunctions import getBaseDirAndFilename, getBaselineFeaturesList, getBaselineMethod, getBaselineTargets, getPreProcessingJobList, getPreProcessingCleanList, getFeatureFileName, getInputFilePath, getTargetColumnNames, getModel, getTestFilePath
 
 class Ntap:
 
     def __init__(self, params):
         self.params = params
-        self.base_dir,self.filename = os.path.split(getInputFilePath(params))
+        self.base_dir, self.filename = os.path.split(getInputFilePath(params))
         self.model_dir = os.path.join(self.base_dir, "models")
         self.preprocessed_dir = os.path.join(self.base_dir, "preprocessed")
         self.feature_dir = os.path.join(self.base_dir, "features")
@@ -23,7 +23,8 @@ class Ntap:
         self.preprocessed_file = os.path.join(self.preprocessed_dir, self.filename )
         self.input_file = os.path.join(self.base_dir, self.filename )
         self.data = None
-        self.test_filepath = params['model']['test_filepath']
+        #self.test_filepath = params['model']['test_filepath']
+        self.test_filepath = getTestFilePath(params)
         self.model_performance_path = os.path.join(self.model_dir, self.filename.split(".")[0]+"/"+ getModel(params)+"/model_performance")
         self.predictions_path = os.path.join(self.model_dir, self.filename.split(".")[0]+"/"+ getModel(params)+"/predictions")
         if not os.path.isdir(self.model_performance_path):
@@ -95,8 +96,8 @@ class Ntap:
 
     def run(self):
         method = Methods()
-        feature_file = os.path.join(self.feature_dir, getFeatureFileName(params) + '.tsv')
-        method.run_method(params, self.data, self.test_filepath, self.predictions_path, self.model_performance_path, feature_file)
+        feature_file = os.path.join(self.feature_dir, getFeatureFileName(self.params) + '.tsv')
+        method.run_method(self.params, self.data, self.test_filepath, self.predictions_path, self.model_performance_path, feature_file)
 
     def search_preprocessed_files(self):
         try:
