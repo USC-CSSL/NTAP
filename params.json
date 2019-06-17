@@ -34,11 +34,11 @@
   },
 
   "neural_params": {
-      "learning_rate": 0.0001,
+      "learning_rate": [0.0001],
       "batch_size": 100,
-      "keep_ratio": 0.66,
+      "keep_ratio": [0.66],
       "cell": "GRU",
-      "model": "ATTN_feat",
+      "model": "LSTM",
       "RNN": "BiLSTM",
       "vocab_size": 10000,
       "embedding_size": 300,
@@ -47,7 +47,7 @@
       "pretrain": true,
       "train_embedding": false,
       "target_cols":["authority","care","fairness","loyalty","purity","moral"],
-      "hidden_layers": [10],
+      "hidden_layers": [[100]],
       "n_outputs": 2,
       "filter_sizes": [2, 3, 4],
       "num_filters": 2,
@@ -59,9 +59,9 @@
       "random_seed": 55,
       "max_length": 1000,
       "min_length": 2,
-      "neural_kfolds": 10,
       "attention_size": 100,
-      "task":"train"
+      "task":"train",
+      "hyper_parameters":["learning_rate","hidden_layers","keep_ratio"]
   },
 
   "path": {

@@ -4,6 +4,13 @@ import pandas as pd
 import os, math
 import numpy as np
 
+def checkHyperParameters(params):
+    neural_params = getNeuralParams(params)
+    hyperParams = getHyperParameters(params)
+    for param in hyperParams:
+        if len(neural_params[param])>1:
+            return True
+    return False
 # a function to get the name of Base Directory and the input file name
 def getBaseDirAndFilename(params):
     base_dir, filename = os.path.split(getInputFilePath(params))
@@ -33,6 +40,12 @@ def getFolds(params):
 # a function to get the glove plath
 def getGlovePath(params):
     return params['path']['glove_path']
+
+def getHyperParameters(params):
+    neural_params = getNeuralParams(params)
+    #params = ["learning_rate","keep_ratio"]
+    #params = ["learning_rate"]
+    return neural_params["hyper_parameters"]
 
 # a function to get the Input file path
 def getInputFilePath(params):

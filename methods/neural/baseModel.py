@@ -248,7 +248,7 @@ class baseModel():
     def trainModel(self, batches, test_batches, weights):
         init = tf.global_variables_initializer()
         saver = tf.train.Saver()
-        patience = 3
+        patience = 10
         model_path = getModelDirectory(self.all_params)
         monitor_test_acc, monitor_test_predictions, monitor_test_labels = [], [], []
         with tf.Session() as self.sess:
@@ -261,7 +261,7 @@ class baseModel():
                 acc_train, epoch_loss = self.model_training(batches, weights)
                 ## Test
                 acc_test, test_predictions, test_labels = self.model_testing(test_batches, weights)
-                monitor_test_acc.append(acc_test)
+                monitor_test_acc.append(acc_test/ float(len(test_batches)))
                 monitor_test_predictions.append(test_predictions)
                 monitor_test_labels.append(test_labels)
                 print(epoch, "Train accuracy:", acc_train / float(len(batches)),
@@ -270,6 +270,8 @@ class baseModel():
                 # Early Stopping
                 if epoch==1:
                     final_acc = acc_test
+                    final_predictions = test_predictions
+                    final_labels = test_labels
                     print("Saving the model at epoch:", epoch)
                     saver.save(self.sess, model_path+"/model")
                     i = 1
@@ -285,13 +287,15 @@ class baseModel():
                     else:
                         i = 1
                         final_acc = acc_test
+                        final_predictions = test_predictions
+                        final_labels = test_labels
                         print("Saving the model at epoch:", epoch)
                         saver.save(self.sess, model_path+"/model")
                 epoch += 1
 
-            f1_scores, precisions, recalls = self.get_precision_recall_f1_scores(monitor_test_predictions[final_epoch-1], monitor_test_labels[final_epoch-1])
+            f1_scores, precisions, recalls = self.get_precision_recall_f1_scores(final_predictions, final_labels)
 
-        return f1_scores, precisions, recalls
+        return f1_scores, precisions, recalls, final_acc
 
     # a function to define a weight variable corresponding to every target in case of multiple targets
     def weightPlaceholder(self, target_cols):
