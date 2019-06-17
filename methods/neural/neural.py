@@ -51,13 +51,15 @@ class Neural:
 
     # a function to train a model using Cross Validation
     def trainModelUsingCV(self, X, y, weights, savedir, features):
-        kf = KFold(n_splits=getFolds(self.all_params), shuffle=True, random_state=self.random_seed)
+        nfolds = getFolds(self.all_params)
+        kf = KFold(n_splits=nfolds, shuffle=True, random_state=self.random_seed)
         f1s = {target: list() for target in self.target_cols}
         ps = {target: list() for target in self.target_cols}
         rs = {target: list() for target in self.target_cols}
         columns = ["Folds", "F1", "Precision", "Recall"]
         scores = defaultdict(lambda: defaultdict(list))
-
+        avg_test_acc = 0
+        avg_f1_score = 0
         for idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             print("Cross validation, iteration", idx + 1)
             X_train, X_test = X[train_idx], X[test_idx]
@@ -67,8 +69,8 @@ class Neural:
             else:
                 feat_train, feat_test = list(), list()
 
-            f1_scores, precision, recall = self.nn.trainModel(get_batches(self.batch_size, self.vocab, X_train, y_train, feat_train), get_batches(self.batch_size, self.vocab, X_test, y_test, feat_test), weights)
-
+            f1_scores, precision, recall, test_acc = self.nn.trainModel(get_batches(self.batch_size, self.vocab, X_train, y_train, feat_train), get_batches(self.batch_size, self.vocab, X_test, y_test, feat_test), weights)
+            avg_test_acc+=test_acc
             for target in self.target_cols:
                 scores[target]['f1'].append(f1_scores[target])
                 scores[target]['precision'].append(precision[target])
@@ -76,7 +78,7 @@ class Neural:
                 f1s[target].append(f1_scores[target])
                 ps[target].append(precision[target])
                 rs[target].append(recall[target])
-
+        avg_test_acc = avg_test_acc/nfolds
         final = {target: list() for target in self.target_cols}
         for target in self.target_cols:
             for i in range(getFolds(self.all_params)):
@@ -86,6 +88,8 @@ class Neural:
             final[target].append(["std(Folds)",np.std(f1s[target]),np.std(ps[target]),np.std(rs[target])])
             final[target].append(["min(Folds)",np.min(f1s[target]),np.min(ps[target]),np.min(rs[target])])
             final[target].append(["max(Folds)",np.max(f1s[target]),np.max(ps[target]),np.max(rs[target])])
+            avg_f1_score+=np.mean(f1s[target])
+        avg_f1_score=avg_f1_score/len(self.target_cols)
         for k, v in final.items():
             temp = pd.DataFrame.from_records(v,columns=columns)
             temp = temp.set_index("Folds")
@@ -99,6 +103,7 @@ class Neural:
             print("Overall Recall for", target, ":", sum(rs[target]) / self.neural_params["kfolds"])
             print("Standard Deviation:", statistics.stdev(rs[target]))
         pd.DataFrame.from_dict(f1s).to_csv(savedir + "/" + ".".join(t for t in self.target_cols) + ".csv")'''
+        return avg_f1_score
 
 
     # a function to predict the label on the trained model

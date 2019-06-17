@@ -1,5 +1,5 @@
 #TODO: Add CNN and RNN models to files cnns.py and rnns.py
-from helperFunctions import learnVocab, tokenize_data, tokens_to_ids, getModelMethod, getNeuralParams, getTargetColumnNames, getMaxLength, getMinLength, getVocabSize, getInputFilePath, getModel, getTrainParam, getFolds, getPredictParam, setFeatureSize, getTask, getTextColName
+from helperFunctions import learnVocab, tokenize_data, tokens_to_ids, getModelMethod, getNeuralParams, getTargetColumnNames, getMaxLength, getMinLength, getVocabSize, getInputFilePath, getModel, getTrainParam, getFolds, getPredictParam, setFeatureSize, getTask, getTextColName, checkHyperParameters, getHyperParameters
 from methods.neural.neural import Neural
 import pandas as pd
 import pickle
@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from collections import Counter
 import json
+import itertools as it
 
 
 """
@@ -104,47 +105,95 @@ class Methods:
             setFeatureSize(all_params, feat.shape[1])
         else:
             feat = []
-        neural = Neural(all_params, vocab)
-        neural.build()
 
-        #if getTrainParam(all_params):
-        #if getPredictParam(all_params):
-        try:
-            if getTask(all_params)=="train":
-                if getFolds(all_params)<=1:
-                    raise Exception('Please set the parameter, kfolds greater than 1')
-                neural_params = getNeuralParams(all_params)
-                print("Training Begin")
-                neural.trainModelUsingCV(X, y, weights, save, feat)
-                print("Training End")
-            elif getTask(all_params)=="predict":
-                data = getInputFilePath(all_params)
-                if data is None:
-                    raise Exception("Please specify the path to the data to be predicted")
-                if data.endswith('.tsv'):
-                    all = pd.read_csv(data, sep='\t', quoting=3)
-                elif data.endswith('.pkl'):
-                    all = pickle.load(open(data, 'rb'))
-                #elif data.endswith('.csv'):
-                else:
-                    all = pd.read_csv(data)
+        neural_params = getNeuralParams(all_params)
+        temp_all_params = dict(all_params)
+        #try:
+        if getTask(all_params)=="train":
+            if getFolds(all_params)<=1:
+                raise Exception('Please set the parameter, kfolds greater than 1')
+            elif checkHyperParameters(all_params):
+                print("Grid Search Training Begin")
+                hyperParams = getHyperParameters(all_params)
+                params_dic = {}
+                for param in hyperParams:
+                    params_dic[param] = neural_params[param]
 
-                #col = self.__get_text_col(all.columns.tolist())
-                col = getTextColName(all_params)
-                #all = tokenize_data(all, col, neural_params["max_length"], neural_params["min_length"])
-                all = tokenize_data(all, col, getMaxLength(all_params), getMinLength(all_params))
-                all_text = all[col].values.tolist()
-                data = np.array(tokens_to_ids(all_text, vocab))
-                #neural.predictModel(X, y, data, weights, save)
-                print("Prediction Begin")
-                neural.predictModel(X, y, data, weights, save_predictions, feat)
-                print("Prediction End")
+                sortedParams = sorted(params_dic)
+                combinations = list(it.product(*(params_dic[k] for k in sortedParams)))
+                print("Total number of combinations possible for GridSearch training:",len(combinations))
+                testAccDic = []
+                count = 1
+                for combination in combinations:
+                    string = "["
+                    for i in range(len(sortedParams)):
+                        if i!=len(sortedParams)-1:
+                            string+=sortedParams[i]+":"+str(combination[i])+", "
+                        else:
+                            string+=sortedParams[i]+":"+str(combination[i])
+                    string+="]"
+                    print("\nHyper-parameters combination:",count)
+                    print("Current combination of parameters in Grid Search Cross Validation training is",string)
+                    for i in range(len(sortedParams)):
+                        neural_params[sortedParams[i]] = combination[i]
+                    neural = Neural(all_params, vocab)
+                    neural.build()
+                    avg_test_acc = neural.trainModelUsingCV(X, y, weights, save, feat)
+                    print("Final average F1-score after training with combination",string,"=",avg_test_acc,"\n")
+                    testAccDic.append([avg_test_acc,combination])
+                    count+=1
+                testAccDic.sort()
+                bestParamCombination = testAccDic[-1][1]
+                string = "["
+                for i in range(len(sortedParams)):
+                    if i!=len(sortedParams)-1:
+                        string+=sortedParams[i]+":"+str(bestParamCombination[i])+", "
+                    else:
+                        string+=sortedParams[i]+":"+str(bestParamCombination[i])
+                string+= "]"
+                print("Best combination of parameters is ",string,"with corresponding best final average F1-score of",testAccDic[-1][0])
+                print("Training model with best parameters =",string)
+                for i in range(len(sortedParams)):
+                    neural_params[sortedParams[i]] = bestParamCombination[i]
+                neural = Neural(all_params, vocab)
+                neural.build()
+                avg_test_acc = neural.trainModelUsingCV(X, y, weights, save, feat)
+                print("Grid Search Training End")
             else:
-                print("Currently Train and Predict Tasks are the only possible tasks")
-                exit(1)
-        except Exception as e:
-            print(e)
+                hyperParams = getHyperParameters(all_params)
+                for param in hyperParams:
+                    neural_params[param] = neural_params[param][0]
+                neural = Neural(all_params, vocab)
+                neural.build()
+                print("Cross Validation Training Begin")
+                avg_test_acc = neural.trainModelUsingCV(X, y, weights, save, feat)
+                print("Cross Validation Training End")
+        elif getTask(all_params)=="predict":
+            data = getInputFilePath(all_params)
+            if data is None:
+                raise Exception("Please specify the path to the data to be predicted")
+            if data.endswith('.tsv'):
+                all = pd.read_csv(data, sep='\t', quoting=3)
+            elif data.endswith('.pkl'):
+                all = pickle.load(open(data, 'rb'))
+            else: #endswith .csv
+                all = pd.read_csv(data)
+
+            #col = self.__get_text_col(all.columns.tolist())
+            col = getTextColName(all_params)
+            #all = tokenize_data(all, col, neural_params["max_length"], neural_params["min_length"])
+            all = tokenize_data(all, col, getMaxLength(all_params), getMinLength(all_params))
+            all_text = all[col].values.tolist()
+            data = np.array(tokens_to_ids(all_text, vocab))
+            print("Prediction Begin")
+            neural.predictModel(X, y, data, weights, save_predictions, feat)
+            print("Prediction End")
+        else:
+            print("Currently Train and Predict Tasks are the only possible tasks")
             exit(1)
+        #except Exception as e:
+        #    print(e)
+        #    exit(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
