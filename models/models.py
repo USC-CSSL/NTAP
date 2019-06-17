@@ -1,27 +1,81 @@
-# baseModel.py has implementation of a super-class "baseModel"
+from abc import ABC, abstractmethod
+"""
+define abstract class `Model`
+Methods:
+    CV
+    set_params
+    train
+    summary
 
-import tensorflow as tf
-from helperFunctions import getNeuralParams, getModelDirectory
-import numpy as np
-from sklearn.metrics import f1_score, precision_score, recall_score
-import pandas as pd
-from nltk import tokenize as nltk_token
-import os
+"""
 
-class baseModel():
-    def __init__(self, all_params, max_length, vocab, my_embeddings=None):
-        self.all_params = all_params
-        self.neural_params = getNeuralParams(all_params)
-        self.vocab = vocab
-        for key in self.neural_params:
-            setattr(self, key, self.neural_params[key])
-        self.hidden_layers = self.neural_params["hidden_layers"]
-        self.max_length = max_length
-        if self.pretrain:
-            self.my_embeddings = my_embeddings
 
-    # a function to build the embedding
-    def buildEmbedding(self, pretrain, train_embedding, embedding_size, vocab_size, expand_dims):
+class Model(abc):
+    def __init__(self):
+        super().__init__()
+        self.__build()
+
+    @abstractmethod
+    def __build(self):
+        pass
+    @abstractmethod
+    def set_params(...):
+        pass
+    @abstractmethod
+    def CV(self, data, folds=10):  # task='classify' ?
+        if len(self.params) == 1:
+            print("Starting Cross-Validation with {} folds".format(folds))
+        else:
+            print("Starting Grid Search over {} parameter sets".format(len(self.params)))
+        print(self.params) 
+
+        for i in range(folds):
+            
+    @abstractmethod
+    def batches(self, data):
+        pass
+
+    def train(self, data, params, verbose='minimal'):  # weights?
+        # assumes self.formula is set
+        # self.__reset_graph()
+        epoch_loss = 0.
+        acc_train = 0.
+        with tf.session() as sess:
+            for feed_dict in self.batches(data):
+                # TODO: Add verbose controls
+                ## TODO: Refactor: feed_dict = self.feed_dictionary(batch, weights)
+                _, loss_val = sess.run([self.training_op, self.joint_loss], feed_dict=feed_dict)
+                #acc_train += self.joint_accuracy.eval(feed_dict=feed_dict)
+                epoch_loss += loss_val
+        return   # self.model is trained
+
+    def predict(self, data, verbose='minimal'): # weights?
+        """
+        return pandas array of predictions
+        """
+        acc_test = 0
+        test_predictions = {target: np.array([]) for target in self.targets}
+        test_labels = {target: np.array([]) for target in self.targets}
+        for feed_dict in self.batches(data):
+            acc_test += self.joint_accuracy.eval(feed_dict=feed_dict)
+            for i in range(len(self.target_cols)):
+                test_predictions[self.target_cols[i]] = np.append(test_predictions[self.target_cols[i]],
+                                                                   self.predict[self.target_cols[i]].eval(
+                                                                       feed_dict=feed_dict))
+                test_labels[self.target_cols[i]] = np.append(test_labels[self.target_cols[i]],
+                                                              feed_dict[
+                                                                  self.task_outputs[self.target_cols[i]]])
+        return acc_test, test_predictions, test_labels
+
+    @abstractmethod
+    def summary(...):
+        print("Performance")
+
+    @abstractmethod
+    def __str__(self):
+
+
+    def buildEmbedding(self, pretrain, train_embedding, embedding_size, vocab_size, expand_dims): # expand_dims??
         if pretrain:
             embeddings_variable = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size]),
                                      trainable=train_embedding, name="W")
@@ -31,14 +85,28 @@ class baseModel():
                                                         [vocab_size, embedding_size], -1, 1),
                                                     dtype=tf.float32)
         if expand_dims==True:
-            embeddings_variable = tf.expand_dims(embeddings_variable,-1)
+            embeddings_variable = tf.expand_dims(embeddings_variable,-1)  # ??
         return embeddings_variable
 
-    # a function to calculate joint accuracy, joint loss and predicted label for every target
+class RNN(Model):
+    def __init__(self, formula, ...):
+        self.__parse_formula(formula)
+        ...
+    def __parse_formula(self, formula)
+        # formula: "hate ~ text"
+        targets, inputs = formula.split("~")
+        self.targets = targets.split(); self.inputs = inputs.split()
+        #self.text_col = inputs[0]
+        #if self.
+        # later: parse `ddr(text)` and similar. Can specify dictionary=`./mfd.json`)
+
+    ...
+
+"""
     def buildPredictor(self):
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 
-        for target in self.target_cols:
+        for target in self.targets:
             self.loss[target], self.predict[target], self.accuracy[target] = self.get_accuracy_loss_predictedLabel(self.state,
                                                                                   self.n_outputs,
                                                                                   self.weights[target],
@@ -55,28 +123,6 @@ class baseModel():
             cell = tf.contrib.rnn.GRUCell(num_units=hidden_size)
         cell_drop = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=keep_ratio)
         return cell_drop
-
-    # a function to build a CNN model
-    def build_CNN(self, input, filter_sizes, num_filters, keep_ratio):
-        pooled_outputs = list()
-        for i, filter_size in enumerate(filter_sizes):
-            filter_shape = [filter_size, int(input.get_shape()[2]), 1, num_filters]
-            b = tf.Variable(tf.constant(0.1, shape=[num_filters]))
-            W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
-
-            conv = tf.nn.conv2d(input, W, strides=[1, 1, 1, 1], padding="VALID")
-            relu = tf.nn.relu(tf.nn.bias_add(conv, b))
-
-            pooled = tf.reduce_max(relu, axis=1, keep_dims=True)
-            pooled_outputs.append(pooled)
-
-        num_filters_total = num_filters * len(filter_sizes)
-        h_pool = tf.concat(pooled_outputs, 3)
-        h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
-
-        output = tf.nn.dropout(h_pool_flat, keep_ratio)
-        return output
-
 
     # a function to construct dynamic_rnn or bidirectional_dynamic_rnn model
     def dynamic_rnn(self, cell, model, hidden_layers, keep_prob, embed, sequence_length):
@@ -157,33 +203,7 @@ class baseModel():
         self.weights = self.weightPlaceholder(self.target_cols)
         self.keep_prob = tf.placeholder(tf.float32)
 
-    # a helper function called during the execution of the traning process
-    def model_testing(self, test_batches, weights):
-        acc_test = 0
-        test_predictions = {target: np.array([]) for target in self.target_cols}
-        test_labels = {target: np.array([]) for target in self.target_cols}
-        for batch in test_batches:
-            feed_dict = self.feed_dictionary(batch, weights)
-            acc_test += self.joint_accuracy.eval(feed_dict=feed_dict)
-            for i in range(len(self.target_cols)):
-                test_predictions[self.target_cols[i]] = np.append(test_predictions[self.target_cols[i]],
-                                                                   self.predict[self.target_cols[i]].eval(
-                                                                       feed_dict=feed_dict))
-                test_labels[self.target_cols[i]] = np.append(test_labels[self.target_cols[i]],
-                                                              feed_dict[
-                                                                  self.task_outputs[self.target_cols[i]]])
-        return acc_test, test_predictions, test_labels
 
-    # a helper function called during the execution of the training process
-    def model_training(self, batches, weights):
-        epoch_loss = float(0)
-        acc_train = 0
-        for batch in batches:
-            feed_dict = self.feed_dictionary(batch, weights)
-            _, loss_val = self.sess.run([self.training_op, self.joint_loss], feed_dict= feed_dict)
-            acc_train += self.joint_accuracy.eval(feed_dict=feed_dict)
-            epoch_loss += loss_val
-        return acc_train, epoch_loss
 
     # a function to build multiple RNN cells
     def multi_RNN(self, cell, hidden_layers, keep_ratio):
@@ -299,3 +319,51 @@ class baseModel():
         for target in target_cols:
             weights[target] = tf.placeholder(tf.float64, [None], name=target + "_w")
         return weights
+
+class CNN(Model):
+    def __init__(self, formula, ...):
+        self.__parse_formula(formula)
+        ...
+    def __parse_formula(self, formula)
+        ...
+
+    def build_CNN(self, input, filter_sizes, num_filters, keep_ratio):
+        pooled_outputs = list()
+        for i, filter_size in enumerate(filter_sizes):
+            filter_shape = [filter_size, int(input.get_shape()[2]), 1, num_filters]
+            b = tf.Variable(tf.constant(0.1, shape=[num_filters]))
+            W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
+
+            conv = tf.nn.conv2d(input, W, strides=[1, 1, 1, 1], padding="VALID")
+            relu = tf.nn.relu(tf.nn.bias_add(conv, b))
+
+            pooled = tf.reduce_max(relu, axis=1, keep_dims=True)
+            pooled_outputs.append(pooled)
+
+        num_filters_total = num_filters * len(filter_sizes)
+        h_pool = tf.concat(pooled_outputs, 3)
+        h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
+
+        output = tf.nn.dropout(h_pool_flat, keep_ratio)
+        return output
+    ...
+
+class SVM(Model):
+    def __init__(self, formula, ...):
+        self.__parse_formula(formula)
+        ...
+    def __parse_formula(self, formula)
+        ...
+class LogReg(Model):
+    def __init__(self, formula, ...):
+        self.__parse_formula(formula)
+        ...
+    def __parse_formula(self, formula)
+        ...
+
+class Regression(Model):
+    def __init__(self, formula, ...):
+        self.__parse_formula(formula)
+        ...
+    def __parse_formula(self, formula)
+        ...

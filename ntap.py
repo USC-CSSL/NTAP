@@ -1,150 +1,142 @@
-import fnmatch
-import json
-import os
+
 import pandas as pd
-from process.processor import Preprocessor
-from methods.baselines.methods import Baseline
-from features.features import Features
-from run_methods import Methods
-import traceback
-from helperFunctions import getBaseDirAndFilename, getBaselineFeaturesList, getBaselineMethod, getBaselineTargets, getPreProcessingJobList, getPreProcessingCleanList, getFeatureFileName, getInputFilePath, getTargetColumnNames, getModel, getTestFilePath
+import json
+from nltk import tokenize as nltk_token
 
-class Ntap:
+link_re = re.compile(r"(http(s)?[^\s]*)|(pic\.[s]*)")
+hashtag_re = re.compile(r"#[a-zA-Z0-9_]+")
+mention_re = re.compile(r"@[a-zA-Z0-9_]+")
 
-    def __init__(self, params):
-        self.params = params
-        self.base_dir, self.filename = os.path.split(getInputFilePath(params))
-        self.model_dir = os.path.join(self.base_dir, "models")
-        self.preprocessed_dir = os.path.join(self.base_dir, "preprocessed")
-        self.feature_dir = os.path.join(self.base_dir, "features")
-        self.filetype="."+ self.filename.split(".")[1]
-        if not os.path.isdir(self.feature_dir):
-            os.makedirs(self.feature_dir)
-        self.preprocessed_file = os.path.join(self.preprocessed_dir, self.filename )
-        self.input_file = os.path.join(self.base_dir, self.filename )
-        self.data = None
-        #self.test_filepath = params['model']['test_filepath']
-        self.test_filepath = getTestFilePath(params)
-        self.model_performance_path = os.path.join(self.model_dir, self.filename.split(".")[0]+"/"+ getModel(params)+"/model_performance")
-        self.predictions_path = os.path.join(self.model_dir, self.filename.split(".")[0]+"/"+ getModel(params)+"/predictions")
-        if not os.path.isdir(self.model_performance_path):
-            os.makedirs(self.model_performance_path)
-        if not os.path.isdir(self.predictions_path):
-            os.makedirs(self.predictions_path)
+nltk_tokenizer = nltk_token.TreebankWordTokenizer()
+treebank_tokenizer = nltk_token.TreebankWordTokenizer()
+wordpunc_tokenizer = nltk_token.WordPunctTokenizer()
+#from tokenization.happierfuntokenizing import HappierTokenizer
+#happierfun not currently supported
 
-    def baseline(self):
-        feature_list = getBaselineFeaturesList(self.params)
-        if feature_list:
-            feature_to_fit = []
-            for feat_str in feature_list:
-                feat_files = fnmatch.filter(os.listdir(self.feature_dir), feat_str + '.*')
-                if not feat_files:
-                    feature_to_fit.append(feat_str)
-            if feature_to_fit:
-                feature_pipeline = Features(self.base_dir, self.params)
-                feature_pipeline.load(self.preprocessed_file)
-                for feat_str in feature_to_fit:
-                    feature_pipeline.fit(feat_str)
-                    feature_pipeline.transform()  # writes to file
-        method = getBaselineMethod(self.params)
-        if method:
-            baseline_pipeline = Baseline(self.base_dir, self.params)
-            targets = getBaselineTargets(self.params)
-            if not targets:
-                baseline_pipeline.load_data(self.preprocessed_file)
-            else:
-                baseline_pipeline.load_data(self.preprocessed_file, targets)
-            baseline_pipeline.load_features()
-            baseline_pipeline.load_method(method)
-            baseline_pipeline.go()
+def wordpunc_tokenize(text):
+    return wordpunc_tokenizer.tokenize(text)
+#def happiertokenize(text):
+    #tok = HappierTokenizer(preserve_case=False)
+    #return tok.tokenize(text)
+def tweettokenize(text):
+    # keeps #s and @s appended to their next word
+    return nltk_tweettokenize.tokenize(text)
 
+def read_file(path):
+    ending = path.split('.')[-1]
+    if ending == 'csv':
+        return pd.read_csv(path)
+    elif ending == 'tsv':
+        return pd.read_csv(path, delimiter='\t')
+    elif ending == 'pkl':
+        return pd.read_pickle(path)
+    elif ending == 'json':
+        return pd.read_json(path)
 
-    def load_preprocessed_data(self, file):
-        if file.endswith('.tsv'):
-            target = pd.read_csv(file, sep='\t', quoting=3)
-        elif file.endswith('.pkl'):
-            target = pd.read_pickle(file)
-        elif file.endswith('.csv'):
-            target = pd.read_csv(file)
-        return target
-
-    def preprocess(self, params):
-        jobs = getPreProcessingJobList(params)
-        processor = Preprocessor(self.preprocessed_dir, self.params)
+class Dataset:
+    def __init__(self, path, tokenizer='wordpunct', vocab_size=5000, embed='glove', min_token=5):
         try:
-            processor.load(self.input_file)
+            self.data = read_file(path)
+            print("Loaded file with {} documents".format(len(self.data)))
         except Exception as e:
-            print(e)
-            print("Could not load data from 1 {}".format(self.base_dir))
-            exit(1)
+            print("Could not read data from {}".format(path))
+            print("Exception:", e)
+            return
+        self.learn_vocab()
 
-        for job in jobs:
-            print("Processing job: {}".format(job))
-            if job == 'clean':
-                processor.clean(getPreProcessingCleanList(params), remove=True)
-            """if job == 'ner':
-                processor.ner()
-            if job == 'pos':
-                processor.pos()
-            if job == 'depparse':
-                processor.depparse()"""
-            if job == 'tagme':
-                processor.tagme()
-        processor.write(self.filetype)
-        self.data = processor.data
+    def clean(self, column, remove=["hashtags", "mentions", "links"], mode='remove'):
+        if column not in self.data:
+            raise ValueError("{} not in dataframe".format(column))
+        def mentions(t):
+            return mention_re.sub("", t)
+        def links(t):
+            return link_re.sub("", t)
+        def hashtags(t):
+            return hashtag_re.sub("", t)
+
+        for pattern in pat_type:
+            if pattern == "mentions":
+                self.data[col] = self.data[col].apply(mentions)
+            if pattern == "hashtags":
+                self.data[col] = self.data[col].apply(hashtags)
+            if pattern == "links":
+                self.data[col] = self.data[col].apply(links)
+        print("TODO: replace dataframe with removed rows")
+
+    def clean_target(self, target, variable_type='factor', 
+            null_val=None):
+        print("TODO: remove NaNs/Nulls (store new data) and encode variable (one-hot, etc.)")
+    
+    def tokenize(self, column, stopwords=None, max_len=None, 
+            vocab_size=None, lower=True, tokenizer=None):
+        print("TODO: tokenize and save to self.words")
+        if tokenizer is not None:
+            self.tokenizer = toks[tokenizer] # TODO
+        if vocab_size is not None:
+            self.learn_vocab(vocab_size)
+        tokenized, drop = list(), list()
+        for idx, string in self.data[column].iteritems:  #TODO: check
+            tokens = self.tokenizer(string, lower, stopwords, max_len)
+            # TODO: max_len truncation/padding
+            tokenized.append(tokens)
+            if len(tokens) < self.min_len:
+                drop.append(idx)
+        prev = len(self.data)
+        self.data.drop(rows=drop, inplace=True)
+        print("Dropped {} docs due to not enough tokens".format(len(prev - len(self.data))))
+        return 
+
+        # move following code to constructor of method (parse_formula)
+        X = np.array(tokens_to_ids(text, vocab))
+        y = np.transpose(np.array([np.array(train_data[target].astype(int)) for target in getTargetColumnNames(all_params)]))
+
+    def lda(self, column, stopwords=None, method='mallet', num_topics=20, max_iter=500, save_model=None, load_model=None):
+        print("TODO: implement lda features\nSave to self.lda")
+
+    def tfidf(self, column, stopwords=None, vocab_size, **kwargs):
+        print("TODO: implement tfidf, save to self.tfidf")
+
+    def ddr(self, column, dictionary, embed='glove', **kwargs):
+        print("TODO: implement ddr features")
+
+    def bert(self, some_params):
+        print("TODO: implement a featurization based on BERT")
 
 
-    def run(self):
-        method = Methods()
-        feature_file = os.path.join(self.feature_dir, getFeatureFileName(self.params) + '.tsv')
-        method.run_method(self.params, self.data, self.test_filepath, self.predictions_path, self.model_performance_path, feature_file)
+    def tokens_to_ids(corpus, vocab, learn_max=True):
+        # TODO: incorporate into 'tokenize' (one-step)
+        print("Converting corpus of size %d to word indices based on learned vocabulary" % len(corpus))
+        if vocab is None:
+            raise ValueError("learn_vocab before converting tokens")
 
-    def search_preprocessed_files(self):
-        try:
-            files=set(os.listdir(ntap.preprocessed_dir))
-            if self.filename in files:
-                return True
-            return False
-        except Exception as e:
-            print("Exception while searching the preprocessed files : "+str(e.args))
-            raise e
+        mapping = {word: idx for idx, word in enumerate(vocab)}
+        unk_idx = vocab.index("<unk>")
+        for i in range(len(corpus)):
+            row = corpus[i]
+            for j in range(len(row)):
+                try:
+                    corpus[i][j] = mapping[corpus[i][j]]
+                except:
+                    corpus[i][j] = unk_idx
+        if learn_max:
+            max_length = max([len(line) for line in corpus])
+        return corpus
 
-
-if __name__ == '__main__':
-        try:
-            with open('params.json') as f:
-                params = json.load(f)
-            ntap = Ntap(params)
-            if not os.path.isdir(ntap.preprocessed_dir):
-                os.makedirs(ntap.preprocessed_dir)
-                ntap.preprocess(params)
-            elif not ntap.search_preprocessed_files():
-                ntap.preprocess(params)
-            elif os.path.isdir(ntap.preprocessed_dir) and ntap.filename in os.listdir(ntap.preprocessed_dir):
-                ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
-                file_str = getInputFilePath(params)
-                ending = file_str.split('.')[-1]
-                if ending == 'pkl':
-                    source = pd.read_pickle(file_str)
-                if ending == 'csv':
-                    source = pd.read_csv(file_str, delimiter=',')
-                if ending == 'tsv':
-                    source = pd.read_csv(file_str, delimiter='\t',quoting=3)
-                new_targets = getTargetColumnNames(params)
-                old_targets = ntap.data.columns.values
-                extra_columns = list(set(new_targets) - set(old_targets))
-                if len(extra_columns)>=1:
-                    normalize = True
-                    for target in extra_columns:
-                        ntap.data.loc[:, target] = source[target]
-                        if normalize:
-                            zscored = ((ntap.data[target] -
-                                ntap.data[target].mean())/ntap.data[target].std(ddof=0))
-                            ntap.data.loc[:, "{}_zscore".format(target)] = zscored
-            else:
-                ntap.data = ntap.load_preprocessed_data(ntap.preprocessed_file)
-            ntap.baseline()
-            ntap.run()
-        except Exception as e:
-            print("Caught exception in main method : "+str(e))
-            traceback.print_exc()
+    def write(self, formatting='.json'):
+        dest = os.path.join(self.dest, self.filename + formatting)
+        if formatting == '.json':
+            self.data.to_json(dest)
+        if formatting == '.csv':
+            self.data.to_csv(dest)
+        if formatting == '.tsv':
+            self.data.to_csv(dest, sep='\t')
+        if formatting == '.pkl':
+            self.data.to_pickle(dest)
+        if formatting == '.stata':
+            self.data.to_stata(dest)
+        if formatting == '.hdf5':
+            self.data.to_hdf(dest)
+        if formatting == '.excel':
+            self.data.to_excel()
+        if formatting == '.sql':
+            self.data.to_sql()
