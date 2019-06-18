@@ -1,28 +1,44 @@
+"""
+file: ntap.py
+about: contains methods and classes available from base ntap directory
+    - class Dataset
+    - tokenization methods
+"""
+
+MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
+
 
 import pandas as pd
-import json
+import numpy as np
+import json, re, os, tempfile
 from nltk import tokenize as nltk_token
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
+from gensim.models.wrappers import LdaMallet
+
+stem = SnowballStemmer("english").stem
 
 link_re = re.compile(r"(http(s)?[^\s]*)|(pic\.[s]*)")
 hashtag_re = re.compile(r"#[a-zA-Z0-9_]+")
 mention_re = re.compile(r"@[a-zA-Z0-9_]+")
 
-nltk_tokenizer = nltk_token.TreebankWordTokenizer()
-treebank_tokenizer = nltk_token.TreebankWordTokenizer()
-wordpunc_tokenizer = nltk_token.WordPunctTokenizer()
-#from tokenization.happierfuntokenizing import HappierTokenizer
-#happierfun not currently supported
+pat_type = {'links': link_re, 
+            'hashtags': hashtag_re,
+            'mentions': mention_re}
 
-def wordpunc_tokenize(text):
-    return wordpunc_tokenizer.tokenize(text)
+tokenizers = {'treebank': nltk_token.TreebankWordTokenizer().tokenize,
+              'wordpunct': nltk_token.WordPunctTokenizer().tokenize,
+              'tweettokenize': nltk_token.TweetTokenizer().tokenize}
+
+#from tokenization.happierfuntokenizing import HappierTokenizer
 #def happiertokenize(text):
     #tok = HappierTokenizer(preserve_case=False)
     #return tok.tokenize(text)
-def tweettokenize(text):
-    # keeps #s and @s appended to their next word
-    return nltk_tweettokenize.tokenize(text)
 
 def read_file(path):
+    if not os.path.exists(path):
+        raise ValueError("Path does not point to existing file: {}".format(path))
+        return
     ending = path.split('.')[-1]
     if ending == 'csv':
         return pd.read_csv(path)
@@ -33,16 +49,58 @@ def read_file(path):
     elif ending == 'json':
         return pd.read_json(path)
 
+
 class Dataset:
-    def __init__(self, path, tokenizer='wordpunct', vocab_size=5000, embed='glove', min_token=5):
+    def __init__(self, path, tokenizer='wordpunct', vocab_size=5000,
+            embed='glove', min_token=5, stopwords=None, stem=False,
+            lower=True, max_len=100):
         try:
             self.data = read_file(path)
-            print("Loaded file with {} documents".format(len(self.data)))
         except Exception as e:
-            print("Could not read data from {}".format(path))
             print("Exception:", e)
             return
-        self.learn_vocab()
+        print("Loaded file with {} documents".format(len(self.data)))
+        self.min_token = min_token
+        self.embed_source = embed
+        self.vocab_size = vocab_size
+        self.tokenizer = tokenizers[tokenizer]
+        self.lower = lower
+        if isinstance(stopwords, list) or isinstance(stopwords, set):
+            self.stopwords = set(stopwords)
+        elif stopwords == 'nltk':
+            self.stopwords = set(stopwords.words('english'))
+        elif stopwords is None:
+            self.stopwords = set()
+        else:
+            raise ValueError("Unsupported stopword list: {}\nOptions include: nltk".format(stopwords))
+        self.stem = stem
+        self.max_len = max_len
+
+    """
+    method encode_docs: given column, tokenize and save documents as list of
+    word IDs in self.docs
+    """
+    def encode_docs(self, column, level='word'):
+        if column not in self.data.columns:
+            raise ValueError("Given column is not in data: {}".format(column))
+        # TODO: catch exception where column is numeric (non-text) type
+
+        self.__learn_vocab(column)
+
+        self.__truncate_count = 0
+        self.__pad_count = 0
+        self.__unk_count = 0
+        self.__token_count = 0
+        tokenized = [None for _ in range(len(self.data))]
+        for i, (_, string) in enumerate(self.data[column].iteritems()):
+            tokens = self.__tokenize_doc(string)
+            tokenized[i] = self.__encode_doc(tokens)
+        print("Encoded {} docs".format(len(tokenized)))
+        print("{} tokens lost to truncation".format(self.__truncate_count))
+        print("{} padding tokens added".format(self.__pad_count))
+        print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count -
+            self.__unk_count) / self.__token_count, len(self.vocab)))
+        self.docs = np.array(tokenized)
 
     def clean(self, column, remove=["hashtags", "mentions", "links"], mode='remove'):
         if column not in self.data:
@@ -56,44 +114,132 @@ class Dataset:
 
         for pattern in pat_type:
             if pattern == "mentions":
-                self.data[col] = self.data[col].apply(mentions)
+                self.data[column] = self.data[column].apply(mentions)
             if pattern == "hashtags":
-                self.data[col] = self.data[col].apply(hashtags)
+                self.data[column] = self.data[column].apply(hashtags)
             if pattern == "links":
-                self.data[col] = self.data[col].apply(links)
-        print("TODO: replace dataframe with removed rows")
-
-    def clean_target(self, target, variable_type='factor', 
-            null_val=None):
-        print("TODO: remove NaNs/Nulls (store new data) and encode variable (one-hot, etc.)")
-    
-    def tokenize(self, column, stopwords=None, max_len=None, 
-            vocab_size=None, lower=True, tokenizer=None):
-        print("TODO: tokenize and save to self.words")
-        if tokenizer is not None:
-            self.tokenizer = toks[tokenizer] # TODO
-        if vocab_size is not None:
-            self.learn_vocab(vocab_size)
-        tokenized, drop = list(), list()
-        for idx, string in self.data[column].iteritems:  #TODO: check
-            tokens = self.tokenizer(string, lower, stopwords, max_len)
-            # TODO: max_len truncation/padding
-            tokenized.append(tokens)
-            if len(tokens) < self.min_len:
-                drop.append(idx)
+                self.data[column] = self.data[column].apply(links)
         prev = len(self.data)
-        self.data.drop(rows=drop, inplace=True)
-        print("Dropped {} docs due to not enough tokens".format(len(prev - len(self.data))))
-        return 
+        self.data = self.data[self.data[column].apply(self.__good_doc)]
+        print("Removed {} docs after cleaning that didn't have enough valid tokens".format(prev - len(self.data)))
 
-        # move following code to constructor of method (parse_formula)
-        X = np.array(tokens_to_ids(text, vocab))
-        y = np.transpose(np.array([np.array(train_data[target].astype(int)) for target in getTargetColumnNames(all_params)]))
+    def set_params(self, **kwargs):
+        if "tokenizer" in kwargs:
+            self.tokenizer = tokenizers[kwargs["tokenizer"]]
+        if "vocab_size" in kwargs:
+            self.vocab_size = kwargs["vocab_size"]
+        if "stopwords" in kwargs:
+            self.stopwords = kwargs["stopwords"]
+        if "lower" in kwargs:
+            self.lower = kwargs["lower"]
+        if "stem" in kwargs:
+            self.stem = stem
+        if "max_len" in kwargs:
+            self.max_len = kwargs["max_len"]
 
-    def lda(self, column, stopwords=None, method='mallet', num_topics=20, max_iter=500, save_model=None, load_model=None):
-        print("TODO: implement lda features\nSave to self.lda")
+    def __learn_vocab(self, column):
+        vocab = dict()
+        for doc in self.data[column].values:
+            for word in self.__tokenize_doc(doc):
+                if word not in vocab:
+                    vocab[word] = 1
+                else:
+                    vocab[word] += 1
+        top = list(sorted(vocab.items(), key=lambda x: x[1],
+            reverse=True))[:self.vocab_size]
+        types, counts = zip(*top)
+        types = list(types)
+        types.append("<PAD>")
+        types.append("<UNK>")
+        self.vocab = types
+        self.__mapping = {word: idx for idx, word in enumerate(self.vocab)}
+        
+    def __good_doc(self, doc):
+        if len(self.tokenizer(doc)) < self.min_token:
+            return False
+        return True
 
-    def tfidf(self, column, stopwords=None, vocab_size, **kwargs):
+    def __tokenize_doc(self, doc):
+        tokens = self.tokenizer(doc)
+        if self.stem:
+            filtered_tokens = [stem(w) for w in tokens if w not in
+                    self.stopwords]
+            if self.lower():
+                return [w.lower() for w in filtered_tokens]
+            else:
+                return filtered_tokens
+        else:
+            filtered_tokens = [w for w in tokens if w not in self.stopwords]
+            if self.lower:
+                return [w.lower() for w in filtered_tokens]
+            else:
+                return filtered_tokens
+
+    def __encode_doc(self, doc):
+        self.__truncate_count += max(len(doc) - self.max_len, 0)
+        unk_idx = self.__mapping["<UNK>"]
+        pad_idx = self.__mapping["<PAD>"]
+        encoded = [pad_idx] * self.max_len
+        self.__pad_count += max(0, self.max_len - len(doc))
+        for i in range(min(self.max_len, len(doc))):  # tokenized
+            encoded[i] = self.__mapping[doc[i]] if doc[i] in self.__mapping else unk_idx
+            self.__unk_count += int(encoded[i] == unk_idx)
+            self.__token_count += int((encoded[i] != pad_idx) & (encoded[i] != unk_idx))
+        return np.array(encoded, dtype=np.int32)
+
+
+    def encode_targets(self, columns, var_type='categorical', normalize=None,
+            encode=True):
+
+        self.targets = dict()
+        self.__target_mappings = dict()
+        if not isinstance(columns, list):
+            columns = [columns]
+
+        for c in columns:
+            if c not in self.data.columns:
+                raise ValueError("Column not in Data: {}".format(c))
+            if encode:  
+                vals = [str(val) for val in list(set(self.data[c]))]
+                self.__target_mappings[c] = {v: i for i, v in enumerate(vals)}
+            else:  
+                vals = [int(val) for val in list(set(self.data[c]))]
+                self.__target_mappings[c] = {str(v): v for v in vals}  # identity
+            self.targets[c] = np.array([self.__target_mappings[c][str(val)] for val
+                in self.data[c].values])
+
+    def lda(self, stopwords=None, method='mallet', num_topics=20, max_iter=500, save_model=None, load_model=None):
+        if not hasattr(self, 'features'):
+            self.features = dict()
+        if method == 'mallet':
+            print("Mallet LDA")
+        else:
+            raise ValueError("Invalid paramater for LDA.method: {}".format(method))
+        tmp_dir = os.path.join(tempfile.gettempdir(), "mallet_lda/")
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        replace = set([self.__mapping["<UNK>"], self.__mapping["<PAD>"]])
+        docs = self.docs.tolist()
+        docs = [[(t, doc.count(t)) for t in list(set(doc) - replace)] for doc in docs]
+        print(docs)
+        id2word = {v:k for k,v in self.__mapping.items()}
+        model = LdaMallet(mallet_path=MALLET_PATH,
+                          id2word=id2word,
+                          prefix=tmp_dir,
+                          num_topics=num_topics,
+                          iterations=max_iter,
+                          optimize_interval=20)
+        model.train(docs)
+        doc_topics = list()
+        for doc_vec in model.read_doctopics(model.fdoctopics()):
+            topic_ids, vecs = zip(*doc_vec)
+            doc_topics.append(np.array(vecs))
+        self.features["lda"] = np.array(doc_topics)
+        self.lda = model.get_topics()
+        return
+
+    def tfidf(self, column, stopwords=None, vocab_size=None, **kwargs):
         print("TODO: implement tfidf, save to self.tfidf")
 
     def ddr(self, column, dictionary, embed='glove', **kwargs):
@@ -103,40 +249,22 @@ class Dataset:
         print("TODO: implement a featurization based on BERT")
 
 
-    def tokens_to_ids(corpus, vocab, learn_max=True):
-        # TODO: incorporate into 'tokenize' (one-step)
-        print("Converting corpus of size %d to word indices based on learned vocabulary" % len(corpus))
-        if vocab is None:
-            raise ValueError("learn_vocab before converting tokens")
+    def write(self, path):
 
-        mapping = {word: idx for idx, word in enumerate(vocab)}
-        unk_idx = vocab.index("<unk>")
-        for i in range(len(corpus)):
-            row = corpus[i]
-            for j in range(len(row)):
-                try:
-                    corpus[i][j] = mapping[corpus[i][j]]
-                except:
-                    corpus[i][j] = unk_idx
-        if learn_max:
-            max_length = max([len(line) for line in corpus])
-        return corpus
-
-    def write(self, formatting='.json'):
-        dest = os.path.join(self.dest, self.filename + formatting)
+        formatting = path.split('.')[-1]
         if formatting == '.json':
-            self.data.to_json(dest)
+            self.data.to_json(path)
         if formatting == '.csv':
-            self.data.to_csv(dest)
+            self.data.to_csv(path)
         if formatting == '.tsv':
-            self.data.to_csv(dest, sep='\t')
+            self.data.to_csv(path, sep='\t')
         if formatting == '.pkl':
-            self.data.to_pickle(dest)
+            self.data.to_pickle(path)
         if formatting == '.stata':
-            self.data.to_stata(dest)
+            self.data.to_stata(path)
         if formatting == '.hdf5':
-            self.data.to_hdf(dest)
+            self.data.to_hdf(path)
         if formatting == '.excel':
-            self.data.to_excel()
+            self.data.to_excel(path)
         if formatting == '.sql':
-            self.data.to_sql()
+            self.data.to_sql(path)
