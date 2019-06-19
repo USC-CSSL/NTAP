@@ -45,41 +45,6 @@ class ElasticNet(BasePredictor):
 
         return dataframe
 
-class SVM(BasePredictor):
-    def __init__(self, save_dir, instance_names, k_folds, 
-                       n_classes=2, param_grid=None):
-        BasePredictor.__init__(self, save_dir, instance_names, k_folds)
-        self.k_folds = k_folds
-        self.n_classes = n_classes
-        if param_grid is None:  # default
-            self.param_grid = {"class_weight": ['balanced'],
-                               "C": [1.0]}  #np.arange(0.05, 1.0, 0.05)}
-        else:
-            self.param_grid = param_grid
-
-    def build(self):
-        self.model = LinearSVC(C=1.0, class_weight='balanced', 
-                               dual=False, random_state=seed)
-    
-    def format_features(self, feature_names):
-        # self.features is a dict of matrices (num_features) or (n_classes, num_features)
-        num_features = len(feature_names)
-        if self.n_classes > 2:
-            features = np.zeros( (self.n_classes, num_features) )
-        else:
-            features = np.zeros( (num_features) )
-        for _, coef in self.features.items():
-            if self.n_classes == 2:
-                coef = coef.reshape( (num_features,) )
-            features += coef
-        
-        if self.n_classes > 2:
-            f = pd.DataFrame(features).transpose()
-            f.index = feature_names
-            f.columns = self.model.classes_
-        else:
-            f = pd.Series(features, index=feature_names)
-        return f
 
 class Baseline:
     def __init__(self, dir_, params):

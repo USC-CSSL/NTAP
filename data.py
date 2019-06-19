@@ -5,16 +5,19 @@ about: contains methods and classes available from base ntap directory
     - tokenization methods
 """
 
-MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
+#MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
+MALLET_PATH = "/home/btkenned/mallet-2.0.8/bin/mallet"
 
-
+from contextlib import redirect_stdout
 import pandas as pd
 import numpy as np
-import json, re, os, tempfile
+import json, re, os, tempfile, sys, io
 from nltk import tokenize as nltk_token
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 from gensim.models.wrappers import LdaMallet
+from gensim.models import TfidfModel
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 stem = SnowballStemmer("english").stem
 
@@ -53,7 +56,7 @@ def read_file(path):
 class Dataset:
     def __init__(self, path, tokenizer='wordpunct', vocab_size=5000,
             embed='glove', min_token=5, stopwords=None, stem=False,
-            lower=True, max_len=100):
+            lower=True, max_len=100, include_nums=False, include_symbols=False, num_topics=100, lda_max_iter=500):
         try:
             self.data = read_file(path)
         except Exception as e:
@@ -75,6 +78,17 @@ class Dataset:
             raise ValueError("Unsupported stopword list: {}\nOptions include: nltk".format(stopwords))
         self.stem = stem
         self.max_len = max_len
+        self.include_nums = include_nums
+        self.include_symbols = include_symbols
+        self.num_topics = num_topics
+        self.lda_max_iter = lda_max_iter
+
+        # destinations for added Dataset objects
+        self.features = dict()
+        self.__feature_names = dict()
+        self.inputs = dict()
+        self.targets = dict()
+        self.__target_names = dict()
 
     """
     method encode_docs: given column, tokenize and save documents as list of
@@ -98,9 +112,8 @@ class Dataset:
         print("Encoded {} docs".format(len(tokenized)))
         print("{} tokens lost to truncation".format(self.__truncate_count))
         print("{} padding tokens added".format(self.__pad_count))
-        print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count -
-            self.__unk_count) / self.__token_count, len(self.vocab)))
-        self.docs = np.array(tokenized)
+        print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
+        self.inputs[column] = np.array(tokenized)
 
     def clean(self, column, remove=["hashtags", "mentions", "links"], mode='remove'):
         if column not in self.data:
@@ -136,6 +149,14 @@ class Dataset:
             self.stem = stem
         if "max_len" in kwargs:
             self.max_len = kwargs["max_len"]
+        if "include_symbols" in kwargs:
+            self.include_symbols = kwargs["include_symbols"]
+        if "include_nums" in kwargs:
+            self.include_nums = kwargs["include_nums"]
+        if "num_topics" in kwargs:
+            self.num_topics = kwargs["num_topics"]
+        if "lda_max_iter" in kwargs:
+            self.num_topics = kwargs["lda_max_iter"]
 
     def __learn_vocab(self, column):
         vocab = dict()
@@ -161,19 +182,19 @@ class Dataset:
 
     def __tokenize_doc(self, doc):
         tokens = self.tokenizer(doc)
+        if self.lower:
+            tokens = [t.lower() for t in tokens]
+        if not self.include_nums and not self.include_symbols:
+            tokens = [t for t in tokens if t.isalpha()]
+        elif not self.include_nums:
+            tokens = [t for t in tokens if not t.isdigit()]
+        elif not self.include_symbols:
+            tokens = [t for t in tokens if t.isalpha() or t.isdigit()]
+
+        tokens = [t for t in tokens if t not in self.stopwords]
         if self.stem:
-            filtered_tokens = [stem(w) for w in tokens if w not in
-                    self.stopwords]
-            if self.lower():
-                return [w.lower() for w in filtered_tokens]
-            else:
-                return filtered_tokens
-        else:
-            filtered_tokens = [w for w in tokens if w not in self.stopwords]
-            if self.lower:
-                return [w.lower() for w in filtered_tokens]
-            else:
-                return filtered_tokens
+            tokens = [stem(w) for w in tokens]
+        return tokens
 
     def __encode_doc(self, doc):
         self.__truncate_count += max(len(doc) - self.max_len, 0)
@@ -187,30 +208,75 @@ class Dataset:
             self.__token_count += int((encoded[i] != pad_idx) & (encoded[i] != unk_idx))
         return np.array(encoded, dtype=np.int32)
 
+    def encode_targets(self, columns, var_type='categorical', normalize=None, encoding='one-hot'):
 
-    def encode_targets(self, columns, var_type='categorical', normalize=None,
-            encode=True):
-
-        self.targets = dict()
-        self.__target_mappings = dict()
         if not isinstance(columns, list):
             columns = [columns]
-
         for c in columns:
             if c not in self.data.columns:
                 raise ValueError("Column not in Data: {}".format(c))
-            if encode:  
-                vals = [str(val) for val in list(set(self.data[c]))]
-                self.__target_mappings[c] = {v: i for i, v in enumerate(vals)}
-            else:  
-                vals = [int(val) for val in list(set(self.data[c]))]
-                self.__target_mappings[c] = {str(v): v for v in vals}  # identity
-            self.targets[c] = np.array([self.__target_mappings[c][str(val)] for val
-                in self.data[c].values])
+            if encoding == 'one-hot':
+                enc = OneHotEncoder(sparse=False, categories='auto')
+                X = [ [v] for v in self.data[c].values]
+                X_onehot = enc.fit_transform(X)
+                target_names = enc.get_feature_names().tolist()
+                target_names = [f.split('_')[-1] for f in target_names]
+                self.__target_names[c] = feat_names
+                self.targets[c] = X_onehot
+            else:
+                enc = LabelEncoder()
+                X = self.data[c].values.tolist()
+                X_enc = enc.fit_transform(X)
+                self.__target_names[c] = enc.classes_
+                self.targets[c] = X_enc
 
-    def lda(self, stopwords=None, method='mallet', num_topics=20, max_iter=500, save_model=None, load_model=None):
-        if not hasattr(self, 'features'):
-            self.features = dict()
+    def encode_inputs(self, columns, var_type='categorical', normalize=None, encoding='one-hot'):
+
+        if not isinstance(columns, list):
+            columns = [columns]
+        for c in columns:
+            if c not in self.data.columns:
+                raise ValueError("Column not in Data: {}".format(c))
+            if encoding == 'one-hot':
+                enc = OneHotEncoder(sparse=False, categories='auto')
+                X = [ [v] for v in self.data[c].values]
+                X_onehot = enc.fit_transform(X)
+                feat_names = enc.get_feature_names().tolist()
+                feat_names = [f.split('_')[-1] for f in feat_names]
+                self.__feature_names[c] = feat_names
+                self.features[c] = X_onehot
+            else:
+                enc = LabelEncoder()
+                X = self.data[c].values.tolist()
+                X_enc = enc.fit_transform(X)
+                self.__feature_names[c] = enc.classes_
+                self.features[c] = X_enc
+
+    def __bag_of_words(self, column):
+        replace = set([self.__mapping["<UNK>"], self.__mapping["<PAD>"]])
+        docs = self.inputs[column].tolist()
+        docs = [[(t, doc.count(t)) for t in list(set(doc) - replace)] for doc in docs]
+        id2word = {v:k for k,v in self.__mapping.items()}
+        return docs, id2word
+
+    def tfidf(self, column):
+        self.features["tfidf"] = list()
+        docs, id2word = self.__bag_of_words(column)
+        _, words = zip(*id2word.items())
+        get_index = {w:i for i, w in enumerate(words)}
+
+        self.__feature_names["tfidf"] = words
+        transformer = TfidfModel(docs)
+
+        for d in docs:
+            sample = transformer[d]
+            _doc = np.zeros((len(words)))
+            for id_, weight in sample:
+                _doc[get_index[id2word[id_]]] = weight
+            self.features["tfidf"].append(_doc)
+        self.features["tfidf"] = np.array(self.features["tfidf"])
+
+    def lda(self, column, method='mallet', save_model=None, load_model=None):
         if method == 'mallet':
             print("Mallet LDA")
         else:
@@ -219,16 +285,12 @@ class Dataset:
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
 
-        replace = set([self.__mapping["<UNK>"], self.__mapping["<PAD>"]])
-        docs = self.docs.tolist()
-        docs = [[(t, doc.count(t)) for t in list(set(doc) - replace)] for doc in docs]
-        print(docs)
-        id2word = {v:k for k,v in self.__mapping.items()}
+        docs, id2word = self.__bag_of_words(column)
         model = LdaMallet(mallet_path=MALLET_PATH,
                           id2word=id2word,
                           prefix=tmp_dir,
-                          num_topics=num_topics,
-                          iterations=max_iter,
+                          num_topics=self.num_topics,
+                          iterations=self.lda_max_iter,
                           optimize_interval=20)
         model.train(docs)
         doc_topics = list()
@@ -236,11 +298,8 @@ class Dataset:
             topic_ids, vecs = zip(*doc_vec)
             doc_topics.append(np.array(vecs))
         self.features["lda"] = np.array(doc_topics)
-        self.lda = model.get_topics()
+        self.__feature_names["lda"] = model.get_topics()
         return
-
-    def tfidf(self, column, stopwords=None, vocab_size=None, **kwargs):
-        print("TODO: implement tfidf, save to self.tfidf")
 
     def ddr(self, column, dictionary, embed='glove', **kwargs):
         print("TODO: implement ddr features")

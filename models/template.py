@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 """
 define abstract class `Model`
 Methods:
@@ -10,44 +9,6 @@ Methods:
 """
 
 
-class Model(abc):
-    def __init__(self):
-        super().__init__()
-        self.__build()
-
-    @abstractmethod
-    def __build(self):
-        pass
-    @abstractmethod
-    def set_params(...):
-        pass
-    @abstractmethod
-    def CV(self, data, folds=10):  # task='classify' ?
-        if len(self.params) == 1:
-            print("Starting Cross-Validation with {} folds".format(folds))
-        else:
-            print("Starting Grid Search over {} parameter sets".format(len(self.params)))
-        print(self.params) 
-
-        for i in range(folds):
-            
-    @abstractmethod
-    def batches(self, data):
-        pass
-
-    def train(self, data, params, verbose='minimal'):  # weights?
-        # assumes self.formula is set
-        # self.__reset_graph()
-        epoch_loss = 0.
-        acc_train = 0.
-        with tf.session() as sess:
-            for feed_dict in self.batches(data):
-                # TODO: Add verbose controls
-                ## TODO: Refactor: feed_dict = self.feed_dictionary(batch, weights)
-                _, loss_val = sess.run([self.training_op, self.joint_loss], feed_dict=feed_dict)
-                #acc_train += self.joint_accuracy.eval(feed_dict=feed_dict)
-                epoch_loss += loss_val
-        return   # self.model is trained
 
     def predict(self, data, verbose='minimal'): # weights?
         """
