@@ -103,7 +103,7 @@ class Dataset:
         self.__bag_of_words = dict()
         self.targets = dict()
         self.target_names = dict()
-        self.sequence_data = dict()
+        #self.sequence_data = None
 
     """
     method encode_docs: given column, tokenize and save documents as list of
@@ -121,14 +121,19 @@ class Dataset:
         self.__unk_count = 0
         self.__token_count = 0
         tokenized = [None for _ in range(len(self.data))]
+
+        self.sequence_lengths = list()
+
         for i, (_, string) in enumerate(self.data[column].iteritems()):
             tokens = self.__tokenize_doc(string)
+            self.sequence_lengths.append(len(tokens))
             tokenized[i] = self.__encode_doc(tokens)
         print("Encoded {} docs".format(len(tokenized)))
         print("{} tokens lost to truncation".format(self.__truncate_count))
         print("{} padding tokens added".format(self.__pad_count))
         print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
-        self.sequence_data[column] = np.array(tokenized)
+        self.sequence_data = np.array(tokenized)
+        self.num_sequences = len(tokenized)
 
     def load_embedding(self, column, embedding_type='glove', embedding_path=None,
             saved_embedding_path=None):
@@ -251,14 +256,18 @@ class Dataset:
                 X_onehot = enc.fit_transform(X)
                 target_names = enc.get_feature_names().tolist()
                 target_names = [f.split('_')[-1] for f in target_names]
-                self.target_names[c] = feat_names
+                self.target_names[c] = target_names
                 self.targets[c] = X_onehot
+                #self.weights[c] = {name: sum(self.targets[c] == name) for \
+                        #name in self.target_names[c]}
             else:
                 enc = LabelEncoder()
                 X = self.data[c].values.tolist()
                 X_enc = enc.fit_transform(X)
                 self.target_names[c] = enc.classes_
                 self.targets[c] = X_enc
+                self.weights[c] = [(name, sum(self.targets[c] == name)/) for \
+                        name in self.target_names[c]}
 
     def encode_inputs(self, columns, var_type='categorical', normalize=None, encoding='one-hot'):
 
@@ -281,6 +290,35 @@ class Dataset:
                 X_enc = enc.fit_transform(X)
                 self.feature_names[c] = enc.classes_
                 self.features[c] = X_enc
+
+
+    def __batch_indices(self, size, batch_size):
+        # produce iterable of (start, end) batch indices
+        for i in range(0, size, batch_size):
+            start = i
+            end = min(size, i + batch_size)
+            yield (start, end)
+
+    def train_batches(self, var_dict, batch_size, indices=None):
+        feed_dict = dict()
+        for (s, e) in self.__batch_indices(self.num_sequences, batch_size):
+            for var_name in var_dict:
+                if var_name == 'word_inputs':
+                    feed_dict[var_dict[var_name]] = self.sequence_data[s:e]
+                if var_name == 'sequence_length':
+                    feed_dict[var_dict[var_name]] = self.sequence_lengths[s:e]
+                if var_name == 'keep_ratio':  # not related to data; param
+                    feed_dict[var_dict[var_name]] = 
+                if var_name.startswith('target'):
+                    name = var_name.replace("target-", "")
+                    if name not in self.targets:
+                        raise ValueError("Target not in data: {}".format(name))
+                    feed_dict[var_dict[var_name]] = self.targets[name][s:e]
+                if var_name.startswith("weights"):
+                    name = var_name.replace("weights-", "")
+                    
+                        
+                    
 
     def __get_bag_of_words(self, column):
         if not hasattr(self, "vocab"):

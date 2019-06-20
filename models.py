@@ -41,7 +41,7 @@ class Model(ABC):
         epoch_loss = 0.
         acc_train = 0.
         with tf.session() as sess:
-            for feed_dict in self.batches(data):
+            for feed_dict in data.train_batches(self.vars, self.batch_size):
                 # TODO: Add verbose controls
                 ## TODO: Refactor: feed_dict = self.feed_dictionary(batch, weights)
                 _, loss_val = sess.run([self.training_op, self.joint_loss], feed_dict=feed_dict)
@@ -76,8 +76,11 @@ class RNN(Model):
     def set_params(self, **kwargs):
         print("TODO")
 
-    def train_batches(self):
-        print("TODO")
+    def train_batches(self, data, ):
+        num_docs = len(data.sequence_data.items()[0]
+        
+        
+
     def test_batches(self):
         print("TODO")
 
@@ -131,6 +134,7 @@ class RNN(Model):
                 raise ValueError("Could not parse {}".format(source))
                 
     def build(self, data):
+
         self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
                 name="SequenceLength")
         self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
