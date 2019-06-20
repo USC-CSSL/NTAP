@@ -28,12 +28,6 @@ class Model(ABC):
         # get data ready
         # get param grid
         # for fold in skf.split(): train on 80+10
-    @abstractmethod
-    def train_batches(self, data, batch_size=256):
-        pass
-    @abstractmethod
-    def test_batches(self, data):
-        pass
 
     def train(self, data, params, verbose='minimal'):  # weights?
         # assumes self.formula is set
@@ -41,12 +35,19 @@ class Model(ABC):
         epoch_loss = 0.
         acc_train = 0.
         with tf.session() as sess:
-            for feed_dict in data.train_batches(self.vars, self.batch_size):
-                # TODO: Add verbose controls
-                ## TODO: Refactor: feed_dict = self.feed_dictionary(batch, weights)
-                _, loss_val = sess.run([self.training_op, self.joint_loss], feed_dict=feed_dict)
-                #acc_train += self.joint_accuracy.eval(feed_dict=feed_dict)
-                epoch_loss += loss_val
+            sess.run(self.vars["EmbeddingInit"], feed_dict={self.vars["EmbeddingPlacholder"]: data.embedding})
+            for epoch in range(self.num_epochs):
+                epoch_loss = 0.0
+                for i, feed_dict in enumerate(data.train_batches(self.vars, 
+                    self.batch_size, keep_ratio=self.rnn_dropout)):
+                    print(feed_dict)
+                    _, loss_val = sess.run([self.vars["training_op"], 
+                        self.vars["joint_loss"]], feed_dict=feed_dict)
+                    if verbose != 'minimal':
+                        print("Batch {}: Loss {:.03}".format(i, loss_val))
+                    epoch_loss += loss_val
+                    num_batches += 1
+                print("Loss (Epoch {}): {}".format(epoch, epoch_loss/num_batches))
         return   # self.model is trained
 
 """
@@ -139,9 +140,11 @@ class RNN(Model):
                 name="SequenceLength")
         self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
             self.max_seq], name="RNNInput")
-        embedding_placeholder = tf.Variable(tf.constant(0.0,
-            shape=[len(data.vocab), data.embed_dim]), trainable=False,
-            name="Embed")
+
+        W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]),                      trainable=False, name="Embed")
+        self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32, 
+                shape=[len(data.vocab), data.embed_dim])
+        self.vars["EmbeddingInit"] = W.assign(embedding_placeholder)
         self.vars["Embedding"] = tf.nn.embedding_lookup(embedding_placeholder,
             self.vars["word_inputs"])
         self.vars["hidden_states"] = self.__build_rnn(self.vars["Embedding"],
