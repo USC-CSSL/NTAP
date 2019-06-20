@@ -5,13 +5,15 @@ about: contains methods and classes available from base ntap directory
     - tokenization methods
 """
 
-#MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
-MALLET_PATH = "/home/btkenned/mallet-2.0.8/bin/mallet"
+MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
+#MALLET_PATH = "/home/btkenned/mallet-2.0.8/bin/mallet"
+GLOVE = "/home/brendan/Data/glove.6B.300d.txt"
+WORD2VEC = ""
 
 from contextlib import redirect_stdout
 import pandas as pd
 import numpy as np
-import json, re, os, tempfile, sys, io
+import json, re, os, tempfile, sys, io, gzip
 from nltk import tokenize as nltk_token
 from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
@@ -52,6 +54,18 @@ def read_file(path):
     elif ending == 'json':
         return pd.read_json(path)
 
+def write_file(data, path):
+
+    formatting = path.split('.')[-1]
+    if formatting == 'json':
+        with open(path, 'w') as fo:
+            json.dump(data, fo, indent=4)
+    if formatting == 'csv':
+        data.to_csv(path)
+    if formatting == 'tsv':
+        data.to_csv(path, sep='\t')
+    if formatting == 'pkl':
+        data.to_pickle(path)
 
 class Dataset:
     def __init__(self, path, tokenizer='wordpunct', vocab_size=5000,
@@ -85,10 +99,11 @@ class Dataset:
 
         # destinations for added Dataset objects
         self.features = dict()
-        self.__feature_names = dict()
-        self.inputs = dict()
+        self.feature_names = dict()
+        self.__bag_of_words = dict()
         self.targets = dict()
-        self.__target_names = dict()
+        self.target_names = dict()
+        self.sequence_data = dict()
 
     """
     method encode_docs: given column, tokenize and save documents as list of
@@ -113,7 +128,22 @@ class Dataset:
         print("{} tokens lost to truncation".format(self.__truncate_count))
         print("{} padding tokens added".format(self.__pad_count))
         print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
-        self.inputs[column] = np.array(tokenized)
+        self.sequence_data[column] = np.array(tokenized)
+
+    def load_embedding(self, column, embedding_type='glove', embedding_path=None,
+            saved_embedding_path=None):
+        if not hasattr(self, "vocab"):
+            self.__learn_vocab(column)
+        load_path = GLOVE if embedding_type == 'glove' else WORD2VEC
+        if saved_embedding_path is not None:
+            print("Load from file")
+        elif embedding_path is not None:
+            load_path = embedding_path
+        
+        if embedding_type == 'glove':
+            self.embedding, self.embed_dim = self.__read_glove(load_path)
+        else:
+            raise ValueError("Only glove supported currently")
 
     def clean(self, column, remove=["hashtags", "mentions", "links"], mode='remove'):
         if column not in self.data:
@@ -221,13 +251,13 @@ class Dataset:
                 X_onehot = enc.fit_transform(X)
                 target_names = enc.get_feature_names().tolist()
                 target_names = [f.split('_')[-1] for f in target_names]
-                self.__target_names[c] = feat_names
+                self.target_names[c] = feat_names
                 self.targets[c] = X_onehot
             else:
                 enc = LabelEncoder()
                 X = self.data[c].values.tolist()
                 X_enc = enc.fit_transform(X)
-                self.__target_names[c] = enc.classes_
+                self.target_names[c] = enc.classes_
                 self.targets[c] = X_enc
 
     def encode_inputs(self, columns, var_type='categorical', normalize=None, encoding='one-hot'):
@@ -243,29 +273,41 @@ class Dataset:
                 X_onehot = enc.fit_transform(X)
                 feat_names = enc.get_feature_names().tolist()
                 feat_names = [f.split('_')[-1] for f in feat_names]
-                self.__feature_names[c] = feat_names
+                self.feature_names[c] = feat_names
                 self.features[c] = X_onehot
             else:
                 enc = LabelEncoder()
                 X = self.data[c].values.tolist()
                 X_enc = enc.fit_transform(X)
-                self.__feature_names[c] = enc.classes_
+                self.feature_names[c] = enc.classes_
                 self.features[c] = X_enc
 
-    def __bag_of_words(self, column):
-        replace = set([self.__mapping["<UNK>"], self.__mapping["<PAD>"]])
-        docs = self.inputs[column].tolist()
-        docs = [[(t, doc.count(t)) for t in list(set(doc) - replace)] for doc in docs]
+    def __get_bag_of_words(self, column):
+        if not hasattr(self, "vocab"):
+            self.__learn_vocab(column)
+        encoded = list()
+        unk_idx = self.__mapping["<UNK>"]
+
+        for doc in self.data[column].values:
+            encoded.append(list())
+            for token in self.__tokenize_doc(doc):
+                id_ = self.__mapping[token] if token in self.__mapping else None
+                if id_ is not None:
+                    encoded[-1].append(id_)
+        docs = [[(t, doc.count(t)) for t in set(doc)] for doc in encoded]
         id2word = {v:k for k,v in self.__mapping.items()}
         return docs, id2word
 
     def tfidf(self, column):
         self.features["tfidf"] = list()
-        docs, id2word = self.__bag_of_words(column)
+        if len(self.__bag_of_words) != 0:
+            docs, id2word = self.__bag_of_words[column]
+        else:
+            docs, id2word = self.__get_bag_of_words(column)
         _, words = zip(*id2word.items())
         get_index = {w:i for i, w in enumerate(words)}
 
-        self.__feature_names["tfidf"] = words
+        self.feature_names["tfidf"] = words
         transformer = TfidfModel(docs)
 
         for d in docs:
@@ -285,7 +327,13 @@ class Dataset:
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
 
-        docs, id2word = self.__bag_of_words(column)
+        if not hasattr(self, "vocab"):
+            self.__learn_vocab(column)
+
+        if len(self.__bag_of_words) != 0:
+            docs, id2word = self.__bag_of_words[column]
+        else:
+            docs, id2word = self.__get_bag_of_words(column)
         model = LdaMallet(mallet_path=MALLET_PATH,
                           id2word=id2word,
                           prefix=tmp_dir,
@@ -298,7 +346,7 @@ class Dataset:
             topic_ids, vecs = zip(*doc_vec)
             doc_topics.append(np.array(vecs))
         self.features["lda"] = np.array(doc_topics)
-        self.__feature_names["lda"] = model.get_topics()
+        self.feature_names["lda"] = model.get_topics()
         return
 
     def ddr(self, column, dictionary, embed='glove', **kwargs):
@@ -307,23 +355,34 @@ class Dataset:
     def bert(self, some_params):
         print("TODO: implement a featurization based on BERT")
 
+    def __read_glove(self, path, dim=300):
+        if not os.path.exists(path):
+            raise ValueError("Could not load glove from {}".format(path))
+            return
+        if path.endswith('.gz'):
+            f = gzip.open(path, 'rb') 
+        else:
+            f = open(path, 'r')
 
-    def write(self, path):
+        embeddings = np.random.randn( len(self.__mapping), dim)
+        found = 0
+        for line in f:
+            split = line.split()
+            idx = len(split) - dim
+            type_ = "".join(split[:idx])
+            if type_ in self.__mapping:
+                embeddings[self.__mapping[type_]] = np.array(split[idx:],
+                        dtype=np.float32)
+                found += 1
+        print("Found {}/{} of vocab in {}".format(found, len(self.__mapping),
+            path))
+        f.close()
+        return embeddings, dim
 
-        formatting = path.split('.')[-1]
-        if formatting == '.json':
-            self.data.to_json(path)
-        if formatting == '.csv':
-            self.data.to_csv(path)
-        if formatting == '.tsv':
-            self.data.to_csv(path, sep='\t')
-        if formatting == '.pkl':
-            self.data.to_pickle(path)
-        if formatting == '.stata':
-            self.data.to_stata(path)
-        if formatting == '.hdf5':
-            self.data.to_hdf(path)
-        if formatting == '.excel':
-            self.data.to_excel(path)
-        if formatting == '.sql':
-            self.data.to_sql(path)
+    def save_embeddings(self, dir_):
+        if not hasattr(self, "embedding"):
+            raise ValueError("No embedding found in Dataset object")
+            return
+        np.save(os.path.join(dir_, "embedding.npy"), self.embedding)
+        write_file(self.__mapping, os.path.join(dir_, "vocab.json"))
+

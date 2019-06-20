@@ -4,28 +4,35 @@ import numpy as np
 import itertools, collections
 from abc import ABC, abstractmethod
 
+import tensorflow as tf
+from tensorflow.losses import sparse_softmax_cross_entropy as cross_ent
+
 seed = 123  #TODO: FIX
 
 
-class Model(abc):
+class Model(ABC):
     def __init__(self):
         super().__init__()
-        self.__build()
 
     @abstractmethod
-    def __build(self):
+    def build(self):
         pass
     @abstractmethod
-    def set_params(...):
+    def set_params(self):
         pass
 
-    def CV(self, data, num_folds=10):  # task='classify' ?
+    def CV(self, data, num_folds=10, validate=None):  # task='classify' ?
         skf = StratifiedKFold(n_splits=num_folds, 
                               shuffle=True,
                               random_state=seed)
-            
+        # get data ready
+        # get param grid
+        # for fold in skf.split(): train on 80+10
     @abstractmethod
-    def batches(self, data):
+    def train_batches(self, data, batch_size=256):
+        pass
+    @abstractmethod
+    def test_batches(self, data):
         pass
 
     def train(self, data, params, verbose='minimal'):  # weights?
@@ -47,32 +54,54 @@ class RNN
 
 """
 class RNN(Model):
-    def __init__(self, formula, data):  # other params
-        # load params
-        self.__parse_formula(formula)
+    def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
+            rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
+            rnn_pooling='last', embedding_source='glove', learning_rate=0.001):
+        embedding_source='glove'  # only one supported
+        self.hidden_size = hidden_size
+        self.bi = cell.startswith('bi')
+        self.cell_type = cell[2:] if self.bi else cell
+        self.rnn_dropout = rnn_dropout
+        self.embedding_dropout = embedding_dropout
+        self.max_seq = data.max_len  # load from data OBJ
+        self.rnn_pooling = rnn_pooling
+        self.optimizer = optimizer
+        self.learning_rate = learning_rate
 
+        self.vars = dict() # store all network variables
+        self.__parse_formula(formula, data)
 
-    def __parse_formula(self, formula):
+        self.build(data)
+
+    def set_params(self, **kwargs):
+        print("TODO")
+
+    def train_batches(self):
+        print("TODO")
+    def test_batches(self):
+        print("TODO")
+
+    def __parse_formula(self, formula, data):
         lhs, rhs = [s.split("+") for s in formula.split('~')]
         for target in lhs:
             target = target.strip()
             if target in data.targets:
-                pass
-                #print("Loading", target)
+                print("Target already present: {}".format(target))
             elif target in data.data.columns:
-                data.encode_targets(target, encoding='one-hot')
+                data.encode_targets(target, encoding='labels')  # sparse
             else:
                 raise ValueError("Failed to load {}".format(target))
         for source in rhs:
             # can't have two of (seq, bag,...)
-            if source starts with "seq(":
+            source = source.strip()
+            if source.startswith("seq("):
                 # get sequence of int id inputs
-                print("TODO")
-                if source in data.data.columns:
-                    print("Try to load from data.seqs dictionary")
-                else:
-                    print("Could not load seq({})".format(source))
-            elif source starts with "bag(":
+                text_col = source.replace("seq(", "").replace(")", "")
+                data.encode_docs(text_col)
+                if not hasattr(data, "embedding"):
+                    data.load_embedding(text_col)
+                # data stored in data.inputs[text_col]
+            elif source.startswith("bag("):
                 # multi-instance learning!
                 # how to aggregate? If no param set, do rebagging with default size
                 print("TODO")
@@ -101,8 +130,100 @@ class RNN(Model):
             else:
                 raise ValueError("Could not parse {}".format(source))
                 
+    def build(self, data):
+        self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
+                name="SequenceLength")
+        self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
+            self.max_seq], name="RNNInput")
+        embedding_placeholder = tf.Variable(tf.constant(0.0,
+            shape=[len(data.vocab), data.embed_dim]), trainable=False,
+            name="Embed")
+        self.vars["Embedding"] = tf.nn.embedding_lookup(embedding_placeholder,
+            self.vars["word_inputs"])
+        self.vars["hidden_states"] = self.__build_rnn(self.vars["Embedding"],
+                self.hidden_size, self.cell_type, self.bi, 
+                self.vars["sequence_length"])
+
+        if self.rnn_dropout is not None:
+            self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
+            self.vars["hidden_states"] = tf.layers.dropout(self.vars["hidden_states"], rate=self.vars["keep_ratio"], name="RNNDropout")
+
+        for target in data.targets:
+            n_outputs = len(data.target_names[target])
+            self.vars["target-{}".format(target)] = tf.placeholder(tf.int32,
+                    shape=[None], name="target-{}".format(target))
+            self.vars["weights-{}".format(target)] = tf.placeholder(tf.float32,
+                    shape=[n_outputs], name="weights-{}".format(target))
+            logits = tf.layers.dense(self.vars["hidden_states"], n_outputs)
+            weight = tf.gather(self.vars["weights-{}".format(target)],
+                               self.vars["target-{}".format(target)])
+            xentropy = cross_ent(labels=self.vars["target-{}".format(target)], 
+                    logits=logits, weights=weight)
+            self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
+            self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
+
+        self.vars["joint_loss"] = sum([self.vars[name] for name in self.vars if name.startswith("loss")])
+        if self.optimizer == 'adam':
+            opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+        elif self.optimizer == 'adagrad':
+            opt = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
+        elif self.optimizer == 'momentum':
+            opt = tf.train.MomentumOptimizer(learning_rate=self.learning_rate)
+        elif self.optimizer == 'rmsprop':
+            opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
+        else:
+            raise ValueError("Invalid optimizer specified")
+        self.vars["training_op"] = opt.minimize(loss=self.vars["joint_loss"])
+
+    def __build_rnn(self, inputs, hidden_size, cell_type, bi, sequences, peephole=False):
+        if cell_type == 'LSTM':
+            if bi:
+                fw_cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
+                          use_peepholes=peephole, name="ForwardRNNCell",
+                          state_is_tuple=False)
+                bw_cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
+                          use_peepholes=peephole, name="BackwardRNNCell",
+                          state_is_tuple=False)
+            else:
+                cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
+                          use_peepholes=peephole, name="RNNCell",
+                          dtype=tf.float32)
+        elif cell_type == 'GRU':
+            if bi:
+                fw_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
+                          name="ForwardRNNCell", dtype=tf.float32)
+                bw_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
+                          reuse=False, name="BackwardRNNCell",
+                          dtype=tf.float32)
+            else:
+                cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
+                          name="BackwardRNNCell", dtype=tf.float32)
+        if bi:
+            outputs, states = tf.nn.bidirectional_dynamic_rnn(fw_cell, bw_cell,
+                inputs, dtype=tf.float32, sequence_length=sequences)
+            hidden_states = tf.concat(outputs, 2)  # shape (B, T, 2*h)
+            state = tf.concat(states, 1)  # last unit
+        else:
+            hidden_states, state = tf.nn.dynamic_rnn(cell, inputs,
+                    dtype=tf.float32, sequence_length=sequences)
+
+        if self.rnn_pooling == 'last':  # regular RNN, take last hidden state
+            return state
+        elif self.rnn_pooling == 'max':
+            return tf.reduce_max(hidden_states, reduction_indices=[1])
+        elif self.rnn_pooling == 'mean':
+            return tf.reduce_mean(hidden_states, axis=1)
+        elif isinstance(self.rnn_pooling, int):
+            return self.__attention(hidden_states, pooling)
+            
+    def __attention(self, inputs, att_size):
+        self.vars["attn"] = tf.tanh(tf.layers.dense(inputs, att_size))
+        self.vars["alphas"] = tf.nn.softmax(tf.layers.dense(self.vars["attn"], 1, use_bias=False))
+        word_attention = tf.reduce_sum(inputs * self.vars["alphas"], 1)
+        return word_attention
+
     def __train_batches(self, data, batch_size=256):
-        
+        print("Train batches") 
 
 
 class SVM:
@@ -193,7 +314,7 @@ class SVM:
         self.names = list()
         for feat in data.features:
             inputs.append(data.features[feat])
-            for name in data.__feature_names[feat]:
+            for name in data.feature_names[feat]:
                 self.names.append("{}_{}".format(feat, name))
         X = np.concatenate(inputs, axis=1)
         targets = list()
@@ -272,7 +393,7 @@ class SVM:
         # self.features is a dict of matrices (num_features) or (n_classes, num_features)
         num_features = len(self.names)
 
-        feature_weights = #TODO
+        #feature_weights = #TODO
 
         if self.n_classes > 2:
             features = np.zeros( (self.n_classes, num_features) )

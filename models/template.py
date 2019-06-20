@@ -38,8 +38,7 @@ Methods:
 
     def buildEmbedding(self, pretrain, train_embedding, embedding_size, vocab_size, expand_dims): # expand_dims??
         if pretrain:
-            embeddings_variable = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size]),
-                                     trainable=train_embedding, name="W")
+            embeddings_variable = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size]), trainable=train_embedding, name="W")
         else:
             embeddings_variable = tf.get_variable("embedding",
                                                     initializer=tf.random_uniform(
@@ -68,10 +67,7 @@ class RNN(Model):
         self.loss, self.accuracy, self.predict = dict(), dict(), dict()
 
         for target in self.targets:
-            self.loss[target], self.predict[target], self.accuracy[target] = self.get_accuracy_loss_predictedLabel(self.state,
-                                                                                  self.n_outputs,
-                                                                                  self.weights[target],
-                                                                                  self.task_outputs[target])
+            self.loss[target], self.predict[target], self.accuracy[target] = self.get_accuracy_loss_predictedLabel(self.state, self.n_outputs, self.weights[target], self.task_outputs[target])
         self.joint_accuracy = sum(self.accuracy.values()) / len(self.target_cols)
         self.joint_loss = sum(self.loss.values())
         self.training_op = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.joint_loss)
@@ -89,8 +85,7 @@ class RNN(Model):
     def dynamic_rnn(self, cell, model, hidden_layers, keep_prob, embed, sequence_length):
         if model[:4] == "LSTM":
             network = self.multi_RNN(cell, hidden_layers, keep_prob)
-            rnn_outputs, state = tf.nn.dynamic_rnn(network, embed,
-                                                   dtype=tf.float32, sequence_length=sequence_length)
+            rnn_outputs, state = tf.nn.dynamic_rnn(network, embed, dtype=tf.float32, sequence_length=sequence_length)
             if cell == "GRU":
                 state = state[0]
             else:
@@ -98,9 +93,7 @@ class RNN(Model):
         else:
             f_network = self.multi_RNN(cell, hidden_layers, keep_prob)
             b_network = self.multi_RNN(cell, hidden_layers, keep_prob)
-            bi_outputs, bi_states = tf.nn.bidirectional_dynamic_rnn(f_network, b_network, embed,
-                                                                    dtype=tf.float32,
-                                                                    sequence_length=sequence_length)
+            bi_outputs, bi_states = tf.nn.bidirectional_dynamic_rnn(f_network, b_network, embed, dtype=tf.float32, sequence_length=sequence_length)
             fw_outputs, bw_outputs = bi_outputs
             fw_states, bw_states = bi_states
             rnn_outputs = tf.concat([fw_outputs, bw_outputs], 2)
@@ -156,8 +149,7 @@ class RNN(Model):
     def initialise(self):
         tf.reset_default_graph()
         self.train_inputs = tf.placeholder(tf.int32, shape=[None, None], name="inputs")
-        self.embedding_placeholder = self.buildEmbedding(self.pretrain, self.train_embedding,
-                                                     self.embedding_size, len(self.vocab), self.expand_dims)
+        self.embedding_placeholder = self.buildEmbedding(self.pretrain, self.train_embedding, self.embedding_size, len(self.vocab), self.expand_dims)
         self.sequence_length = tf.placeholder(tf.int32, [None])
         self.embed = tf.nn.embedding_lookup(self.embedding_placeholder, self.train_inputs)
         self.task_outputs = self.multi_outputs(self.target_cols)
