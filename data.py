@@ -8,6 +8,7 @@ about: contains methods and classes available from base ntap directory
 MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
 #MALLET_PATH = "/home/btkenned/mallet-2.0.8/bin/mallet"
 GLOVE = "/home/brendan/Data/glove.6B.300d.txt"
+
 WORD2VEC = ""
 
 from contextlib import redirect_stdout
@@ -20,6 +21,7 @@ from nltk.stem import SnowballStemmer
 from gensim.models.wrappers import LdaMallet
 from gensim.models import TfidfModel
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+import copy, inspect
 
 stem = SnowballStemmer("english").stem
 
@@ -68,11 +70,13 @@ def write_file(data, path):
         data.to_pickle(path)
 
 class Dataset:
-    def __init__(self, path, tokenizer='wordpunct', vocab_size=5000,
-            embed='glove', min_token=5, stopwords=None, stem=False,
-            lower=True, max_len=100, include_nums=False, include_symbols=False, num_topics=100, lda_max_iter=500):
+    def __init__(self, source, tokenizer='wordpunct', vocab_size=5000, embed='glove', min_token=5, stopwords=None, stem=False, lower=True, max_len=100, include_nums=False, include_symbols=False, num_topics=100, lda_max_iter=500):
+        if isinstance(source, Dataset):
+            self = source.copy()
+            print(self.data)
+            return
         try:
-            self.data = read_file(path)
+            self.data = read_file(source)
         except Exception as e:
             print("Exception:", e)
             return
@@ -103,7 +107,11 @@ class Dataset:
         self.__bag_of_words = dict()
         self.targets = dict()
         self.target_names = dict()
+        self.weights = dict()
         #self.sequence_data = None
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     """
     method encode_docs: given column, tokenize and save documents as list of
@@ -134,6 +142,7 @@ class Dataset:
         print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
         self.sequence_data = np.array(tokenized)
         self.num_sequences = len(tokenized)
+        self.sequence_lengths = np.array(self.sequence_lengths, dtype=np.int32)
 
     def load_embedding(self, column, embedding_type='glove', embedding_path=None,
             saved_embedding_path=None):
@@ -311,8 +320,6 @@ class Dataset:
                     feed_dict[var_dict[var_name]] = self.sequence_data[idx[s:e]]
                 if var_name == 'sequence_length':
                     feed_dict[var_dict[var_name]] = self.sequence_lengths[idx[s:e]]
-                if var_name == 'keep_ratio':  # not related to data; param
-                    feed_dict[var_dict[var_name]] = 
                 if var_name.startswith('target'):
                     name = var_name.replace("target-", "")
                     if name not in self.targets:

@@ -1,14 +1,29 @@
 from sklearn.svm import LinearSVC
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, KFold
+
+import tempfile
 import numpy as np
 import itertools, collections
 from abc import ABC, abstractmethod
+import os
+from tensorflow.compat.v1 import logging
+logging.set_verbosity(logging.ERROR)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
+
+"""
+def deprecated(date, instructions, warn_once=True):
+    def deprecated_wrapper(func):
+        return func
+    return deprecated_wrapper
+
+from tensorflow.python.util import deprecation
+deprecation.deprecated = deprecated
+"""
 
 import tensorflow as tf
 from tensorflow.losses import sparse_softmax_cross_entropy as cross_ent
 
 seed = 123  #TODO: FIX
-
 
 class Model(ABC):
     def __init__(self):
@@ -21,34 +36,72 @@ class Model(ABC):
     def set_params(self):
         pass
 
-    def CV(self, data, num_folds=10, validate=None):  # task='classify' ?
-        skf = StratifiedKFold(n_splits=num_folds, 
-                              shuffle=True,
-                              random_state=seed)
-        # get data ready
-        # get param grid
-        # for fold in skf.split(): train on 80+10
+    def CV(self, data, num_folds=10):  # task='classify' ?
 
-    def train(self, data, params, verbose='minimal'):  # weights?
-        # assumes self.formula is set
-        # self.__reset_graph()
-        epoch_loss = 0.
-        acc_train = 0.
-        with tf.session() as sess:
-            sess.run(self.vars["EmbeddingInit"], feed_dict={self.vars["EmbeddingPlacholder"]: data.embedding})
-            for epoch in range(self.num_epochs):
-                epoch_loss = 0.0
-                for i, feed_dict in enumerate(data.train_batches(self.vars, 
-                    self.batch_size, keep_ratio=self.rnn_dropout)):
-                    print(feed_dict)
-                    _, loss_val = sess.run([self.vars["training_op"], 
-                        self.vars["joint_loss"]], feed_dict=feed_dict)
-                    if verbose != 'minimal':
-                        print("Batch {}: Loss {:.03}".format(i, loss_val))
-                    epoch_loss += loss_val
-                    num_batches += 1
-                print("Loss (Epoch {}): {}".format(epoch, epoch_loss/num_batches))
-        return   # self.model is trained
+        self.cv_model_paths = dict()
+        model_dir = os.path.join(tempfile.gettempdir(), "tf_cv_models")
+        if not os.path.isdir(model_dir):
+            os.makedirs(model_dir)
+
+        X = np.zeros(data.num_sequences)
+        num_classes = len(data.targets)
+        if num_classes == 1:  # LabelEncoder, not one-hot
+            folder = StratifiedKFold(n_splits=num_folds, shuffle=True,
+                                  random_state=seed)
+            y = list(data.targets.values())[0]
+        else:
+            folder = KFold(n_splits=num_folds, shuffle=True, random_state=seed)
+            y = None
+
+        for i, (train_idx, test_idx) in enumerate(folder.split(X, y)):
+            model_path = os.path.join(model_dir, str(i))
+            self.cv_model_paths[i] = model_path
+            train_session = self.train(data, indices=train_idx.tolist(), 
+                    model_path=model_path)
+            
+        # param grid TODO
+
+    def predict(self, data, indices, model_path):  # TODO: load from file with model_path
+        with self.graph.as_default:
+            saver = tf.train.Saver()
+            with tf.Session(graph=self.graph) as sess:
+                if model_path is not None:
+                    saver.restore(sess, model_path)
+                for i, feed_dict in enumerate(data.test_batches(self.vars,
+                    self.batch_size, idx=indices)):
+                    pass  # TODO: combine test_batches and train_batches into one
+
+                
+
+    def train(self, data, verbose='minimal', num_epochs=None, batch_size=None,
+            indices=None, model_path=None):
+        if num_epochs is not None:
+            self.num_epochs = num_epochs
+        if batch_size is not None:
+            self.batch_size = batch_size
+
+        with self.graph.as_default():
+            saver = tf.train.Saver()
+            with tf.Session(graph=self.graph) as sess:
+                sess.run(self.init_op)  # resetting variables?
+                _ = sess.run(self.vars["EmbeddingInit"],
+                    feed_dict={self.vars["EmbeddingPlaceholder"]: data.embedding})
+                for epoch in range(self.num_epochs):
+                    epoch_loss = 0.0
+                    num_batches = 0
+                    for i, feed_dict in enumerate(data.train_batches(self.vars, 
+                        self.batch_size, keep_ratio=self.rnn_dropout, idx=indices)):
+                        _, loss_val = sess.run([self.vars["training_op"], 
+                            self.vars["joint_loss"]], feed_dict=feed_dict)
+                        if verbose != 'minimal':
+                            print("Batch {}: Loss {:.03}".format(i, loss_val))
+                        epoch_loss += loss_val
+                        num_batches += 1
+                    print("Loss (Epoch {}): {:.2}".format(epoch, epoch_loss/num_batches))
+                if model_path is not None:
+                    saver.save(sess, model_path)
+                self.train_session = sess
+        return
 
 """
 class RNN
@@ -57,7 +110,10 @@ class RNN
 class RNN(Model):
     def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
             rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
-            rnn_pooling='last', embedding_source='glove', learning_rate=0.001):
+            rnn_pooling='last', embedding_source='glove', learning_rate=0.001,
+            num_epochs=30, batch_size=256):
+        super().__init__()
+
         embedding_source='glove'  # only one supported
         self.hidden_size = hidden_size
         self.bi = cell.startswith('bi')
@@ -68,6 +124,8 @@ class RNN(Model):
         self.rnn_pooling = rnn_pooling
         self.optimizer = optimizer
         self.learning_rate = learning_rate
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
 
         self.vars = dict() # store all network variables
         self.__parse_formula(formula, data)
@@ -75,14 +133,6 @@ class RNN(Model):
         self.build(data)
 
     def set_params(self, **kwargs):
-        print("TODO")
-
-    def train_batches(self, data, ):
-        num_docs = len(data.sequence_data.items()[0]
-        
-        
-
-    def test_batches(self):
         print("TODO")
 
     def __parse_formula(self, formula, data):
@@ -135,52 +185,55 @@ class RNN(Model):
                 raise ValueError("Could not parse {}".format(source))
                 
     def build(self, data):
+        self.graph = tf.Graph()
 
-        self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
-                name="SequenceLength")
-        self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
-            self.max_seq], name="RNNInput")
+        with self.graph.as_default():
+            self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
+                    name="SequenceLength")
+            self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
+                self.max_seq], name="RNNInput")
 
-        W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]),                      trainable=False, name="Embed")
-        self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32, 
-                shape=[len(data.vocab), data.embed_dim])
-        self.vars["EmbeddingInit"] = W.assign(embedding_placeholder)
-        self.vars["Embedding"] = tf.nn.embedding_lookup(embedding_placeholder,
-            self.vars["word_inputs"])
-        self.vars["hidden_states"] = self.__build_rnn(self.vars["Embedding"],
-                self.hidden_size, self.cell_type, self.bi, 
-                self.vars["sequence_length"])
+            W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]),                      trainable=False, name="Embed")
+            self.vars["Embedding"] = tf.nn.embedding_lookup(W, 
+                    self.vars["word_inputs"])
+            self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32, 
+                    shape=[len(data.vocab), data.embed_dim])
+            self.vars["EmbeddingInit"] = W.assign(self.vars["EmbeddingPlaceholder"])
+            self.vars["hidden_states"] = self.__build_rnn(self.vars["Embedding"],
+                    self.hidden_size, self.cell_type, self.bi, 
+                    self.vars["sequence_length"])
 
-        if self.rnn_dropout is not None:
-            self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
-            self.vars["hidden_states"] = tf.layers.dropout(self.vars["hidden_states"], rate=self.vars["keep_ratio"], name="RNNDropout")
+            if self.rnn_dropout is not None:
+                self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
+                self.vars["hidden_states"] = tf.layers.dropout(self.vars["hidden_states"], rate=self.vars["keep_ratio"], name="RNNDropout")
 
-        for target in data.targets:
-            n_outputs = len(data.target_names[target])
-            self.vars["target-{}".format(target)] = tf.placeholder(tf.int32,
-                    shape=[None], name="target-{}".format(target))
-            self.vars["weights-{}".format(target)] = tf.placeholder(tf.float32,
-                    shape=[n_outputs], name="weights-{}".format(target))
-            logits = tf.layers.dense(self.vars["hidden_states"], n_outputs)
-            weight = tf.gather(self.vars["weights-{}".format(target)],
-                               self.vars["target-{}".format(target)])
-            xentropy = cross_ent(labels=self.vars["target-{}".format(target)], 
-                    logits=logits, weights=weight)
-            self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
-            self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
+            for target in data.targets:
+                n_outputs = len(data.target_names[target])
+                self.vars["target-{}".format(target)] = tf.placeholder(tf.int32,
+                        shape=[None], name="target-{}".format(target))
+                self.vars["weights-{}".format(target)] = tf.placeholder(tf.float32,
+                        shape=[n_outputs], name="weights-{}".format(target))
+                logits = tf.layers.dense(self.vars["hidden_states"], n_outputs)
+                weight = tf.gather(self.vars["weights-{}".format(target)],
+                                   self.vars["target-{}".format(target)])
+                xentropy = cross_ent(labels=self.vars["target-{}".format(target)], 
+                        logits=logits, weights=weight)
+                self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
+                self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
 
-        self.vars["joint_loss"] = sum([self.vars[name] for name in self.vars if name.startswith("loss")])
-        if self.optimizer == 'adam':
-            opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-        elif self.optimizer == 'adagrad':
-            opt = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
-        elif self.optimizer == 'momentum':
-            opt = tf.train.MomentumOptimizer(learning_rate=self.learning_rate)
-        elif self.optimizer == 'rmsprop':
-            opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
-        else:
-            raise ValueError("Invalid optimizer specified")
-        self.vars["training_op"] = opt.minimize(loss=self.vars["joint_loss"])
+            self.vars["joint_loss"] = sum([self.vars[name] for name in self.vars if name.startswith("loss")])
+            if self.optimizer == 'adam':
+                opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            elif self.optimizer == 'adagrad':
+                opt = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
+            elif self.optimizer == 'momentum':
+                opt = tf.train.MomentumOptimizer(learning_rate=self.learning_rate)
+            elif self.optimizer == 'rmsprop':
+                opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
+            else:
+                raise ValueError("Invalid optimizer specified")
+            self.vars["training_op"] = opt.minimize(loss=self.vars["joint_loss"])
+            self.init_op = tf.global_variables_initializer()
 
     def __build_rnn(self, inputs, hidden_size, cell_type, bi, sequences, peephole=False):
         if cell_type == 'LSTM':
@@ -214,23 +267,20 @@ class RNN(Model):
             hidden_states, state = tf.nn.dynamic_rnn(cell, inputs,
                     dtype=tf.float32, sequence_length=sequences)
 
-        if self.rnn_pooling == 'last':  # regular RNN, take last hidden state
+        if isinstance(self.rnn_pooling, int):
+            return self.__attention(hidden_states, self.rnn_pooling)
+        elif self.rnn_pooling == 'last':  # default
             return state
         elif self.rnn_pooling == 'max':
             return tf.reduce_max(hidden_states, reduction_indices=[1])
         elif self.rnn_pooling == 'mean':
             return tf.reduce_mean(hidden_states, axis=1)
-        elif isinstance(self.rnn_pooling, int):
-            return self.__attention(hidden_states, pooling)
             
     def __attention(self, inputs, att_size):
         self.vars["attn"] = tf.tanh(tf.layers.dense(inputs, att_size))
         self.vars["alphas"] = tf.nn.softmax(tf.layers.dense(self.vars["attn"], 1, use_bias=False))
         word_attention = tf.reduce_sum(inputs * self.vars["alphas"], 1)
         return word_attention
-
-    def __train_batches(self, data, batch_size=256):
-        print("Train batches") 
 
 
 class SVM:
