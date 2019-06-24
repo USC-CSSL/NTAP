@@ -1,7 +1,7 @@
 {
   "processing": {
       "jobs":["clean"],
-      "input_path": "/var/lib/jenkins/workspace/ntap_data/data_alm.pkl",
+      "input_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/election_data.pkl",
       "clean": ["links"],
       "preprocess": ["lowercase"],
       "text_col":"text"
@@ -34,11 +34,11 @@
   },
 
   "neural_params": {
-      "learning_rate": [0.0001],
+      "learning_rate": [0.0001,0.001],
       "batch_size": 100,
-      "keep_ratio": [0.66],
+      "keep_ratio": [0.66,0.5],
       "cell": "GRU",
-      "model": "LSTM",
+      "model": "CNN",
       "RNN": "BiLSTM",
       "vocab_size": 10000,
       "embedding_size": 300,
@@ -47,10 +47,10 @@
       "pretrain": true,
       "train_embedding": false,
       "target_cols":["authority","care","fairness","loyalty","purity","moral"],
-      "hidden_layers": [[100]],
+      "hidden_layers": [[100],[256]],
       "n_outputs": 2,
       "filter_sizes": [2, 3, 4],
-      "num_filters": 2,
+      "num_filters": 3,
       "loss": "Mean",
       "save_vectors": false,
       "epochs": 100,
@@ -65,9 +65,9 @@
   },
 
   "path": {
-    "glove_path": "/var/lib/jenkins/workspace/ntap_data/glove.6B/glove.6B.300d.txt",
-    "word2vec_path": "/var/lib/jenkins/workspace/ntap_data/GoogleNews-vectors-negative300.bin.gz",
-    "dictionary_path": "/var/lib/jenkins/workspace/ntap_data/",
+    "glove_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/glove.6B/glove.6B.300d.txt",
+    "word2vec_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/GoogleNews-vectors-negative300.bin.gz",
+    "dictionary_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data",
     "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
   }
 }

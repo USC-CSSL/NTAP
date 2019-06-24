@@ -14,7 +14,7 @@ class Ntap:
     def __init__(self, params):
         self.params = params
         self.base_dir, self.filename = os.path.split(getInputFilePath(params))
-        self.model_dir = os.path.join(self.base_dir, "models")
+        self.model_dir = os.path.join(self.base_dir, "MFTC_models")
         self.preprocessed_dir = os.path.join(self.base_dir, "preprocessed")
         self.feature_dir = os.path.join(self.base_dir, "features")
         self.filetype="."+ self.filename.split(".")[1]

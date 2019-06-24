@@ -95,9 +95,11 @@ class Preprocessor:
         removed = source
         for pattern in pat_type:
             p = patterns[pattern]
-            extracted = [p.findall(text) for text in source]
+            #print(type(source))
+            #extracted = [p.findall(text) for text in source]
+            extracted = [p.findall(str(text)) for text in source]
             if remove:
-                removed = [p.sub("", text) for text in removed]
+                removed = [p.sub("", str(text)) for text in removed]
                 removed = [' '.join(text.split()) for text in removed]
                 removed = [x.lower() for x in removed]
             self.data.loc[:, pattern] = pd.Series(extracted, index=self.data.index)

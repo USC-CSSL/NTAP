@@ -74,7 +74,7 @@ def getModel(params):
 # a function to get the directory where best model is stored
 def getModelDirectory(params):
     base_dir, filename = getBaseDirAndFilename(params)
-    return base_dir+"/models/"+filename.split(".")[0]+"/"+getModel(params)+"/NTAP_model"
+    return base_dir+"/MFTC_models/"+filename.split(".")[0]+"/"+getModel(params)+"/NTAP_model"
 
 # a function to get the name of the model method specified
 def getModelMethod(params):
