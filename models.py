@@ -388,16 +388,23 @@ class SVM:
         X = np.concatenate(inputs, axis=1)
         return X
 
-    def CV(self, data, num_folds=10, stratified=True):
+    def CV(self, data, num_folds=10, stratified=True, metric="accuracy"):
         
         X, y = self.__get_X_y(data)
         skf = StratifiedKFold(n_splits=num_folds, 
                               shuffle=True,
                               random_state=seed)
         scores = list()
+        """
+        TODO (Anirudh): modify metrics to include accuracy, precision, recall, 
+            and f1 for all folds (train and test)
+            - record as much info as possible and store internally
+            - store in self.cv_scores
+        """
         for params in self.__grid():
             cv_scores = {"params": params}
             cv_scores["accuracy"] = list()
+            # TODO: add all classification metrics
             for train_idx, test_idx in skf.split(X, y):
                 model = LinearSVC(**params._asdict())
                 train_X = X[train_idx]
@@ -406,8 +413,8 @@ class SVM:
                 test_X = X[test_idx]
                 test_y = y[test_idx]
                 pred_y = model.predict(test_X)
-                accuracy = sum(test_y == pred_y)/len(test_y)
-                cv_scores["accuracy"].append(accuracy)
+                accuracy = sum(test_y == pred_y)/len(test_y) # augment
+                cv_scores["accuracy"].append(accuracy) # change
                 scores.append(cv_scores)
 
         return self.__best_model(scores)

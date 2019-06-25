@@ -73,7 +73,6 @@ class Dataset:
     def __init__(self, source, tokenizer='wordpunct', vocab_size=5000, embed='glove', min_token=5, stopwords=None, stem=False, lower=True, max_len=100, include_nums=False, include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
             self = source.copy()
-            print(self.data)
             return
         try:
             self.data = read_file(source)
