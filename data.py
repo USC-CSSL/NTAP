@@ -199,7 +199,7 @@ class Dataset:
         if "num_topics" in kwargs:
             self.num_topics = kwargs["num_topics"]
         if "lda_max_iter" in kwargs:
-            self.num_topics = kwargs["lda_max_iter"]
+            self.lda_max_iter = kwargs["lda_max_iter"]
 
     def __learn_vocab(self, column):
         vocab = dict()
@@ -258,6 +258,12 @@ class Dataset:
         for c in columns:
             if c not in self.data.columns:
                 raise ValueError("Column not in Data: {}".format(c))
+            if var_type == 'continuous':
+                if normalize is not None:
+                    pass #TODO: NORM
+                else:
+                    self.targets[c] = self.data[c].values
+            continue
             if encoding == 'one-hot':
                 enc = OneHotEncoder(sparse=False, categories='auto')
                 X = [ [v] for v in self.data[c].values]

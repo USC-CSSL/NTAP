@@ -10,12 +10,12 @@ data = Dataset("/home/brendan/Data/GabProject/full_gab_binary.pkl")
 data.clean("text")
 data.set_params(vocab_size=5000)
 #data.set_params(dictionary='mfd.json')
-#model = RNN("hate ~ seq(text)", data=data, optimizer='adagrad',
+model = RNN("hate ~ seq(text)", data=data)#, optimizer='adagrad',
         #learning_rate=0.01, rnn_pooling=100, num_epochs=10)
 #model.train(data)
 #model.CV(data)
 #model.print_vars()
-#model.predict(data, retrieve=["alphas", "predictions"])
+alphas, predictions = model.predict(data, retrieve=["alphas", "predictions"])
 
 #print(model.nodes)
 #alphas, predictions = model.predict(data, retrieve=["alphas", "predictions"])
