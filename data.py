@@ -251,7 +251,11 @@ class Dataset:
             self.__token_count += int((encoded[i] != pad_idx) & (encoded[i] != unk_idx))
         return np.array(encoded, dtype=np.int32)
 
-    def encode_targets(self, columns, var_type='categorical', normalize=None, encoding='one-hot'):
+    def encode_targets(self, columns, var_type='categorical', normalize=None,
+            encoding='one-hot', reset=False):
+        if reset:
+            self.data.targets = dict()
+            self.data.target_names = dict()
 
         if not isinstance(columns, list):
             columns = [columns]
@@ -263,7 +267,7 @@ class Dataset:
                     pass #TODO: NORM
                 else:
                     self.targets[c] = self.data[c].values
-            continue
+                continue
             if encoding == 'one-hot':
                 enc = OneHotEncoder(sparse=False, categories='auto')
                 X = [ [v] for v in self.data[c].values]
@@ -313,18 +317,21 @@ class Dataset:
             end = min(size, i + batch_size)
             yield (start, end)
 
-    def train_batches(self, var_dict, batch_size, keep_ratio=None, idx=None):
+    def batches(self, var_dict, batch_size, test, keep_ratio=None, idx=None):
         feed_dict = dict()
 
         if idx is None:
             idx = [i for i in range(self.num_sequences)]
         
-        for (s, e) in self.__batch_indices(self.num_sequences, batch_size):
+        for (s, e) in self.__batch_indices(len(idx), batch_size):
             for var_name in var_dict:
                 if var_name == 'word_inputs':
                     feed_dict[var_dict[var_name]] = self.sequence_data[idx[s:e]]
                 if var_name == 'sequence_length':
                     feed_dict[var_dict[var_name]] = self.sequence_lengths[idx[s:e]]
+                if test:
+                    feed_dict[var_dict['keep_ratio']] = 1.0
+                    continue  # no labels or loss weights
                 if var_name.startswith('target'):
                     name = var_name.replace("target-", "")
                     if name not in self.targets:
@@ -340,6 +347,12 @@ class Dataset:
                         raise ValueError("Keep Ratio for RNN Dropout not set")
                     feed_dict[var_dict[var_name]] = keep_ratio
             yield feed_dict
+
+    def get_labels(self, idx, var):
+        if var not in self.targets:
+            raise ValueError("Target not in Dataset object")
+        num_classes = len(self.target_names[var])
+        return self.targets[var][idx], num_classes
 
     def __get_bag_of_words(self, column):
         if not hasattr(self, "vocab"):
