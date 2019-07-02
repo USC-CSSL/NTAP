@@ -37,11 +37,6 @@ tokenizers = {'treebank': nltk_token.TreebankWordTokenizer().tokenize,
               'wordpunct': nltk_token.WordPunctTokenizer().tokenize,
               'tweettokenize': nltk_token.TweetTokenizer().tokenize}
 
-#from tokenization.happierfuntokenizing import HappierTokenizer
-#def happiertokenize(text):
-    #tok = HappierTokenizer(preserve_case=False)
-    #return tok.tokenize(text)
-
 def read_file(path):
     if not os.path.exists(path):
         raise ValueError("Path does not point to existing file: {}".format(path))
@@ -70,7 +65,10 @@ def write_file(data, path):
         data.to_pickle(path)
 
 class Dataset:
-    def __init__(self, source, tokenizer='wordpunct', vocab_size=5000, embed='glove', min_token=5, stopwords=None, stem=False, lower=True, max_len=100, include_nums=False, include_symbols=False, num_topics=100, lda_max_iter=500):
+    def __init__(self, source, tokenizer='wordpunct', vocab_size=5000, 
+            embed='glove', min_token=5, stopwords=None, stem=False, 
+            lower=True, max_len=100, include_nums=False, 
+            include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
             self = source.copy()
             return
@@ -107,7 +105,6 @@ class Dataset:
         self.targets = dict()
         self.target_names = dict()
         self.weights = dict()
-        #self.sequence_data = None
 
     def copy(self):
         return copy.deepcopy(self)
@@ -420,6 +417,8 @@ class Dataset:
         self.features["lda"] = np.array(doc_topics)
         self.feature_names["lda"] = model.get_topics()
         return
+
+    #def 
 
     def ddr(self, column, dictionary, embed='glove', **kwargs):
         print("TODO: implement ddr features")

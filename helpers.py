@@ -15,9 +15,9 @@ class CV_Results:
         for target, cv_res in res_by_name.items():
             cv_df = pd.DataFrame(cv_res)
             cv_df.index.name = target
-            cv_df.drop(columns["Target"], inplace=True)
-            means = [cv_df[col].mean() for col in res_df.columns]
-            cv_df = cv_df.append({"Mean": means}, ignore_index=True)
+            cv_df.drop(columns=["Target"], inplace=True)
+            means = [cv_df[col].mean() for col in cv_df.columns]
+            cv_df.loc["Mean", :] = means
             self.dfs.append(cv_df)
     
     def summary(self):

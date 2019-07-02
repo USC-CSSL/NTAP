@@ -13,26 +13,20 @@ import numpy as np
 import itertools, collections
 from abc import ABC, abstractmethod
 import os
+
+# disable tensorflow excessive warnings/logging
 from tensorflow.compat.v1 import logging
 logging.set_verbosity(logging.ERROR)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
-
-"""
-def deprecated(date, instructions, warn_once=True):
-    def deprecated_wrapper(func):
-        return func
-    return deprecated_wrapper
-
-from tensorflow.python.util import deprecation
-deprecation.deprecated = deprecated
-"""
 
 import tensorflow as tf
 from tensorflow.losses import sparse_softmax_cross_entropy as cross_ent
 
 class Model(ABC):
-    def __init__(self):
+    def __init__(self, optimizer, embedding_source):
         super().__init__()
+        self.optimizer = optimizer
+        self.embedding_source = 'glove'
 
     @abstractmethod
     def build(self):
@@ -41,11 +35,8 @@ class Model(ABC):
     def set_params(self):
         pass
 
-    def CV(self, data, num_folds=10, num_epochs=None, comp='accuracy', 
+    def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy', 
             model_dir=None):  
-        if num_epochs is not None:
-            self.num_epochs = num_epochs
-
         self.cv_model_paths = dict()
         if model_dir is None:
             model_dir = os.path.join(tempfile.gettempdir(), "tf_cv_models")
@@ -65,9 +56,12 @@ class Model(ABC):
 
         results = list()
         for i, (train_idx, test_idx) in enumerate(folder.split(X, y)):
+
             model_path = os.path.join(model_dir, str(i), "cv_model")
             self.cv_model_paths[i] = model_path
-            self.train(data, indices=train_idx.tolist(), model_path=model_path)
+
+            self.train(data, num_epochs=num_epochs, indices=train_idx.tolist(), 
+                    model_path=model_path)
             y = self.predict(data, indices=test_idx.tolist(),
                     model_path=model_path)
             labels = dict()
@@ -77,8 +71,10 @@ class Model(ABC):
                 test_y, card = data.get_labels(idx=test_idx, var=var_name)
                 labels[key] = test_y
                 num_classes[key] = card
+            print(num_classes)
             stats = self.evaluate(y, labels, num_classes)  # both dict objects
             results.append(stats)
+            print(stats)
         return CV_Results(results)
         # param grid TODO
 
@@ -105,13 +101,14 @@ class Model(ABC):
                     stat[m] = f1_score(y, y_hat, average=avg)
                 if m == 'kappa':
                     stat[m] = cohen_kappa_score(y, y_hat)
-                stats.append(stat)
+            stats.append(stat)
         return stats
 
-    def predict(self, data, indices=None, batch_size=None, model_path=None, 
+    def predict(self, data, model_path, indices=None, batch_size=256, 
             retrieve=list()):
-        if batch_size is not None:
-            self.batch_size = batch_size
+
+        if model_path is None:
+            raise ValueError("predict must be called with a valid model_path argument")
         fetch_vars = {v: self.vars[v] for v in self.vars if v.startswith("prediction-")}
         if len(retrieve) > 0:
             retrieve = [r for r in retrieve if r in self.list_model_vars()]
@@ -122,13 +119,12 @@ class Model(ABC):
         predictions = {k: list() for k,v in fetch_vars}
         saver = tf.train.Saver()
         with tf.Session() as self.sess:
-            if model_path is not None:
-                try:
-                    saver.restore(self.sess, model_path)
-                except Exception as e:
-                    print("{}; could not load saved model".format(e))
+            try:
+                saver.restore(self.sess, model_path)
+            except Exception as e:
+                print("{}; could not load saved model".format(e))
             for i, feed in enumerate(data.batches(self.vars,
-                self.batch_size, idx=indices, test=True)):
+                batch_size, idx=indices, test=True)):
                 prediction_vars = [v for k, v in fetch_vars]
                 output = self.sess.run(prediction_vars, feed_dict=feed)
                 for i in range(len(output)):
@@ -140,24 +136,19 @@ class Model(ABC):
                     predictions[var_name] += outputs
         return predictions
                         
-    def train(self, data, num_epochs=None, batch_size=None, indices=None, 
+    def train(self, data, num_epochs=30, batch_size=256, indices=None, 
             model_path=None):
-        if num_epochs is not None:
-            self.num_epochs = num_epochs
-        if batch_size is not None:
-            self.batch_size = batch_size
-        
         saver = tf.train.Saver()
         with tf.Session() as self.sess:
             self.sess.run(self.init)
             _ = self.sess.run(self.vars["EmbeddingInit"],
                 feed_dict={self.vars["EmbeddingPlaceholder"]: data.embedding})
-            for epoch in range(self.num_epochs):
+            for epoch in range(num_epochs):
                 epoch_loss = 0.0
                 num_batches = 0
                 for i, feed in enumerate(data.batches(self.vars, 
-                    self.batch_size, test=False, 
-                    keep_ratio=self.rnn_dropout, idx=indices)):
+                    batch_size, test=False, keep_ratio=self.rnn_dropout, 
+                    idx=indices)):
                     _, loss_val = self.sess.run([self.vars["training_op"], 
                         self.vars["joint_loss"]], feed_dict=feed)
                     epoch_loss += loss_val
@@ -167,18 +158,14 @@ class Model(ABC):
                 saver.save(self.sess, model_path)
         return
 
-"""
-class RNN
-
-"""
 class RNN(Model):
     def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
             rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
-            rnn_pooling='last', embedding_source='glove', learning_rate=0.001,
-            num_epochs=30, batch_size=256, random_state=None):
-        super().__init__()
+            learning_rate=0.001, rnn_pooling='last', 
+            embedding_source='glove', random_state=None):
+        Model.__init__(self, optimizer=optimizer,
+                embedding_source=embedding_source)
 
-        embedding_source='glove'  # only one supported
         self.hidden_size = hidden_size
         self.bi = cell.startswith('bi')
         self.cell_type = cell[2:] if self.bi else cell
@@ -186,11 +173,8 @@ class RNN(Model):
         self.embedding_dropout = embedding_dropout
         self.max_seq = data.max_len  # load from data OBJ
         self.rnn_pooling = rnn_pooling
-        self.optimizer = optimizer
-        self.learning_rate = learning_rate
-        self.num_epochs = num_epochs
-        self.batch_size = batch_size
         self.random_state = random_state
+        self.learning_rate = learning_rate
 
         self.vars = dict() # store all network variables
         self.__parse_formula(formula, data)
@@ -473,7 +457,8 @@ class SVM:
         X = np.concatenate(inputs, axis=1)
         return X
 
-    def CV(self, data, num_folds=10, stratified=True, metric="accuracy"):
+    def CV(self, data, num_epochs, num_folds=10, 
+            stratified=True, metric="accuracy"):
         
         X, y = self.__get_X_y(data)
         skf = StratifiedKFold(n_splits=num_folds, 
