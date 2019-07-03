@@ -71,10 +71,8 @@ class Model(ABC):
                 test_y, card = data.get_labels(idx=test_idx, var=var_name)
                 labels[key] = test_y
                 num_classes[key] = card
-            print(num_classes)
             stats = self.evaluate(y, labels, num_classes)  # both dict objects
             results.append(stats)
-            print(stats)
         return CV_Results(results)
         # param grid TODO
 
@@ -407,20 +405,21 @@ class SVM:
                 print("Fetch lda from features")
             elif source == 'ddr':
                 print("Write DDR method")
-            elif source.startswith('tfidf'):
+            elif source.startswith('tfidf('):
                 text_col = source.replace('tfidf(','').strip(')')
                 if text_col not in data.data.columns:
                     raise ValueError("Could not parse {}".format(source))
                     continue
                 data.tfidf(text_col)
-            elif source.startswith('lda'):
+            elif source.startswith('lda('):
                 text_col = source.replace('lda(','').strip(')')
                 if text_col not in data.data.columns:
                     raise ValueError("Could not parse {}".format(source))
                     continue
                 data.lda(text_col)
-            elif source in data.data.columns:
-                data.encode_inputs(source)
+            elif source.startswith('ddr('):
+                text_col = source.replace('ddr(', '').strip(')')
+                data.ddr(text_col, dictionary=data.dictionary)
             else:
                 raise ValueError("Could not parse {}".format(source))
 
@@ -434,21 +433,6 @@ class SVM:
         for p in itertools.product(__c(self.C), __c(self.class_weight), __c(self.dual), __c(self.penalty), __c(self.loss), __c(self.tol), __c(self.max_iter)):
             param_tuple = Paramset(C=p[0], class_weight=p[1], dual=p[2], penalty=p[3], loss=p[4], tol=p[5], max_iter=p[6])
             yield param_tuple
-
-    def __get_X_y(self, data):
-        inputs = list()
-        self.names = list()
-        for feat in data.features:
-            inputs.append(data.features[feat])
-            for name in data.feature_names[feat]:
-                self.names.append("{}_{}".format(feat, name))
-        X = np.concatenate(inputs, axis=1)
-        targets = list()
-        if len(data.targets) != 1:
-            raise ValueError("Multitask not enabled; encode with LabelEncoder")
-            return
-        y = list(data.targets.values())[0]
-        return X, y
 
     def __get_X(self, data):
         inputs = list()
@@ -478,16 +462,44 @@ class SVM:
             for train_idx, test_idx in skf.split(X, y):
                 model = LinearSVC(**params._asdict())
                 train_X = X[train_idx]
-                train_y = y[train_idx]
+                train_y, cardinality = data.get_labels(idx=train_idx)
                 model.fit(train_X, train_y)
                 test_X = X[test_idx]
                 test_y = y[test_idx]
                 pred_y = model.predict(test_X)
-                accuracy = sum(test_y == pred_y)/len(test_y) # augment
                 cv_scores["accuracy"].append(accuracy) # change
                 scores.append(cv_scores)
 
-        return self.__best_model(scores)
+        results = [self.evaluate(
+        self.best_model = self.__get_best_model(scores)
+
+        return CV_Results([
+
+    def evaluate(self, predictions, labels, num_classes, 
+            metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
+        stats = list()
+        for key in predictions:
+            if not key.startswith("prediction-"):
+                continue
+            if key not in labels:
+                raise ValueError("Predictions and Labels have different keys")
+            stat = {"Target": key.replace("prediction-", "")}
+            y, y_hat = labels[key], predictions[key]
+            card = num_classes[key]
+            for m in metrics:
+                if m == 'accuracy':
+                    stat[m] = accuracy_score(y, y_hat)
+                avg = 'binary' if card == 2 else 'macro'
+                if m == 'precision':
+                    stat[m] = precision_score(y, y_hat, average=avg)
+                if m == 'recall':
+                    stat[m] = recall_score(y, y_hat, average=avg)
+                if m == 'f1':
+                    stat[m] = f1_score(y, y_hat, average=avg)
+                if m == 'kappa':
+                    stat[m] = cohen_kappa_score(y, y_hat)
+            stats.append(stat)
+        return stats
 
     def train(self, data, params=None):
         if params is not None:
@@ -598,11 +610,7 @@ class LM:
             for name in data.feature_names[feat]:
                 self.names.append("{}_{}".format(feat, name))
         X = np.concatenate(inputs, axis=1)
-        y = list(data.targets.values())[0]
-        np.save("lda_vecs.npy", X)
-        with open("purity_save.txt", 'w') as fo:
-            fo.write('\n'.join([str(val) for val in y]))
-        return X, y
+        return X
 
     def __get_X(self, data):
         inputs = list()

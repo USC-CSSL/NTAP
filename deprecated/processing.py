@@ -222,10 +222,6 @@ def depparse(self):
 
 
 
-# Incorporate into class:
-
-###############################################################################
-"""
 def emojis(df, col):
     emojis_col = list()
     for i, row in df.iterrows():

@@ -5,23 +5,21 @@ about: contains methods and classes available from base ntap directory
     - tokenization methods
 """
 
+# TODO: move to ntap.mallet_path, ntap.glove_path
 MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
-#MALLET_PATH = "/home/btkenned/mallet-2.0.8/bin/mallet"
 GLOVE = "/home/brendan/Data/glove.6B.300d.txt"
 
-WORD2VEC = ""
-
-from contextlib import redirect_stdout
 import pandas as pd
 import numpy as np
 import json, re, os, tempfile, sys, io, gzip
 from nltk import tokenize as nltk_token
 from nltk.corpus import stopwords
-from nltk.stem import SnowballStemmer
+from nltk.stem import SnowballStemmer  # TODO: more stemming options
 from gensim.models.wrappers import LdaMallet
 from gensim.models import TfidfModel
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import copy, inspect
+from scipy.spatial.distance import cosine
 
 stem = SnowballStemmer("english").stem
 
@@ -50,6 +48,24 @@ def read_file(path):
         return pd.read_pickle(path)
     elif ending == 'json':
         return pd.read_json(path)
+
+def open_dictionary(dictionary_path):
+    if not os.path.exists(dictionary_path):
+        raise ValueError("Dictionary not found at {}".format(dictionary_path))
+        return
+    if dictionary_path.endswith(".json"):
+        try:  
+            with open(dictionary_path, 'r') as fo:
+                dictionary = json.load(fo)  # {category: words}
+        except Exception:
+            raise ValueError("Could not import json dictionary")
+    elif dictionary_path.endswith(".dic"):  # traditional LIWC format
+        raise ValueError("Dictionary type .dic not supported")
+        return 
+    else:
+        raise ValueError("Dictionary type not supported")
+    categories, items = zip(*sorted(dictionary.items(), key=lambda x:x[0]))
+    return categories, items
 
 def write_file(data, path):
 
@@ -197,6 +213,8 @@ class Dataset:
             self.num_topics = kwargs["num_topics"]
         if "lda_max_iter" in kwargs:
             self.lda_max_iter = kwargs["lda_max_iter"]
+        if "dictionary" in kwargs:
+            self.dictionary = kwargs["dictionary"]
 
     def __learn_vocab(self, column):
         vocab = dict()
@@ -213,7 +231,7 @@ class Dataset:
         types.append("<PAD>")
         types.append("<UNK>")
         self.vocab = types
-        self.__mapping = {word: idx for idx, word in enumerate(self.vocab)}
+        self.mapping = {word: idx for idx, word in enumerate(self.vocab)}
         
     def __good_doc(self, doc):
         if len(self.tokenizer(doc)) < self.min_token:
@@ -221,6 +239,8 @@ class Dataset:
         return True
 
     def __tokenize_doc(self, doc):
+        if type(doc) == list:
+            doc = " ".join(doc)
         tokens = self.tokenizer(doc)
         if self.lower:
             tokens = [t.lower() for t in tokens]
@@ -238,12 +258,12 @@ class Dataset:
 
     def __encode_doc(self, doc):
         self.__truncate_count += max(len(doc) - self.max_len, 0)
-        unk_idx = self.__mapping["<UNK>"]
-        pad_idx = self.__mapping["<PAD>"]
+        unk_idx = self.mapping["<UNK>"]
+        pad_idx = self.mapping["<PAD>"]
         encoded = [pad_idx] * self.max_len
         self.__pad_count += max(0, self.max_len - len(doc))
         for i in range(min(self.max_len, len(doc))):  # tokenized
-            encoded[i] = self.__mapping[doc[i]] if doc[i] in self.__mapping else unk_idx
+            encoded[i] = self.mapping[doc[i]] if doc[i] in self.mapping else unk_idx
             self.__unk_count += int(encoded[i] == unk_idx)
             self.__token_count += int((encoded[i] != pad_idx) & (encoded[i] != unk_idx))
         return np.array(encoded, dtype=np.int32)
@@ -345,7 +365,9 @@ class Dataset:
                     feed_dict[var_dict[var_name]] = keep_ratio
             yield feed_dict
 
-    def get_labels(self, idx, var):
+    def get_labels(self, idx, var=None):
+        if var is None:
+            var = list(self.targets.keys())[0]
         if var not in self.targets:
             raise ValueError("Target not in Dataset object")
         num_classes = len(self.target_names[var])
@@ -355,16 +377,16 @@ class Dataset:
         if not hasattr(self, "vocab"):
             self.__learn_vocab(column)
         encoded = list()
-        unk_idx = self.__mapping["<UNK>"]
+        unk_idx = self.mapping["<UNK>"]
 
         for doc in self.data[column].values:
             encoded.append(list())
             for token in self.__tokenize_doc(doc):
-                id_ = self.__mapping[token] if token in self.__mapping else None
+                id_ = self.mapping[token] if token in self.mapping else None
                 if id_ is not None:
                     encoded[-1].append(id_)
         docs = [[(t, doc.count(t)) for t in set(doc)] for doc in encoded]
-        id2word = {v:k for k,v in self.__mapping.items()}
+        id2word = {v:k for k,v in self.mapping.items()}
         return docs, id2word
 
     def tfidf(self, column):
@@ -418,10 +440,71 @@ class Dataset:
         self.feature_names["lda"] = model.get_topics()
         return
 
-    #def 
-
     def ddr(self, column, dictionary, embed='glove', **kwargs):
-        print("TODO: implement ddr features")
+        # dictionary can b
+        if isinstance(dictionary, str):  # file name
+            try:
+                dictionary, name = open_dictionary(dictionary)
+            except ValueError as e:
+                print(e)
+                return
+        elif isinstance(dictionary, dict):  # {category: [w1, w2...]}
+            try:
+                sort_dictionary = sorted(dictionary.items(), key=lambda x:x[0])
+                dictionary, name = zip(*sort_dictionary)
+            except Exception:
+                print("Couldn't unpack dictionary")
+                return
+
+        if "vocab_size" in kwargs:
+            self.__learn_vocab(column, vocab_size=kwargs["vocab_size"])  #TODO
+        elif not hasattr(self, "mapping"):
+            self.__learn_vocab(column)
+        for word_list in name:
+            for w in word_list:
+                if w not in self.mapping:
+                    self.mapping[w] = len(self.mapping)
+                    self.vocab.append(w)
+
+        if embed == 'glove':
+            embeddings, _ = self.__read_glove(GLOVE)
+        else:
+            raise ValueError("Glove only embedding supported")
+            return
+
+        dictionary_centers = {cat: self.__embedding_of_doc(words, embeddings) \
+                for cat, words in zip(dictionary, name)}
+        features = list()
+        for doc in self.data[column].values.tolist():
+            e = self.__embedding_of_doc(doc, embeddings=embeddings)
+            not_found = False
+            if e.sum() == 0:  # no tokens found
+                not_found = True
+            doc_feat = dict()
+            for category, dict_vec in dictionary_centers.items():
+                if not_found:
+                    e = np.random.rand(len(e))
+                doc_feat[category] = cosine(dict_vec, e)
+            features.append(doc_feat)
+
+        features = pd.DataFrame(features)
+        features, categories = features.values, list(features.columns)
+        self.features["ddr"] = features  # type numpy array
+        self.feature_names["ddr"] = categories # list of strings
+
+    def __embedding_of_doc(self, doc_string, embeddings, agg='mean', thresh=1):
+        tokens = self.__tokenize_doc(doc_string)
+        embedded = list()
+        for t in tokens:
+            if t in self.mapping:
+                embedded.append(embeddings[self.mapping[t]])
+        if len(embedded) < thresh:
+            return np.zeros(embeddings.shape[1])
+        if agg == 'mean':
+            return np.array(embedded).mean(axis=0)
+        else: 
+            raise ValueError("Aggregation given ({}) not supported")
+            return
 
     def bert(self, some_params):
         print("TODO: implement a featurization based on BERT")
@@ -435,17 +518,17 @@ class Dataset:
         else:
             f = open(path, 'r')
 
-        embeddings = np.random.randn( len(self.__mapping), dim)
+        embeddings = np.random.randn( len(self.mapping), dim)
         found = 0
         for line in f:
             split = line.split()
             idx = len(split) - dim
             type_ = "".join(split[:idx])
-            if type_ in self.__mapping:
-                embeddings[self.__mapping[type_]] = np.array(split[idx:],
+            if type_ in self.mapping:
+                embeddings[self.mapping[type_]] = np.array(split[idx:],
                         dtype=np.float32)
                 found += 1
-        print("Found {}/{} of vocab in {}".format(found, len(self.__mapping),
+        print("Found {}/{} of vocab in {}".format(found, len(self.mapping),
             path))
         f.close()
         return embeddings, dim
@@ -455,5 +538,5 @@ class Dataset:
             raise ValueError("No embedding found in Dataset object")
             return
         np.save(os.path.join(dir_, "embedding.npy"), self.embedding)
-        write_file(self.__mapping, os.path.join(dir_, "vocab.json"))
+        write_file(self.mapping, os.path.join(dir_, "vocab.json"))
 
