@@ -443,49 +443,55 @@ class SVM:
 
     def CV(self, data, num_epochs, num_folds=10, 
             stratified=True, metric="accuracy"):
+        """
+        evaluate between parameter sets based on 'metric' parameter
+        """
+        if metric not in ["accuracy", "f1", "precision", "recall", "kappa"]:
+            raise ValueError("Not a valid metric for CV: {}".format(metric))
         
-        X, y = self.__get_X_y(data)
+        X = self.__get_X(data)
+        y, _ = data.get_labels(idx=None)
+        target = list(data.targets.keys())[0]
+        print("TARGET: {}".format(target))
         skf = StratifiedKFold(n_splits=num_folds, 
                               shuffle=True,
                               random_state=self.random_state)
-        scores = list()
-        """
-        TODO (Anirudh): modify metrics to include accuracy, precision, recall, 
-            and f1 for all folds (train and test)
-            - record as much info as possible and store internally
-            - store in self.cv_scores
-        """
+        grid_search_results = list()
+        best_index = -1
+        best_score = -1.0
         for params in self.__grid():
-            cv_scores = {"params": params}
-            cv_scores["accuracy"] = list()
-            # TODO: add all classification metrics
+            cv_scores = {"params": params._asdict()}
+
+            labels = list()
+            predictions = list()
             for train_idx, test_idx in skf.split(X, y):
                 model = LinearSVC(**params._asdict())
                 train_X = X[train_idx]
                 train_y, cardinality = data.get_labels(idx=train_idx)
                 model.fit(train_X, train_y)
                 test_X = X[test_idx]
-                test_y = y[test_idx]
+                test_y, _ = data.get_labels(idx=test_idx)
                 pred_y = model.predict(test_X)
-                cv_scores["accuracy"].append(accuracy) # change
-                scores.append(cv_scores)
+                labels.append(test_y)
+                predictions.append(pred_y)
+            performance = self.evaluate(predictions=predictions,
+                    labels=labels, num_classes=cardinality, target=target)
+            cv_scores["stats"] = performance
+            results = [score[metric] for score in performance]
+            score = np.mean(results)
+            if score > best_score:
+                best_score = score
+                best_index = len(grid_search_results)
+            grid_search_results.append(cv_scores)
+        return CV_Results([grid_search_results[best_index]["stats"]])
 
-        results = [self.evaluate(
-        self.best_model = self.__get_best_model(scores)
-
-        return CV_Results([
-
-    def evaluate(self, predictions, labels, num_classes, 
+    def evaluate(self, predictions, labels, num_classes, target,
             metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
         stats = list()
-        for key in predictions:
-            if not key.startswith("prediction-"):
-                continue
-            if key not in labels:
-                raise ValueError("Predictions and Labels have different keys")
-            stat = {"Target": key.replace("prediction-", "")}
-            y, y_hat = labels[key], predictions[key]
-            card = num_classes[key]
+        y, y_hat = labels, predictions
+        card = num_classes
+        for y, y_hat in zip(predictions, labels):
+            stat = {"Target": target}
             for m in metrics:
                 if m == 'accuracy':
                     stat[m] = accuracy_score(y, y_hat)
@@ -623,7 +629,8 @@ class LM:
         
         if random_state is not None:
             self.random_state = random_state
-        X, y = self.__get_X_y(data)
+        X = self.__get_X(data)
+        y, _ = data.get_labels(idx=None)
         folds = KFold(n_splits=num_folds, 
                               shuffle=True,
                               random_state=self.random_state)

@@ -371,6 +371,8 @@ class Dataset:
         if var not in self.targets:
             raise ValueError("Target not in Dataset object")
         num_classes = len(self.target_names[var])
+        if idx is None:
+            return self.targets[var], num_classes
         return self.targets[var][idx], num_classes
 
     def __get_bag_of_words(self, column):
