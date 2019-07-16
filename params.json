@@ -38,7 +38,7 @@
       "batch_size": 100,
       "keep_ratio": [0.66,0.5],
       "cell": "GRU",
-      "model": "CNN",
+      "model": "ATTN",
       "RNN": "BiLSTM",
       "vocab_size": 10000,
       "embedding_size": 300,
@@ -68,6 +68,7 @@
     "glove_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/glove.6B/glove.6B.300d.txt",
     "word2vec_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/GoogleNews-vectors-negative300.bin.gz",
     "dictionary_path": "D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data",
+    "mallet_path":"D:/Summer_2019/Computational_Social_Sciences_Lab/cssl/data/mallet-2.0.8/bin/mallet",
     "tagme_token": "ec107e88-e1b9-494a-bbc4-00f9e214efd8-843339462"
   }
 }
