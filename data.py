@@ -5,10 +5,6 @@ about: contains methods and classes available from base ntap directory
     - tokenization methods
 """
 
-# TODO: move to ntap.mallet_path, ntap.glove_path
-MALLET_PATH = "/home/brendan/mallet-2.0.8/bin/mallet"
-GLOVE = "/home/brendan/Data/glove.6B.300d.txt"
-
 import pandas as pd
 import numpy as np
 import json, re, os, tempfile, sys, io, gzip
@@ -27,7 +23,7 @@ link_re = re.compile(r"(http(s)?[^\s]*)|(pic\.[s]*)")
 hashtag_re = re.compile(r"#[a-zA-Z0-9_]+")
 mention_re = re.compile(r"@[a-zA-Z0-9_]+")
 
-pat_type = {'links': link_re, 
+pat_type = {'links': link_re,
             'hashtags': hashtag_re,
             'mentions': mention_re}
 
@@ -54,14 +50,14 @@ def open_dictionary(dictionary_path):
         raise ValueError("Dictionary not found at {}".format(dictionary_path))
         return
     if dictionary_path.endswith(".json"):
-        try:  
+        try:
             with open(dictionary_path, 'r') as fo:
                 dictionary = json.load(fo)  # {category: words}
         except Exception:
             raise ValueError("Could not import json dictionary")
     elif dictionary_path.endswith(".dic"):  # traditional LIWC format
         raise ValueError("Dictionary type .dic not supported")
-        return 
+        return
     else:
         raise ValueError("Dictionary type not supported")
     categories, items = zip(*sorted(dictionary.items(), key=lambda x:x[0]))
@@ -81,9 +77,9 @@ def write_file(data, path):
         data.to_pickle(path)
 
 class Dataset:
-    def __init__(self, source, tokenizer='wordpunct', vocab_size=5000, 
-            embed='glove', min_token=5, stopwords=None, stem=False, 
-            lower=True, max_len=100, include_nums=False, 
+    def __init__(self, source, glove_path=None, mallet_path=None, tokenizer='wordpunct', vocab_size=5000,
+            embed='glove', min_token=5, stopwords=None, stem=False,
+            lower=True, max_len=100, include_nums=False,
             include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
             self = source.copy()
@@ -94,6 +90,8 @@ class Dataset:
             print("Exception:", e)
             return
         print("Loaded file with {} documents".format(len(self.data)))
+        self.mallet_path = mallet_path
+        self.glove_path = glove_path
         self.min_token = min_token
         self.embed_source = embed
         self.vocab_size = vocab_size
@@ -160,12 +158,12 @@ class Dataset:
             saved_embedding_path=None):
         if not hasattr(self, "vocab"):
             self.__learn_vocab(column)
-        load_path = GLOVE if embedding_type == 'glove' else WORD2VEC
+        load_path = self.glove_path if embedding_type == 'glove' else WORD2VEC
         if saved_embedding_path is not None:
             print("Load from file")
         elif embedding_path is not None:
             load_path = embedding_path
-        
+
         if embedding_type == 'glove':
             self.embedding, self.embed_dim = self.__read_glove(load_path)
         else:
@@ -215,6 +213,10 @@ class Dataset:
             self.lda_max_iter = kwargs["lda_max_iter"]
         if "dictionary" in kwargs:
             self.dictionary = kwargs["dictionary"]
+        if "mallet_path" in kwargs:
+            self.mallet_path = kwargs['mallet_path']
+        if "glove_path" in kwargs:
+            self.glove_path = kwargs['glove_path']
 
     def __learn_vocab(self, column):
         vocab = dict()
@@ -232,7 +234,7 @@ class Dataset:
         types.append("<UNK>")
         self.vocab = types
         self.mapping = {word: idx for idx, word in enumerate(self.vocab)}
-        
+
     def __good_doc(self, doc):
         if len(self.tokenizer(doc)) < self.min_token:
             return False
@@ -339,7 +341,7 @@ class Dataset:
 
         if idx is None:
             idx = [i for i in range(self.num_sequences)]
-        
+
         for (s, e) in self.__batch_indices(len(idx), batch_size):
             for var_name in var_dict:
                 if var_name == 'word_inputs':
@@ -427,7 +429,7 @@ class Dataset:
             docs, id2word = self.__bag_of_words[column]
         else:
             docs, id2word = self.__get_bag_of_words(column)
-        model = LdaMallet(mallet_path=MALLET_PATH,
+        model = LdaMallet(mallet_path=self.mallet_path,
                           id2word=id2word,
                           prefix=tmp_dir,
                           num_topics=self.num_topics,
@@ -469,7 +471,7 @@ class Dataset:
                     self.vocab.append(w)
 
         if embed == 'glove':
-            embeddings, _ = self.__read_glove(GLOVE)
+            embeddings, _ = self.__read_glove(self.glove_path)
         else:
             raise ValueError("Glove only embedding supported")
             return
@@ -504,7 +506,7 @@ class Dataset:
             return np.zeros(embeddings.shape[1])
         if agg == 'mean':
             return np.array(embedded).mean(axis=0)
-        else: 
+        else:
             raise ValueError("Aggregation given ({}) not supported")
             return
 
@@ -516,7 +518,7 @@ class Dataset:
             raise ValueError("Could not load glove from {}".format(path))
             return
         if path.endswith('.gz'):
-            f = gzip.open(path, 'rb') 
+            f = gzip.open(path, 'rb')
         else:
             f = open(path, 'r')
 
@@ -541,4 +543,3 @@ class Dataset:
             return
         np.save(os.path.join(dir_, "embedding.npy"), self.embedding)
         write_file(self.mapping, os.path.join(dir_, "vocab.json"))
-
