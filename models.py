@@ -35,8 +35,8 @@ class Model(ABC):
     def set_params(self):
         pass
 
-    def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy', 
-            model_dir=None):  
+    def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy',
+            model_dir=None):
         self.cv_model_paths = dict()
         if model_dir is None:
             model_dir = os.path.join(tempfile.gettempdir(), "tf_cv_models")
@@ -60,7 +60,7 @@ class Model(ABC):
             model_path = os.path.join(model_dir, str(i), "cv_model")
             self.cv_model_paths[i] = model_path
 
-            self.train(data, num_epochs=num_epochs, indices=train_idx.tolist(), 
+            self.train(data, num_epochs=num_epochs, indices=train_idx.tolist(),
                     model_path=model_path)
             y = self.predict(data, indices=test_idx.tolist(),
                     model_path=model_path)
@@ -76,7 +76,7 @@ class Model(ABC):
         return CV_Results(results)
         # param grid TODO
 
-    def evaluate(self, predictions, labels, num_classes, 
+    def evaluate(self, predictions, labels, num_classes,
             metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
         stats = list()
         for key in predictions:
@@ -102,7 +102,7 @@ class Model(ABC):
             stats.append(stat)
         return stats
 
-    def predict(self, data, model_path, indices=None, batch_size=256, 
+    def predict(self, data, model_path, indices=None, batch_size=256,
             retrieve=list()):
 
         if model_path is None:
@@ -133,8 +133,8 @@ class Model(ABC):
                         outputs = [o[:l] for o, l in zip(outputs, lens)]
                     predictions[var_name] += outputs
         return predictions
-                        
-    def train(self, data, num_epochs=30, batch_size=256, indices=None, 
+
+    def train(self, data, num_epochs=30, batch_size=256, indices=None,
             model_path=None):
         saver = tf.train.Saver()
         with tf.Session() as self.sess:
@@ -144,10 +144,10 @@ class Model(ABC):
             for epoch in range(num_epochs):
                 epoch_loss = 0.0
                 num_batches = 0
-                for i, feed in enumerate(data.batches(self.vars, 
-                    batch_size, test=False, keep_ratio=self.rnn_dropout, 
+                for i, feed in enumerate(data.batches(self.vars,
+                    batch_size, test=False, keep_ratio=self.rnn_dropout,
                     idx=indices)):
-                    _, loss_val = self.sess.run([self.vars["training_op"], 
+                    _, loss_val = self.sess.run([self.vars["training_op"],
                         self.vars["joint_loss"]], feed_dict=feed)
                     epoch_loss += loss_val
                     num_batches += 1
@@ -159,7 +159,7 @@ class Model(ABC):
 class RNN(Model):
     def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
             rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
-            learning_rate=0.001, rnn_pooling='last', 
+            learning_rate=0.001, rnn_pooling='last',
             embedding_source='glove', random_state=None):
         Model.__init__(self, optimizer=optimizer,
                 embedding_source=embedding_source)
@@ -230,7 +230,7 @@ class RNN(Model):
                 data.encode_inputs(source)
             else:
                 raise ValueError("Could not parse {}".format(source))
-                
+
     def build(self, data):
         self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
                 name="SequenceLength")
@@ -238,13 +238,13 @@ class RNN(Model):
             self.max_seq], name="RNNInput")
 
         W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]),                      trainable=False, name="Embed")
-        self.vars["Embedding"] = tf.nn.embedding_lookup(W, 
+        self.vars["Embedding"] = tf.nn.embedding_lookup(W,
                 self.vars["word_inputs"])
-        self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32, 
+        self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32,
                 shape=[len(data.vocab), data.embed_dim])
         self.vars["EmbeddingInit"] = W.assign(self.vars["EmbeddingPlaceholder"])
         self.vars["states"] = self.__build_rnn(self.vars["Embedding"],
-                self.hidden_size, self.cell_type, self.bi, 
+                self.hidden_size, self.cell_type, self.bi,
                 self.vars["sequence_length"])
 
         if self.rnn_dropout is not None:
@@ -262,7 +262,7 @@ class RNN(Model):
             logits = tf.layers.dense(self.vars["hidden_states"], n_outputs)
             weight = tf.gather(self.vars["weights-{}".format(target)],
                                self.vars["target-{}".format(target)])
-            xentropy = cross_ent(labels=self.vars["target-{}".format(target)], 
+            xentropy = cross_ent(labels=self.vars["target-{}".format(target)],
                     logits=logits, weights=weight)
             self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
             self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
@@ -329,7 +329,7 @@ class RNN(Model):
             return tf.reduce_max(hidden_states, reduction_indices=[1])
         elif self.rnn_pooling == 'mean':
             return tf.reduce_mean(hidden_states, axis=1)
-            
+
     def __attention(self, inputs, att_size):
         hidden_size = inputs.shape[2].value
         w_omega = tf.Variable(tf.random_normal([hidden_size, att_size],
@@ -362,7 +362,7 @@ class SVM:
         self.random_state = random_state
 
         self.__parse_formula(formula, data)
-                       
+
         #BasePredictor.__init__(self)
         #self.n_classes = n_classes
             #self.param_grid = {"class_weight": ['balanced'],
@@ -441,19 +441,19 @@ class SVM:
         X = np.concatenate(inputs, axis=1)
         return X
 
-    def CV(self, data, num_epochs, num_folds=10, 
+    def CV(self, data, num_folds=10, 
             stratified=True, metric="accuracy"):
         """
         evaluate between parameter sets based on 'metric' parameter
         """
         if metric not in ["accuracy", "f1", "precision", "recall", "kappa"]:
             raise ValueError("Not a valid metric for CV: {}".format(metric))
-        
+
         X = self.__get_X(data)
         y, _ = data.get_labels(idx=None)
         target = list(data.targets.keys())[0]
         print("TARGET: {}".format(target))
-        skf = StratifiedKFold(n_splits=num_folds, 
+        skf = StratifiedKFold(n_splits=num_folds,
                               shuffle=True,
                               random_state=self.random_state)
         grid_search_results = list()
@@ -537,14 +537,14 @@ class SVM:
         self.best_score = (metric, best_score)
         self.best_params = best_params
         return best_score, best_params, metric
-    
+
 
 class LM:
     """
     Class LM: implements a linear model with a variety of regularization options, including RIDGE, LASSO, and ElasticNet
     """
     def __init__(self, formula, data, alpha=0.0,
-            l1_ratio=0.5, max_iter=1000, tol=0.001, 
+            l1_ratio=0.5, max_iter=1000, tol=0.001,
             random_state=None):
 
         self.alpha = alpha
@@ -626,17 +626,17 @@ class LM:
         return X
 
     def CV(self, data, num_folds=10, metric="r2", random_state=None):
-        
+
         if random_state is not None:
             self.random_state = random_state
         X = self.__get_X(data)
         y, _ = data.get_labels(idx=None)
-        folds = KFold(n_splits=num_folds, 
+        folds = KFold(n_splits=num_folds,
                               shuffle=True,
                               random_state=self.random_state)
         scores = list()
         """
-        TODO (Anirudh): modify metrics to include accuracy, precision, recall, 
+        TODO (Anirudh): modify metrics to include accuracy, precision, recall,
             and f1 for all folds (train and test)
             - record as much info as possible and store internally
             - store in self.cv_scores
