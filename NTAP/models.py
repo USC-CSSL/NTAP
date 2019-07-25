@@ -23,10 +23,10 @@ import tensorflow as tf
 from tensorflow.losses import sparse_softmax_cross_entropy as cross_ent
 
 class Model(ABC):
-    def __init__(self, optimizer, embedding_source):
+    def __init__(self, optimizer, embedding_source = 'glove'):
         super().__init__()
         self.optimizer = optimizer
-        self.embedding_source = 'glove'
+        self.embedding_source = embedding_source
 
     @abstractmethod
     def build(self):
@@ -232,12 +232,13 @@ class RNN(Model):
                 raise ValueError("Could not parse {}".format(source))
 
     def build(self, data):
+        tf.reset_default_graph()
         self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
                 name="SequenceLength")
         self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
             self.max_seq], name="RNNInput")
 
-        W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]),                      trainable=False, name="Embed")
+        W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]), trainable=False, name="Embed")
         self.vars["Embedding"] = tf.nn.embedding_lookup(W,
                 self.vars["word_inputs"])
         self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32,
@@ -441,7 +442,7 @@ class SVM:
         X = np.concatenate(inputs, axis=1)
         return X
 
-    def CV(self, data, num_folds=10, 
+    def CV(self, data, num_folds=10,
             stratified=True, metric="accuracy"):
         """
         evaluate between parameter sets based on 'metric' parameter
