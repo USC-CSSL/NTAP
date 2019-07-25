@@ -6,7 +6,7 @@ from sklearn.linear_model import ElasticNet, LinearRegression
 
 # CV Results
 
-from NTAP.helpers import CV_Results
+from ntap.helpers import CV_Results
 
 import tempfile
 import numpy as np
