@@ -2,8 +2,8 @@ import sys
 
 sys.path.append('../')
 
-from NTAP.data import Dataset
-from NTAP.models import RNN
+from ntap.data import Dataset
+from ntap.models import RNN
 
 
 def initialize_dataset():
