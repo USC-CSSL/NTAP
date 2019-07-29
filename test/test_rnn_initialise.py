@@ -1,15 +1,15 @@
 import sys
 
-sys.path.append('../')
+sys.path.append('.')
 
 from ntap.data import Dataset
 from ntap.models import RNN
 
 
 def initialize_dataset():
-    data = Dataset("/home/anirudh/cssl/data/alm_data.pkl")
+    data = Dataset("/var/lib/jenkins/workspace/ntap_data/data_alm.pkl")
     data.clean("text")
-    data.set_params(vocab_size=5000, mallet_path = "/home/anirudh/cssl/data/mallet-2.0.8/bin/mallet", glove_path = "/home/anirudh/cssl/data/glove.6B/glove.6B.300d.txt")
+    data.set_params(vocab_size=5000, mallet_path = "/var/lib/jenkins/workspace/ntap_data/mallet-2.0.8/bin/mallet", glove_path = "/var/lib/jenkins/workspace/ntap_data/glove.6B/glove.6B.300d.txt")
     return data
 
 def initialise_rnn_1(data):
