@@ -22,7 +22,7 @@ setuptools.setup(
      'jmespath==0.9.3', 'mock==2.0.0', 'pbr==5.1.1', 'protobuf==3.6.1', 'python-dateutil==2.7.5', 'pytz==2018.7', \
      'requests==2.20.1', 's3transfer==0.1.13', 'scikit-learn==0.20.1', 'scipy==1.1.0', 'singledispatch==3.4.0.3', \
      'six==1.11.0', 'sklearn==0.0', 'sklearn-pandas==1.8.0', 'smart-open==1.7.1', 'urllib3==1.24.1', 'Werkzeug==0.14.1',\
-      'stanfordcorenlp', 'progressbar2','tensorboard==1.14.0'],
+      'stanfordcorenlp', 'progressbar2'],
     classifiers=[ 
         "Programming Language :: Python :: 3",
         'Programming Language :: Python :: 3.4',
