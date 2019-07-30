@@ -15,8 +15,8 @@ from abc import ABC, abstractmethod
 import os
 
 # disable tensorflow excessive warnings/logging
-from tensorflow.compat.v1 import logging
-logging.set_verbosity(logging.ERROR)
+#from tensorflow.compat.v1 import logging
+#logging.set_verbosity(logging.ERROR)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
 import tensorflow as tf
