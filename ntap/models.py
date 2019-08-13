@@ -20,7 +20,7 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
 import tensorflow as tf
-from tf.compat.v1.losses import sparse_softmax_cross_entropy as cross_ent
+from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy as cross_ent
 
 class Model(ABC):
     def __init__(self, optimizer, embedding_source = 'glove'):
