@@ -133,7 +133,23 @@ class Dataset:
         # TODO: catch exception where column is numeric (non-text) type
 
         self.__learn_vocab(column)
+        self.__encode(column)
 
+    def encode_with_vocab(self, column, external_data, level="word"):
+        if column not in self.data.columns:
+            raise ValueError("Given column is not in data: {}".format(column))
+        # TODO: catch exception where column is numeric (non-text) type
+
+        try:
+            self.vocab = external_data.vocab
+            self.mapping = external_data.mapping
+        except Exception:
+            raise ValueError("The external data is not encoded yet")
+
+        self.__encode(column)
+
+
+    def __encode(self, column):
         self.__truncate_count = 0
         self.__pad_count = 0
         self.__unk_count = 0
@@ -149,10 +165,12 @@ class Dataset:
         print("Encoded {} docs".format(len(tokenized)))
         print("{} tokens lost to truncation".format(self.__truncate_count))
         print("{} padding tokens added".format(self.__pad_count))
-        print("{:.3%} tokens covered by vocabulary of size {}".format((self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
+        print("{:.3%} tokens covered by vocabulary of size {}".format(
+            (self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
         self.sequence_data = np.array(tokenized)
         self.num_sequences = len(tokenized)
         self.sequence_lengths = np.array(self.sequence_lengths, dtype=np.int32)
+
 
     def load_embedding(self, column, embedding_type='glove', embedding_path=None,
             saved_embedding_path=None):

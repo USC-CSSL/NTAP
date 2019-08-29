@@ -213,9 +213,11 @@ base_model.set_params({"hidden"=[200, 50], lr=[0.01, 0.05]}) # enable grid searc
 base_results = base_model.CV()
 base_results.summary()
 
-# Train model and save. Predict for 6 specific instances and get alphas
+# Train model and save. 
 attention_lstm.train(data, model_path="./trained_model")
-predictions = attention_lstm.predict(data, model_path="./trained_model",
+# Generate preditions for a new dataset
+new_data = Dataset("./new_data.csv")
+predictions = attention_lstm.predict(new_data, data, column="text", model_path="./trained_model",
 							indices=[0,1,2,3,4,5], retrieve=["rnn_alphas"])
 for alphas in predictions["rnn_alphas"]:
 	print(alphas)  # prints list of floats, each the weight of a word in the ith document

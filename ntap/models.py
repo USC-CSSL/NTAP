@@ -102,9 +102,10 @@ class Model(ABC):
             stats.append(stat)
         return stats
 
-    def predict(self, data, model_path, indices=None, batch_size=256,
+    def predict(self, new_data, data, model_path, column, indices=None, batch_size=256,
             retrieve=list()):
 
+        new_data.encode_with_vocab(column, data)
         if model_path is None:
             raise ValueError("predict must be called with a valid model_path argument")
         fetch_vars = {v: self.vars[v] for v in self.vars if v.startswith("prediction-")}
@@ -121,7 +122,7 @@ class Model(ABC):
                 saver.restore(self.sess, model_path)
             except Exception as e:
                 print("{}; could not load saved model".format(e))
-            for i, feed in enumerate(data.batches(self.vars,
+            for i, feed in enumerate(new_data.batches(self.vars,
                 batch_size, idx=indices, test=True)):
                 prediction_vars = [v for k, v in fetch_vars]
                 output = self.sess.run(prediction_vars, feed_dict=feed)
