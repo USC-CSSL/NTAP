@@ -170,7 +170,7 @@ class RNN(Model):
         self.cell_type = cell[2:] if self.bi else cell
         self.rnn_dropout = rnn_dropout
         self.embedding_dropout = embedding_dropout
-        self.max_seq = data.max_len  # load from data OBJ
+        #self.max_seq = data.max_len  # load from data OBJ
         self.rnn_pooling = rnn_pooling
         self.random_state = random_state
         self.learning_rate = learning_rate
@@ -236,8 +236,8 @@ class RNN(Model):
         tf.reset_default_graph()
         self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
                 name="SequenceLength")
-        self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None,
-            self.max_seq], name="RNNInput")
+        self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None, None],
+                                                  name="RNNInput")
 
         W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]), trainable=False, name="Embed")
         self.vars["Embedding"] = tf.nn.embedding_lookup(W,

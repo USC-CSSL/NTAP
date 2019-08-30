@@ -79,7 +79,7 @@ def write_file(data, path):
 class Dataset:
     def __init__(self, source, glove_path=None, mallet_path=None, tokenizer='wordpunct', vocab_size=5000,
             embed='glove', min_token=5, stopwords=None, stem=False,
-            lower=True, max_len=100, include_nums=False,
+            lower=True, max_len=512, include_nums=False,
             include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
             self = source.copy()
@@ -162,9 +162,12 @@ class Dataset:
             tokens = self.__tokenize_doc(string)
             self.sequence_lengths.append(len(tokens))
             tokenized[i] = self.__encode_doc(tokens)
+
+        #self.max_len = max(self.sequence_lengths)
+
         print("Encoded {} docs".format(len(tokenized)))
         print("{} tokens lost to truncation".format(self.__truncate_count))
-        print("{} padding tokens added".format(self.__pad_count))
+        #print("{} padding tokens added".format(self.__pad_count))
         print("{:.3%} tokens covered by vocabulary of size {}".format(
             (self.__token_count - self.__unk_count) / self.__token_count, len(self.vocab)))
         self.sequence_data = np.array(tokenized)
@@ -280,7 +283,7 @@ class Dataset:
         self.__truncate_count += max(len(doc) - self.max_len, 0)
         unk_idx = self.mapping["<UNK>"]
         pad_idx = self.mapping["<PAD>"]
-        encoded = [pad_idx] * self.max_len
+        encoded = [pad_idx] * len(doc) #self.max_len
         self.__pad_count += max(0, self.max_len - len(doc))
         for i in range(min(self.max_len, len(doc))):  # tokenized
             encoded[i] = self.mapping[doc[i]] if doc[i] in self.mapping else unk_idx
@@ -363,7 +366,7 @@ class Dataset:
         for (s, e) in self.__batch_indices(len(idx), batch_size):
             for var_name in var_dict:
                 if var_name == 'word_inputs':
-                    feed_dict[var_dict[var_name]] = self.sequence_data[idx[s:e]]
+                    feed_dict[var_dict[var_name]] = self.__add_padding(self.sequence_data[idx[s:e]])
                 if var_name == 'sequence_length':
                     feed_dict[var_dict[var_name]] = self.sequence_lengths[idx[s:e]]
                 if test:
@@ -384,6 +387,14 @@ class Dataset:
                         raise ValueError("Keep Ratio for RNN Dropout not set")
                     feed_dict[var_dict[var_name]] = keep_ratio
             yield feed_dict
+
+    def __add_padding(self, batch):
+        pad_idx = self.mapping["<PAD>"]
+        _max_len = max(len(doc) for doc in batch)
+        _padded_batch = list()
+        for doc in batch:
+            _padded_batch.append(np.append(doc, np.array([pad_idx for i in range(_max_len - len(doc))])))
+        return np.array(_padded_batch)
 
     def get_labels(self, idx, var=None):
         if var is None:
