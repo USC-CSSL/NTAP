@@ -56,7 +56,7 @@ class Model(ABC):
 
         results = list()
         for i, (train_idx, test_idx) in enumerate(folder.split(X, y)):
-
+            print("Conducting Fold #", i + 1)
             model_path = os.path.join(model_dir, str(i), "cv_model")
             self.cv_model_paths[i] = model_path
 
@@ -102,10 +102,11 @@ class Model(ABC):
             stats.append(stat)
         return stats
 
-    def predict(self, new_data, data, model_path, column, indices=None, batch_size=256,
+    def predict(self, new_data, model_path, orig_data=None, column=None, indices=None, batch_size=256,
             retrieve=list()):
+        if orig_data:
+            new_data.encode_with_vocab(column, orig_data)
 
-        new_data.encode_with_vocab(column, data)
         if model_path is None:
             raise ValueError("predict must be called with a valid model_path argument")
         fetch_vars = {v: self.vars[v] for v in self.vars if v.startswith("prediction-")}
