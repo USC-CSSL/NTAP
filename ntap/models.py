@@ -20,7 +20,6 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
 import tensorflow as tf
-from tensorflow.compat.v1.losses import sparse_softmax_cross_entropy as cross_ent
 
 class Model(ABC):
     def __init__(self, optimizer, embedding_source = 'glove'):
@@ -265,7 +264,8 @@ class RNN(Model):
             logits = tf.layers.dense(self.vars["hidden_states"], n_outputs)
             weight = tf.gather(self.vars["weights-{}".format(target)],
                                self.vars["target-{}".format(target)])
-            xentropy = cross_ent(labels=self.vars["target-{}".format(target)],
+            xentropy = tf.losses.sparse_softmax_cross_entropy\
+                (labels=self.vars["target-{}".format(target)],
                     logits=logits, weights=weight)
             self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
             self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
