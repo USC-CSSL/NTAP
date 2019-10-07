@@ -35,7 +35,7 @@ class Model(ABC):
         pass
 
     def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy',
-            model_dir=None):
+            model_dir=None, batch_size=256):
         self.cv_model_paths = dict()
         if model_dir is None:
             model_dir = os.path.join(tempfile.gettempdir(), "tf_cv_models")
@@ -59,8 +59,8 @@ class Model(ABC):
             model_path = os.path.join(model_dir, str(i), "cv_model")
             self.cv_model_paths[i] = model_path
 
-            self.train(data, num_epochs=num_epochs, indices=train_idx.tolist(),
-                    model_path=model_path)
+            self.train(data, num_epochs=num_epochs, train_indices=train_idx.tolist(),
+                    test_indices=test_idx.tolist(), model_path=model_path, batch_size=batch_size)
             y = self.predict(data, indices=test_idx.tolist(),
                     model_path=model_path)
             labels = dict()
@@ -135,24 +135,37 @@ class Model(ABC):
                     predictions[var_name] += outputs
         return predictions
 
-    def train(self, data, num_epochs=30, batch_size=256, indices=None,
-            model_path=None):
+    def train(self, data, num_epochs=30, batch_size=256, train_indices=None,
+              test_indices=None, model_path=None):
         saver = tf.train.Saver()
         with tf.Session() as self.sess:
             self.sess.run(self.init)
             _ = self.sess.run(self.vars["EmbeddingInit"],
                 feed_dict={self.vars["EmbeddingPlaceholder"]: data.embedding})
             for epoch in range(num_epochs):
-                epoch_loss = 0.0
-                num_batches = 0
+                epoch_loss, train_accuracy, test_accuracy = 0.0, 0.0, 0.0
+                num_batches, test_batches = 0, 0
                 for i, feed in enumerate(data.batches(self.vars,
                     batch_size, test=False, keep_ratio=self.rnn_dropout,
-                    idx=indices)):
-                    _, loss_val = self.sess.run([self.vars["training_op"],
-                        self.vars["joint_loss"]], feed_dict=feed)
+                    idx=train_indices)):
+                    _, loss_val, acc = self.sess.run([self.vars["training_op"],
+                        self.vars["joint_loss"], self.vars["joint_accuracy"]],
+                                                     feed_dict=feed)
+                    pred = self.sess.run(self.vars["prediction-hate"], feed_dict=feed)
+                    tar = self.sess.run(self.vars["target-hate"], feed_dict=feed)
                     epoch_loss += loss_val
+                    train_accuracy += acc
                     num_batches += 1
-                print("Loss (Epoch {}): {:.3}".format(epoch, epoch_loss/num_batches))
+                for i, feed in enumerate(data.batches(self.vars,
+                    batch_size, test=False, keep_ratio=self.rnn_dropout,
+                    idx=test_indices)):
+                    acc = self.sess.run(self.vars["joint_accuracy"], feed_dict=feed)
+                    test_accuracy += acc
+                    test_batches += 1
+
+                print("Epoch {}: Loss = {:.3}, Train Accuracy = {:.3}, Test Accuracy = {:.3}"
+                      .format(epoch, epoch_loss/num_batches, train_accuracy/num_batches,
+                              test_accuracy/test_batches))
             if model_path is not None:
                 saver.save(self.sess, model_path)
         return
@@ -257,7 +270,7 @@ class RNN(Model):
 
         for target in data.targets:
             n_outputs = len(data.target_names[target])
-            self.vars["target-{}".format(target)] = tf.placeholder(tf.int32,
+            self.vars["target-{}".format(target)] = tf.placeholder(tf.int64,
                     shape=[None], name="target-{}".format(target))
             self.vars["weights-{}".format(target)] = tf.placeholder(tf.float32,
                     shape=[n_outputs], name="weights-{}".format(target))
@@ -269,8 +282,12 @@ class RNN(Model):
                     logits=logits, weights=weight)
             self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
             self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
+            self.vars["accuracy-{}".format(target)] = tf.reduce_mean(
+                tf.cast(tf.equal(self.vars["prediction-{}".format(target)],
+                                 self.vars["target-{}".format(target)]), tf.float32))
 
         self.vars["joint_loss"] = sum([self.vars[name] for name in self.vars if name.startswith("loss")])
+        self.vars["joint_accuracy"] = sum([self.vars[name] for name in self.vars if name.startswith("accuracy")])
         if self.optimizer == 'adam':
             opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
         elif self.optimizer == 'adagrad':
@@ -283,6 +300,7 @@ class RNN(Model):
             raise ValueError("Invalid optimizer specified")
         self.vars["training_op"] = opt.minimize(loss=self.vars["joint_loss"])
         self.init = tf.global_variables_initializer()
+
 
     def list_model_vars(self):
         # return list of variable names that can be retrieved during inference
