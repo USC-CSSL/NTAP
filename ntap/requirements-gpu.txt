@@ -17,7 +17,7 @@ html5lib==0.9999999
 idna==2.7
 jmespath==0.9.3
 Markdown==3.0.1
-nltk==3.4
+nltk==3.4.5
 numpy==1.15.4
 pandas==0.23.4
 protobuf==3.6.1
