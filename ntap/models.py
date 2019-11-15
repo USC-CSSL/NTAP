@@ -151,8 +151,6 @@ class Model(ABC):
                     _, loss_val, acc = self.sess.run([self.vars["training_op"],
                         self.vars["joint_loss"], self.vars["joint_accuracy"]],
                                                      feed_dict=feed)
-                    pred = self.sess.run(self.vars["prediction-hate"], feed_dict=feed)
-                    tar = self.sess.run(self.vars["target-hate"], feed_dict=feed)
                     epoch_loss += loss_val
                     train_accuracy += acc
                     num_batches += 1
