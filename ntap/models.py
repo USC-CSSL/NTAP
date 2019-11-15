@@ -251,10 +251,10 @@ class RNN(Model):
                 name="SequenceLength")
         self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None, None],
                                                   name="RNNInput")
-
+        self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
         W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]), trainable=False, name="Embed")
-        self.vars["Embedding"] = tf.nn.embedding_lookup(W,
-                self.vars["word_inputs"])
+        self.vars["Embedding"] = tf.layers.dropout(tf.nn.embedding_lookup(W,
+                self.vars["word_inputs"]), rate=self.vars["keep_ratio"], name="EmbDropout")
         self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32,
                 shape=[len(data.vocab), data.embed_dim])
         self.vars["EmbeddingInit"] = W.assign(self.vars["EmbeddingPlaceholder"])
@@ -263,8 +263,9 @@ class RNN(Model):
                 self.vars["sequence_length"])
 
         if self.rnn_dropout is not None:
-            self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
-            self.vars["hidden_states"] = tf.layers.dropout(self.vars["states"], rate=self.vars["keep_ratio"], name="RNNDropout")
+            self.vars["hidden_states"] = tf.layers.dropout(self.vars["states"],
+                                                           rate=self.vars["keep_ratio"],
+                                                           name="RNNDropout")
         else:
             self.vars["hidden_states"] = self.vars["states"]
 
@@ -326,10 +327,9 @@ class RNN(Model):
         elif cell_type == 'GRU':
             if bi:
                 fw_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
-                          name="ForwardRNNCell", dtype=tf.float32)
+                          name="ForwardRNNCell")
                 bw_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
-                          reuse=False, name="BackwardRNNCell",
-                          dtype=tf.float32)
+                          reuse=False, name="BackwardRNNCell")
             else:
                 cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
                           name="BackwardRNNCell", dtype=tf.float32)
