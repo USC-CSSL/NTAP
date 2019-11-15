@@ -286,7 +286,8 @@ class RNN(Model):
                                  self.vars["target-{}".format(target)]), tf.float32))
 
         self.vars["joint_loss"] = sum([self.vars[name] for name in self.vars if name.startswith("loss")])
-        self.vars["joint_accuracy"] = sum([self.vars[name] for name in self.vars if name.startswith("accuracy")])
+        self.vars["joint_accuracy"] = sum([self.vars[name] for name in self.vars if name.startswith("accuracy")]) \
+                                      / len([self.vars[name] for name in self.vars if name.startswith("accuracy")])
         if self.optimizer == 'adam':
             opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
         elif self.optimizer == 'adagrad':
