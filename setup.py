@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ntap",
-    version="1.0.6",
+    version="1.0.12",
     author="Praveen Patil",
     author_email="pspatil@usc.edu",
     description="NTAP - CSSL",
