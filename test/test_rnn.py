@@ -47,8 +47,8 @@ def predict(model, new_data, data, task):
 
 if __name__== '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", "a .csv, .tsv or .pkl data file")
-    parser.add_argument("--task", "task can be 'hate', 'moral' or 'bind'")
+    parser.add_argument("--data")
+    parser.add_argument("--task")
     args = parser.parse_args()
 
     data = initialize_dataset(args.data)
