@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     features = ["wordcount"]  # include lda, ddr, liwc later
     targets = ["hate", "hd", "cv"]
-
+    dataset.set_params(dictionary=dictionary_path)
     for feat in features:
         for target in targets:
             filename = target + "_" + feat + ".csv"

@@ -440,6 +440,10 @@ class SVM:
             elif source.startswith('ddr('):
                 text_col = source.replace('ddr(', '').strip(')')
                 data.ddr(text_col, dictionary=data.dictionary)
+
+            elif source.startswith('wordcount('):
+                text_col = source.replace('wordcount(', '').strip(')')
+                data.wordcount(text_col, dictionary=data.dictionary)
             else:
                 raise ValueError("Could not parse {}".format(source))
 
