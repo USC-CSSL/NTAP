@@ -473,6 +473,80 @@ class Dataset:
         self.feature_names["lda"] = model.get_topics()
         return
 
+    def wordcount(self, column, dictionary, **kwargs):
+
+        def count_sentence(sentence, dictionary_re, doc_feat):
+            vector = []
+            for cat in sorted(dictionary_re.keys()):
+                count = 0
+                for reg in dictionary_re[cat]:
+                    x = len(re.findall(reg, sentence))
+                    if x > 0:
+                        count += x
+                if len(sentence.split()) == 0:
+                    doc_feat[cat] = 0
+                    vector.append(0)
+                else:
+                    doc_feat[cat] = float(count) / float(len(sentence.split()))
+                    vector.append(float(count) / float(len(sentence.split())))
+            return vector
+
+        if isinstance(dictionary, str):  # file name
+            try:
+                dictionary, name = open_dictionary(dictionary)
+            except ValueError as e:
+                print(e)
+                return
+
+        elif isinstance(dictionary, dict):  # {category: [w1, w2...]}
+            try:
+                sort_dictionary = sorted(dictionary.items(), key=lambda x: x[0])
+                dictionary, name = zip(*sort_dictionary)
+            except Exception:
+                print("Couldn't unpack dictionary")
+                return
+
+        self.dictionary = dict()
+        for i in range(len(dictionary)):
+            self.dictionary[dictionary[i]] = name[i]
+
+        if "vocab_size" in kwargs:
+            self.__learn_vocab(column, vocab_size=kwargs["vocab_size"])  # TODO
+        elif not hasattr(self, "mapping"):
+            self.__learn_vocab(column)
+        for word_list in name:
+            for w in word_list:
+                if w not in self.mapping:
+                    self.mapping[w] = len(self.mapping)
+                    self.vocab.append(w)
+
+        dictionary_re = dict()
+        for cat, words in self.dictionary.items():
+            dictionary_re[cat] = list()
+            for word in words:
+                word = word.replace(")", "\\)").replace("(", "\\(").replace(":", "\\:").replace(";", "\\;").replace(
+                    "/",
+                    "\\/")
+                if len(word) == 0:
+                    continue
+                if word[-1] == "*":
+                    dictionary_re[cat].append(re.compile("(\\b" + word[:-1] + "+\w*\\b)"))
+                else:
+                    dictionary_re[cat].append(re.compile("(\\b" + word + "\\b)"))
+
+
+        features = list()
+        for doc in self.data[column].values.tolist():
+            doc_feat = dict()
+            e = count_sentence(doc, dictionary_re, doc_feat)
+            features.append(doc_feat)
+
+
+        features = pd.DataFrame(features)
+        features, categories = features.values, list(features.columns)
+        self.features["wordcount"] = features  # type numpy array
+        self.feature_names["wordcount"] = categories  # list of strings
+
     def ddr(self, column, dictionary, embed='glove', **kwargs):
         # dictionary can b
         if isinstance(dictionary, str):  # file name
@@ -507,6 +581,7 @@ class Dataset:
 
         dictionary_centers = {cat: self.__embedding_of_doc(words, embeddings) \
                 for cat, words in zip(dictionary, name)}
+
         features = list()
         for doc in self.data[column].values.tolist():
             e = self.__embedding_of_doc(doc, embeddings=embeddings)
