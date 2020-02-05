@@ -396,7 +396,7 @@ class Dataset:
             _padded_batch.append(np.append(doc, np.array([pad_idx for i in range(_max_len - len(doc))])))
         return np.array(_padded_batch)
 
-    def get_labels(self, idx, var=None):
+    def get_labels(self, idx=None, var=None):
         if var is None:
             var = list(self.targets.keys())[0]
         if var not in self.targets:
