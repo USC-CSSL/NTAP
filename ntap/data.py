@@ -83,12 +83,15 @@ class Dataset:
             include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
             self = source.copy()
-            return
-        try:
-            self.data = read_file(source)
-        except Exception as e:
-            print("Exception:", e)
-            return
+        elif isinstance(source, pd.DataFrame):
+            self.data = source
+        else:
+            try:
+                self.data = read_file(source)
+            except Exception as e:
+                print("Exception:", e)
+                return
+
         print("Loaded file with {} documents".format(len(self.data)))
         self.mallet_path = mallet_path
         self.glove_path = glove_path
