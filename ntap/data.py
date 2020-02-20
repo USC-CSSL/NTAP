@@ -16,6 +16,8 @@ from gensim.models import TfidfModel
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import copy, inspect
 from scipy.spatial.distance import cosine
+import lda
+from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
 
 stem = SnowballStemmer("english").stem
 
@@ -78,7 +80,7 @@ def write_file(data, path):
 
 class Dataset:
     def __init__(self, source, glove_path=None, mallet_path=None, tokenizer='wordpunct', vocab_size=5000,
-            embed='glove', min_token=5, stopwords=None, stem=False,
+            embed='glove', min_token=5, stopwords=None, stem=False, max_df=1.0,
             lower=True, max_len=512, include_nums=False,
             include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
@@ -97,6 +99,7 @@ class Dataset:
         self.vocab_size = vocab_size
         self.tokenizer = tokenizers[tokenizer]
         self.lower = lower
+        self.max_df = max_df
         if isinstance(stopwords, list) or isinstance(stopwords, set):
             self.stopwords = set(stopwords)
         elif stopwords == 'nltk':
@@ -241,16 +244,9 @@ class Dataset:
 
     def __learn_vocab(self, column):
         vocab = dict()
-        for doc in self.data[column].values:
-            for word in self.__tokenize_doc(doc):
-                if word not in vocab:
-                    vocab[word] = 1
-                else:
-                    vocab[word] += 1
-        top = list(sorted(vocab.items(), key=lambda x: x[1],
-            reverse=True))[:self.vocab_size]
-        types, counts = zip(*top)
-        types = list(types)
+        vectorizer = CountVectorizer(tokenizer=self.__tokenize_doc, max_df=self.max_df, max_features=self.vocab_size)
+        vectorizer.fit(self.data[column].values)
+        types = vectorizer.get_feature_names()
         types.append("<PAD>")
         types.append("<UNK>")
         self.vocab = types
@@ -406,71 +402,35 @@ class Dataset:
             return self.targets[var], num_classes
         return self.targets[var][idx], num_classes
 
-    def __get_bag_of_words(self, column):
+    def __get_bag_of_words(self, column, do_tfidf=False):
         if not hasattr(self, "vocab"):
             self.__learn_vocab(column)
-        encoded = list()
-        unk_idx = self.mapping["<UNK>"]
-
-        for doc in self.data[column].values:
-            encoded.append(list())
-            for token in self.__tokenize_doc(doc):
-                id_ = self.mapping[token] if token in self.mapping else None
-                if id_ is not None:
-                    encoded[-1].append(id_)
-        docs = [[(t, doc.count(t)) for t in set(doc)] for doc in encoded]
-        id2word = {v:k for k,v in self.mapping.items()}
-        return docs, id2word
+        vec_model = CountVectorizer if not do_tfidf else TfidfVectorizer
+        bow_vectorizer = vec_model(vocabulary=self.vocab)
+        docs = bow_vectorizer.fit_transform(self.data[column].values)
+        return docs
 
     def tfidf(self, column):
-        self.features["tfidf"] = list()
-        if len(self.__bag_of_words) != 0:
-            docs, id2word = self.__bag_of_words[column]
-        else:
-            docs, id2word = self.__get_bag_of_words(column)
-        _, words = zip(*id2word.items())
-        get_index = {w:i for i, w in enumerate(words)}
+        self.feature_names["tfidf"] = self.vocab
+        docs = self.__get_bag_of_words(column, do_tfidf=True)
+        self.features["tfidf"] = docs.todense()
 
-        self.feature_names["tfidf"] = words
-        transformer = TfidfModel(docs)
-
-        for d in docs:
-            sample = transformer[d]
-            _doc = np.zeros((len(words)))
-            for id_, weight in sample:
-                _doc[get_index[id2word[id_]]] = weight
-            self.features["tfidf"].append(_doc)
-        self.features["tfidf"] = np.array(self.features["tfidf"])
-
-    def lda(self, column, method='mallet', save_model=None, load_model=None):
-        if method == 'mallet':
-            print("Mallet LDA")
-        else:
-            raise ValueError("Invalid paramater for LDA.method: {}".format(method))
-        tmp_dir = os.path.join(tempfile.gettempdir(), "mallet_lda/")
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
+    def lda(self, column, save_model=None, load_model=None):
+        #tmp_dir = os.path.join(tempfile.gettempdir(), "mallet_lda/")
+        #if not os.path.exists(tmp_dir):
+        #    os.makedirs(tmp_dir)
 
         if not hasattr(self, "vocab"):
             self.__learn_vocab(column)
 
-        if len(self.__bag_of_words) != 0:
-            docs, id2word = self.__bag_of_words[column]
-        else:
-            docs, id2word = self.__get_bag_of_words(column)
-        model = LdaMallet(mallet_path=self.mallet_path,
-                          id2word=id2word,
-                          prefix=tmp_dir,
-                          num_topics=self.num_topics,
-                          iterations=self.lda_max_iter,
-                          optimize_interval=20)
-        model.train(docs)
-        doc_topics = list()
-        for doc_vec in model.read_doctopics(model.fdoctopics()):
-            topic_ids, vecs = zip(*doc_vec)
-            doc_topics.append(np.array(vecs))
-        self.features["lda"] = np.array(doc_topics)
-        self.feature_names["lda"] = model.get_topics()
+        docs = self.__get_bag_of_words(column)
+
+        model = lda.LDA(n_topics=self.num_topics,
+                          n_iter=self.lda_max_iter)
+        X = model.fit_transform(docs)
+        self.features["lda"] = X
+        word_weights = model.topic_word_.T  # (|Vocab|, |num_topics|) np array
+        #self.feature_names["lda"] = model.get_topics()
         return
 
     def ddr(self, column, dictionary, embed='glove', **kwargs):
