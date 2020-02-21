@@ -5,7 +5,8 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.linear_model import ElasticNet, LinearRegression
 
 # CV Results
-
+import sys
+sys.path.append('.')
 from ntap.helpers import CV_Results
 
 import tempfile
@@ -167,6 +168,8 @@ class Model(ABC):
             if model_path is not None:
                 saver.save(self.sess, model_path)
         return
+
+
 
 class RNN(Model):
     def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
@@ -367,7 +370,7 @@ class RNN(Model):
         return output
 
 
-class SVM:
+class SVM():
     def __init__(self, formula, data, C=1.0, class_weight=None, dual=False,
             penalty='l2', loss='squared_hinge', tol=0.0001, max_iter=1000,
             random_state=None):
@@ -502,6 +505,7 @@ class SVM:
             if score > best_score:
                 best_score = score
                 best_index = len(grid_search_results)
+                self.best_params = params
             grid_search_results.append(cv_scores)
         return CV_Results([grid_search_results[best_index]["stats"]])
 
@@ -529,13 +533,13 @@ class SVM:
 
     def train(self, data, params=None):
         if params is not None:
-            if hasattr(self, "best_params"):
-                params = self.best_params
             self.trained = LinearSVC(**params._asdict())
         else:
+            if hasattr(self, "best_params"):
+                params = self.best_params
             self.trained = LinearSVC()
-
-        X, y = self.__get_X_y(data)
+        X = self.__get_X(data)
+        y, _ = data.get_labels()
         self.trained.fit(X, y)
 
     def predict(self, data):
@@ -557,6 +561,18 @@ class SVM:
         self.best_score = (metric, best_score)
         self.best_params = best_params
         return best_score, best_params, metric
+
+
+    def __get_X_y(self, data):
+        inputs = list()
+        self.names = list()
+        for feat in data.features:
+            inputs.append(data.features[feat])
+            for name in data.feature_names[feat]:
+                self.names.append("{}_{}".format(feat, name))
+        X = np.concatenate(inputs, axis=1)
+        y = data.get_labels()
+        return X, y
 
 
 class LM:
@@ -628,15 +644,6 @@ class LM:
             param_tuple = Paramset(alpha=p[0], l1_ratio=p[1], tol=p[2], max_iter=p[3])
             yield param_tuple
 
-    def __get_X_y(self, data):
-        inputs = list()
-        self.names = list()
-        for feat in data.features:
-            inputs.append(data.features[feat])
-            for name in data.feature_names[feat]:
-                self.names.append("{}_{}".format(feat, name))
-        X = np.concatenate(inputs, axis=1)
-        return X
 
     def __get_X(self, data):
         inputs = list()
