@@ -53,12 +53,20 @@ class Model(ABC):
 
     @abstractmethod
     def build(self):
-        """
+        """Builds a model.
+
+        Abstract method that must be implemented by inheriting classes.
+        Builds and intializes a model, depending on model requirements.
         """
         pass
 
     @abstractmethod
     def set_params(self):
+        """Sets the parameters of class.
+
+        Abstract method that must be implemented by inheriting classes.
+        Sets the parameters of the inheriting class.
+        """
         pass
 
     def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy',
@@ -71,7 +79,7 @@ class Model(ABC):
         Args:
             data: A Dataset object.
             num_folds: The number of cross-validation folds to be run.
-            num_epochs: The number of epochs
+            num_epochs: The number of epochs.
             comp: A comparison metric.
             model_dir: The path to where the model is saved.
             batch_size: The number of batches.
@@ -122,6 +130,22 @@ class Model(ABC):
 
     def evaluate(self, predictions, labels, num_classes,
             metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
+        """Evaluates predicted and true labels.
+
+        Evaluate function that compares predicted labels to true
+        labels based on the given metrics.
+
+        Args:
+            predictions: Dict of targets and predictions {target:[prediction]}.
+            labels: Dict of targets and true labels {target:[true labels]}.
+            num_classes: Dict of targets and num classes for each
+                {target:num_classes}.
+            metrics: A list of strings indicating measurement metric.
+
+        Returns:
+           List of scores for each target, based on the metrics
+           specified in the metrics argument.
+        """
         stats = list()
         for key in predictions:
             if not key.startswith("prediction-"):
@@ -148,6 +172,26 @@ class Model(ABC):
 
     def predict(self, new_data, model_path, orig_data=None,
             column=None, indices=None, batch_size=256, retrieve=list()):
+        """Predicts labels for given target(s) of dataset.
+
+        Uses trained model to make predictions for each target on a given
+        dataset.
+
+        Args:
+            new_data: A Dataset object containing test data.
+            model_path: The path to saved model from training.
+            orig_data: Optional, will be used to add data
+                to new_data if provided.
+            column: A string indicating the column name from
+                orig_data to be added to new_data.
+            indices: An integer indicating where to batch data. (DOUBLE CHECK)
+            batch_size: An intiger indicating how many data points
+                each batch should contain.
+
+        Returns:
+            A dictionary where each key is a target and the corresponding
+            value is a list of predicted values.
+        """
         if orig_data:
             new_data.encode_with_vocab(column, orig_data)
 
@@ -185,6 +229,20 @@ class Model(ABC):
 
     def train(self, data, num_epochs=30, batch_size=256, train_indices=None,
               test_indices=None, model_path=None):
+        """Trains instance of Model.
+
+        Trains Model object on data and saves the model to model_path.
+
+        Args:
+            data: A Dataset object containing the data to be trained on.
+            num_epochs: An int indicating the number of epochs to be run.
+            batch_size: An int indicating the size of each batch.
+            train_indices: Optional list of ints that specify the
+                indices of data to be used for training.
+            test_indices: Optional list of ints that specify the
+                indices of the data to be used for testing.
+            model_path: A string representing the path the model will be saved.
+        """
         saver = tf.train.Saver()
         with tf.Session() as self.sess:
             self.sess.run(self.init)
