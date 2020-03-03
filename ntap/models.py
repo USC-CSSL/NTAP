@@ -279,10 +279,30 @@ class Model(ABC):
 
 
 class RNN(Model):
+    """Recurrent Neural Network class.
+
+    RNN class that inherits from Model. Provides model building,
+    training, evaluating, and predicting for RNN models.
+
+    Attributes:
+        optimizer: An optimizer to be used during training.
+        embedding_source: A path to embeddings.
+        hidden_size: The number of hidden units in the RNN layer(s).
+        bi: A bool indicating whether or not the cells are bidirectional.
+        cell_type: A string indicating the type of RNN cell.
+        rnn_dropout: The dropout rate for the RNN layer.
+        embedding_dropout: The dropout rate for embeddings.
+        rnn_pooling: A string indicating type of pooling.
+        random_state: An optional int, setting the random state.
+        learning_rate: A float indicating the learning rate for the model.
+        vars: A dictionary to store all the network model variables.
+        init:
+    """
     def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
             rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
             learning_rate=0.001, rnn_pooling='last',
             embedding_source='glove', random_state=None):
+
         Model.__init__(self, optimizer=optimizer,
                 embedding_source=embedding_source)
 
