@@ -1,16 +1,12 @@
-from sklearn.svm import LinearSVC
 from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.metrics import r2_score, cohen_kappa_score
+from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from sklearn.linear_model import ElasticNet, LinearRegression
 
 # CV Results
-
 from ntap.helpers import CV_Results
 
 import tempfile
 import numpy as np
-import itertools, collections
 from abc import ABC, abstractmethod
 import os
 
@@ -18,24 +14,63 @@ import os
 #from tensorflow.compat.v1 import logging
 #logging.set_verbosity(logging.ERROR)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
-
 import tensorflow as tf
 
 class Model(ABC):
+    """Model class serves as parent class for all models.
+
+    Model class serves as abstract base class for other model classes.
+
+    Attributes:
+        optimizer: An optimizer type to be used for neural networks.
+        embedding_source: A string representing embedding to be used
+        in feature extraction.
+    """
     def __init__(self, optimizer, embedding_source = 'glove'):
+        """Init function sets optimizer and embedding source.
+
+        Args:
+            optimizer: An optimizer type (string)
+            embedding_source: Embedding type (string)
+        """
         super().__init__()
         self.optimizer = optimizer
         self.embedding_source = embedding_source
 
     @abstractmethod
     def build(self):
+        """Builds a model.
+
+        Abstract method that must be implemented by inheriting classes.
+        Builds and intializes a model, depending on model requirements.
+        """
         pass
     @abstractmethod
     def set_params(self):
+        """Sets the parameters of class.
+
+        Abstract method that must be implemented by inheriting classes.
+        Sets the parameters of the inheriting class.
+        """
         pass
 
     def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy',
             model_dir=None, batch_size=256):
+        """Runs cross validation.
+
+        Base function that runs cross validation process.
+        Can be overridden by other classes.
+
+        Args:
+            data: A Dataset object.
+            num_folds: The number of cross-validation folds to be run.
+            num_epochs: The number of epochs.
+            comp: A comparison metric.
+            model_dir: The path to where the model is saved.
+            batch_size: The number of batches.
+        Returns:
+            A CV_Results object containing prediction score information.
+        """
         self.cv_model_paths = dict()
         if model_dir is None:
             model_dir = os.path.join(tempfile.gettempdir(), "tf_cv_models")
@@ -77,6 +112,22 @@ class Model(ABC):
 
     def evaluate(self, predictions, labels, num_classes,
             metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
+        """Evaluates predicted and true labels.
+
+        Evaluate function that compares predicted labels to true
+        labels based on the given metrics.
+
+        Args:
+            predictions: Dict of targets and predictions {target:[prediction]}.
+            labels: Dict of targets and true labels {target:[true labels]}.
+            num_classes: Dict of targets and num classes for each
+                {target:num_classes}.
+            metrics: A list of strings indicating measurement metric.
+
+        Returns:
+           List of scores for each target, based on the metrics
+           specified in the metrics argument.
+        """
         stats = list()
         for key in predictions:
             if not key.startswith("prediction-"):
@@ -103,6 +154,26 @@ class Model(ABC):
 
     def predict(self, new_data, model_path, orig_data=None, column=None, indices=None, batch_size=256,
             retrieve=list()):
+        """Predicts labels for given target(s) of dataset.
+
+       Uses trained model to make predictions for each target on a given
+       dataset.
+
+       Args:
+           new_data: A Dataset object containing test data.
+           model_path: The path to saved model from training.
+           orig_data: Optional, will be used to add data
+               to new_data if provided.
+           column: A string indicating the column name from
+               orig_data to be added to new_data.
+           indices: An integer indicating where to batch data. (DOUBLE CHECK)
+           batch_size: An intiger indicating how many data points
+               each batch should contain.
+
+       Returns:
+           A dictionary where each key is a target and the corresponding
+           value is a list of predicted values.
+       """
         if orig_data:
             new_data.encode_with_vocab(column, orig_data)
 
@@ -137,6 +208,20 @@ class Model(ABC):
 
     def train(self, data, num_epochs=30, batch_size=256, train_indices=None,
               test_indices=None, model_path=None):
+        """Trains instance of Model.
+
+        Trains Model object on data and saves the model to model_path.
+
+        Args:
+            data: A Dataset object containing the data to be trained on.
+            num_epochs: An int indicating the number of epochs to be run.
+            batch_size: An int indicating the size of each batch.
+            train_indices: Optional list of ints that specify the
+                indices of data to be used for training.
+            test_indices: Optional list of ints that specify the
+                indices of the data to be used for testing.
+            model_path: A string representing the path the model will be saved.
+        """
         saver = tf.train.Saver()
         with tf.Session() as self.sess:
             self.sess.run(self.init)
@@ -167,548 +252,3 @@ class Model(ABC):
             if model_path is not None:
                 saver.save(self.sess, model_path)
         return
-
-class RNN(Model):
-    def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
-            rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
-            learning_rate=0.001, rnn_pooling='last',
-            embedding_source='glove', random_state=None):
-        Model.__init__(self, optimizer=optimizer,
-                embedding_source=embedding_source)
-
-        self.hidden_size = hidden_size
-        self.bi = cell.startswith('bi')
-        self.cell_type = cell[2:] if self.bi else cell
-        self.rnn_dropout = rnn_dropout
-        self.embedding_dropout = embedding_dropout
-        #self.max_seq = data.max_len  # load from data OBJ
-        self.rnn_pooling = rnn_pooling
-        self.random_state = random_state
-        self.learning_rate = learning_rate
-
-        self.vars = dict() # store all network variables
-        self.__parse_formula(formula, data)
-
-        self.build(data)
-
-    def set_params(self, **kwargs):
-        print("TODO")
-
-    def __parse_formula(self, formula, data):
-        lhs, rhs = [s.split("+") for s in formula.split('~')]
-        for target in lhs:
-            target = target.strip()
-            if target in data.targets:
-                print("Target already present: {}".format(target))
-            elif target in data.data.columns:
-                data.encode_targets(target, encoding='labels')  # sparse
-            else:
-                raise ValueError("Failed to load {}".format(target))
-        for source in rhs:
-            # can't have two of (seq, bag,...)
-            source = source.strip()
-            if source.startswith("seq("):
-                # get sequence of int id inputs
-                text_col = source.replace("seq(", "").replace(")", "")
-                data.encode_docs(text_col)
-                if not hasattr(data, "embedding"):
-                    data.load_embedding(text_col)
-                # data stored in data.inputs[text_col]
-            elif source.startswith("bag("):
-                # multi-instance learning!
-                # how to aggregate? If no param set, do rebagging with default size
-                print("TODO")
-            elif source in data.features:
-                inputs.append(source)
-            elif source == 'tfidf':
-                print("Fetch tfidf from features")
-            elif source == 'lda':
-                print("Fetch lda from features")
-            elif source == 'ddr':
-                print("Write DDR method")
-            elif source.startswith('tfidf('):
-                text_col = source.replace('tfidf(','').strip(')')
-                if text_col not in data.data.columns:
-                    raise ValueError("Could not parse {}".format(source))
-                    continue
-                data.tfidf(text_col)
-            elif source.startswith('lda('):
-                text_col = source.replace('lda(','').strip(')')
-                if text_col not in data.data.columns:
-                    raise ValueError("Could not parse {}".format(source))
-                    continue
-                data.lda(text_col)
-            elif source in data.data.columns:
-                data.encode_inputs(source)
-            else:
-                raise ValueError("Could not parse {}".format(source))
-
-    def build(self, data):
-        tf.reset_default_graph()
-        self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
-                name="SequenceLength")
-        self.vars["word_inputs"] = tf.placeholder(tf.int32, shape=[None, None],
-                                                  name="RNNInput")
-        self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
-        W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]), trainable=False, name="Embed")
-        self.vars["Embedding"] = tf.layers.dropout(tf.nn.embedding_lookup(W,
-                self.vars["word_inputs"]), rate=self.vars["keep_ratio"], name="EmbDropout")
-        self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32,
-                shape=[len(data.vocab), data.embed_dim])
-        self.vars["EmbeddingInit"] = W.assign(self.vars["EmbeddingPlaceholder"])
-        self.vars["states"] = self.__build_rnn(self.vars["Embedding"],
-                self.hidden_size, self.cell_type, self.bi,
-                self.vars["sequence_length"])
-
-        if self.rnn_dropout is not None:
-            self.vars["hidden_states"] = tf.layers.dropout(self.vars["states"],
-                                                           rate=self.vars["keep_ratio"],
-                                                           name="RNNDropout")
-        else:
-            self.vars["hidden_states"] = self.vars["states"]
-
-        for target in data.targets:
-            n_outputs = len(data.target_names[target])
-            self.vars["target-{}".format(target)] = tf.placeholder(tf.int64,
-                    shape=[None], name="target-{}".format(target))
-            self.vars["weights-{}".format(target)] = tf.placeholder(tf.float32,
-                    shape=[n_outputs], name="weights-{}".format(target))
-            logits = tf.layers.dense(self.vars["hidden_states"], n_outputs)
-            weight = tf.gather(self.vars["weights-{}".format(target)],
-                               self.vars["target-{}".format(target)])
-            xentropy = tf.losses.sparse_softmax_cross_entropy\
-                (labels=self.vars["target-{}".format(target)],
-                    logits=logits, weights=weight)
-            self.vars["loss-{}".format(target)] = tf.reduce_mean(xentropy)
-            self.vars["prediction-{}".format(target)] = tf.argmax(logits, 1)
-            self.vars["accuracy-{}".format(target)] = tf.reduce_mean(
-                tf.cast(tf.equal(self.vars["prediction-{}".format(target)],
-                                 self.vars["target-{}".format(target)]), tf.float32))
-
-        self.vars["joint_loss"] = sum([self.vars[name] for name in self.vars if name.startswith("loss")])
-        self.vars["joint_accuracy"] = sum([self.vars[name] for name in self.vars if name.startswith("accuracy")]) \
-                                      / len([self.vars[name] for name in self.vars if name.startswith("accuracy")])
-        if self.optimizer == 'adam':
-            opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-        elif self.optimizer == 'adagrad':
-            opt = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
-        elif self.optimizer == 'momentum':
-            opt = tf.train.MomentumOptimizer(learning_rate=self.learning_rate)
-        elif self.optimizer == 'rmsprop':
-            opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
-        else:
-            raise ValueError("Invalid optimizer specified")
-        self.vars["training_op"] = opt.minimize(loss=self.vars["joint_loss"])
-        self.init = tf.global_variables_initializer()
-
-
-    def list_model_vars(self):
-        # return list of variable names that can be retrieved during inference
-        vs = [v for v in self.vars if v.startswith("loss-")]
-        vs.append("hidden_states")
-        if isinstance(self.rnn_pooling, int):
-            vs.append("rnn_alphas")
-        return vs
-
-    def __build_rnn(self, inputs, hidden_size, cell_type, bi, sequences, peephole=False):
-        if cell_type == 'LSTM':
-            if bi:
-                fw_cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
-                          use_peepholes=peephole, name="ForwardRNNCell",
-                          state_is_tuple=False)
-                bw_cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
-                          use_peepholes=peephole, name="BackwardRNNCell",
-                          state_is_tuple=False)
-            else:
-                cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
-                          use_peepholes=peephole, name="RNNCell",
-                          dtype=tf.float32)
-        elif cell_type == 'GRU':
-            if bi:
-                fw_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
-                          name="ForwardRNNCell")
-                bw_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
-                          reuse=False, name="BackwardRNNCell")
-            else:
-                cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size,
-                          name="BackwardRNNCell", dtype=tf.float32)
-        if bi:
-            outputs, states = tf.nn.bidirectional_dynamic_rnn(fw_cell, bw_cell,
-                inputs, dtype=tf.float32, sequence_length=sequences)
-            hidden_states = tf.concat(outputs, 2)  # shape (B, T, 2*h)
-            state = tf.concat(states, 1)  # last unit
-        else:
-            hidden_states, state = tf.nn.dynamic_rnn(cell, inputs,
-                    dtype=tf.float32, sequence_length=sequences)
-
-        if isinstance(self.rnn_pooling, int):
-            return self.__attention(hidden_states, self.rnn_pooling)
-        elif self.rnn_pooling == 'last':  # default
-            return state
-        elif self.rnn_pooling == 'max':
-            return tf.reduce_max(hidden_states, reduction_indices=[1])
-        elif self.rnn_pooling == 'mean':
-            return tf.reduce_mean(hidden_states, axis=1)
-
-    def __attention(self, inputs, att_size):
-        hidden_size = inputs.shape[2].value
-        w_omega = tf.Variable(tf.random_normal([hidden_size, att_size],
-            stddev=0.1))
-        b_omega = tf.Variable(tf.random_normal([att_size], stddev=0.1))
-        u_omega = tf.Variable(tf.random_normal([att_size], stddev=0.1))
-
-        with tf.name_scope('v'):
-            v = tf.tanh(tf.tensordot(inputs, w_omega, axes=1) + b_omega)
-        vu = tf.tensordot(v, u_omega, axes=1, name='vu')
-        alphas = tf.nn.softmax(vu, name='alphas')
-        output = tf.reduce_sum(inputs * tf.expand_dims(alphas, -1), 1)
-        self.vars["rnn_alphas"] = alphas
-
-        return output
-
-
-class SVM:
-    def __init__(self, formula, data, C=1.0, class_weight=None, dual=False,
-            penalty='l2', loss='squared_hinge', tol=0.0001, max_iter=1000,
-            random_state=None):
-
-        self.C = C
-        self.class_weight = class_weight
-        self.dual = dual
-        self.penalty = penalty
-        self.loss = loss
-        self.tol = tol
-        self.max_iter = max_iter
-        self.random_state = random_state
-
-        self.__parse_formula(formula, data)
-
-        #BasePredictor.__init__(self)
-        #self.n_classes = n_classes
-            #self.param_grid = {"class_weight": ['balanced'],
-                               #"C": [1.0]}  #np.arange(0.05, 1.0, 0.05)}
-
-    def set_params(self, **kwargs):
-        if "C" in kwargs:
-            self.C = kwargs["C"]
-        if "class_weight" in kwargs:
-            self.class_weight = kwargs["class_weight"]
-        if "dual" in kwargs:
-            self.dual = kwargs["dual"]
-        if "penalty" in kwargs:
-            self.penalty = kwargs["penalty"]
-        if "loss" in kwargs:
-            self.loss = kwargs["loss"]
-        if "tol" in kwargs:
-            self.tol = kwargs["tol"]
-        if "max_iter" in kwargs:
-            self.max_iter = kwargs["max_iter"]
-
-    def __parse_formula(self, formula, data):
-        lhs, rhs = [s.split("+") for s in formula.split('~')]
-        for target in lhs:
-            target = target.strip()
-            if target in data.targets:
-                print("Loading", target)
-            elif target in data.data.columns:
-                data.encode_targets(target, encoding='labels')
-            else:
-                raise ValueError("Failed to load {}".format(target))
-        inputs = list()
-        for source in rhs:
-            source = source.strip()
-            if source in data.features:
-                inputs.append(source)
-            elif source == 'tfidf':
-                print("Fetch tfidf from features")
-            elif source == 'lda':
-                print("Fetch lda from features")
-            elif source == 'ddr':
-                print("Write DDR method")
-            elif source.startswith('tfidf('):
-                text_col = source.replace('tfidf(','').strip(')')
-                if text_col not in data.data.columns:
-                    raise ValueError("Could not parse {}".format(source))
-                    continue
-                data.tfidf(text_col)
-            elif source.startswith('lda('):
-                text_col = source.replace('lda(','').strip(')')
-                if text_col not in data.data.columns:
-                    raise ValueError("Could not parse {}".format(source))
-                    continue
-                data.lda(text_col)
-            elif source.startswith('ddr('):
-                text_col = source.replace('ddr(', '').strip(')')
-                data.ddr(text_col, dictionary=data.dictionary)
-            else:
-                raise ValueError("Could not parse {}".format(source))
-
-    def __grid(self):
-        Paramset = collections.namedtuple('Paramset', 'C class_weight dual penalty loss tol max_iter')
-
-        def __c(a):
-            if isinstance(a, list) or isinstance(a, set):
-                return a
-            return [a]
-        for p in itertools.product(__c(self.C), __c(self.class_weight), __c(self.dual), __c(self.penalty), __c(self.loss), __c(self.tol), __c(self.max_iter)):
-            param_tuple = Paramset(C=p[0], class_weight=p[1], dual=p[2], penalty=p[3], loss=p[4], tol=p[5], max_iter=p[6])
-            yield param_tuple
-
-    def __get_X(self, data):
-        inputs = list()
-        for feat in data.features:
-            inputs.append(data.features[feat])
-        X = np.concatenate(inputs, axis=1)
-        return X
-
-    def CV(self, data, num_folds=10,
-            stratified=True, metric="accuracy"):
-        """
-        evaluate between parameter sets based on 'metric' parameter
-        """
-        if metric not in ["accuracy", "f1", "precision", "recall", "kappa"]:
-            raise ValueError("Not a valid metric for CV: {}".format(metric))
-
-        X = self.__get_X(data)
-        y, _ = data.get_labels(idx=None)
-        target = list(data.targets.keys())[0]
-        print("TARGET: {}".format(target))
-        skf = StratifiedKFold(n_splits=num_folds,
-                              shuffle=True,
-                              random_state=self.random_state)
-        grid_search_results = list()
-        best_index = -1
-        best_score = -1.0
-        for params in self.__grid():
-            cv_scores = {"params": params._asdict()}
-
-            labels = list()
-            predictions = list()
-            for train_idx, test_idx in skf.split(X, y):
-                model = LinearSVC(**params._asdict())
-                train_X = X[train_idx]
-                train_y, cardinality = data.get_labels(idx=train_idx)
-                model.fit(train_X, train_y)
-                test_X = X[test_idx]
-                test_y, _ = data.get_labels(idx=test_idx)
-                pred_y = model.predict(test_X)
-                labels.append(test_y)
-                predictions.append(pred_y)
-            performance = self.evaluate(predictions=predictions,
-                    labels=labels, num_classes=cardinality, target=target)
-            cv_scores["stats"] = performance
-            results = [score[metric] for score in performance]
-            score = np.mean(results)
-            if score > best_score:
-                best_score = score
-                best_index = len(grid_search_results)
-            grid_search_results.append(cv_scores)
-        return CV_Results([grid_search_results[best_index]["stats"]])
-
-    def evaluate(self, predictions, labels, num_classes, target,
-            metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
-        stats = list()
-        y, y_hat = labels, predictions
-        card = num_classes
-        for y, y_hat in zip(predictions, labels):
-            stat = {"Target": target}
-            for m in metrics:
-                if m == 'accuracy':
-                    stat[m] = accuracy_score(y, y_hat)
-                avg = 'binary' if card == 2 else 'macro'
-                if m == 'precision':
-                    stat[m] = precision_score(y, y_hat, average=avg)
-                if m == 'recall':
-                    stat[m] = recall_score(y, y_hat, average=avg)
-                if m == 'f1':
-                    stat[m] = f1_score(y, y_hat, average=avg)
-                if m == 'kappa':
-                    stat[m] = cohen_kappa_score(y, y_hat)
-            stats.append(stat)
-        return stats
-
-    def train(self, data, params=None):
-        if params is not None:
-            if hasattr(self, "best_params"):
-                params = self.best_params
-            self.trained = LinearSVC(**params._asdict())
-        else:
-            self.trained = LinearSVC()
-
-        X, y = self.__get_X_y(data)
-        self.trained.fit(X, y)
-
-    def predict(self, data):
-        if not hasattr(self, "trained"):
-            raise ValueError("Call SVM.train to train model")
-            return
-        X = self.__get_X(data)
-        y = self.trained.predict(X)
-        return y
-
-    def __best_model(self, scores, metric='accuracy'):
-        best_params = None
-        best_score = 0.0
-        for score in scores:  # One Grid Search
-            mean = np.mean(score[metric])
-            if mean > best_score:
-                best_score = mean
-                best_params = score["params"]
-        self.best_score = (metric, best_score)
-        self.best_params = best_params
-        return best_score, best_params, metric
-
-
-class LM:
-    """
-    Class LM: implements a linear model with a variety of regularization options, including RIDGE, LASSO, and ElasticNet
-    """
-    def __init__(self, formula, data, alpha=0.0,
-            l1_ratio=0.5, max_iter=1000, tol=0.001,
-            random_state=None):
-
-        self.alpha = alpha
-        self.l1_ratio = l1_ratio
-        self.tol = tol
-        self.max_iter = max_iter
-        self.random_state = random_state
-        self.normalize_inputs = False  # TODO
-
-        self.__parse_formula(formula, data)
-
-    def set_params(self, **kwargs):
-        if "alpha" in kwargs:
-            self.alpha = kwargs["alpha"]
-        if "l1_ratio" in kwargs:
-            self.l1_ratio = kwargs["l1_ratio"]
-        if "tol" in kwargs:
-            self.tol = kwargs["tol"]
-        if "max_iter" in kwargs:
-            self.max_iter = kwargs["max_iter"]
-
-    def __parse_formula(self, formula, data):
-        lhs, rhs = [s.split("+") for s in formula.split('~')]
-        if len(lhs) > 1:
-            raise ValueError("Multiple DVs not supported")
-            return
-        for target in lhs:
-            target = target.strip()
-            if target in data.data.columns:
-                data.encode_targets(target, var_type="continuous", reset=True)
-            else:
-                raise ValueError("Failed to load {}".format(target))
-        inputs = list()
-        for source in rhs:
-            source = source.strip()
-            if source.startswith('tfidf('):
-                text_col = source.replace('tfidf(','').strip(')')
-                if text_col not in data.data.columns:
-                    raise ValueError("Could not parse {}".format(source))
-                    continue
-                data.tfidf(text_col)
-            elif source.startswith('lda('):
-                text_col = source.replace('lda(','').strip(')')
-                if text_col not in data.data.columns:
-                    raise ValueError("Could not parse {}".format(source))
-                    continue
-                data.lda(text_col)
-            elif source in data.data.columns:
-                data.encode_inputs(source)
-            else:
-                raise ValueError("Could not parse {}".format(source))
-
-    def __grid(self):
-        Paramset = collections.namedtuple('Paramset', 'alpha l1_ratio tol max_iter')
-
-        def __c(a):
-            if isinstance(a, list) or isinstance(a, set):
-                return a
-            return [a]
-        for p in itertools.product(__c(self.alpha), __c(self.l1_ratio), __c(self.tol), __c(self.max_iter)):
-            param_tuple = Paramset(alpha=p[0], l1_ratio=p[1], tol=p[2], max_iter=p[3])
-            yield param_tuple
-
-    def __get_X_y(self, data):
-        inputs = list()
-        self.names = list()
-        for feat in data.features:
-            inputs.append(data.features[feat])
-            for name in data.feature_names[feat]:
-                self.names.append("{}_{}".format(feat, name))
-        X = np.concatenate(inputs, axis=1)
-        return X
-
-    def __get_X(self, data):
-        inputs = list()
-        for feat in data.features:
-            inputs.append(data.features[feat])
-        X = np.concatenate(inputs, axis=1)
-        return X
-
-    def CV(self, data, num_folds=10, metric="r2", random_state=None):
-
-        if random_state is not None:
-            self.random_state = random_state
-        X = self.__get_X(data)
-        y, _ = data.get_labels(idx=None)
-        folds = KFold(n_splits=num_folds,
-                              shuffle=True,
-                              random_state=self.random_state)
-        scores = list()
-        """
-        TODO (Anirudh): modify metrics to include accuracy, precision, recall,
-            and f1 for all folds (train and test)
-            - record as much info as possible and store internally
-            - store in self.cv_scores
-        """
-        for params in self.__grid():
-            params = dict()
-            cv_scores = {"params": params}
-            cv_scores[metric] = list()
-            # TODO: add all regression metrics
-            for train_idx, test_idx in folds.split(X):
-                model = LinearRegression()
-                #model = ElasticNet(**params._asdict())
-                train_X = X[train_idx]
-                train_y = y[train_idx]
-                model.fit(train_X, train_y)
-                test_X = X[test_idx]
-                test_y = y[test_idx]
-                pred_y = model.predict(test_X)
-                r2 = r2_score(test_y, pred_y)
-                cv_scores[metric].append(r2) # change
-            scores.append(cv_scores)
-        return scores[0]
-
-    def train(self, data, params=None):
-        if params is None:
-            if hasattr(self, "best_params"):
-                params = self.best_params
-                self.trained = ElasticNet(**params._asdict())
-            else:
-                self.trained = ElasticNet()
-        else:
-            self.trained = ElasticNet(**params._asdict())
-
-        X, y = self.__get_X_y(data)
-        self.trained.fit(X, y)
-
-    def predict(self, data):
-        if not hasattr(self, "trained"):
-            raise ValueError("Call SVM.train to train model")
-            return
-        X = self.__get_X(data)
-        y = self.trained.predict(X)
-        return y
-
-    def __best_model(self, scores, metric='r2'):
-        best_params = None
-        best_score = -1.0
-        for score in scores:  # One Grid Search
-            mean = np.mean(score[metric])
-            if mean > best_score:
-                best_score = mean
-                best_params = score["params"]
-        self.best_score = (metric, best_score)
-        self.best_params = best_params
-        return best_score, best_params, metric
