@@ -44,8 +44,8 @@ class Model(ABC):
         """Init function sets optimizer and embedding source.
 
         Args:
-            optimizer: An optimizer type (string)
-            embedding_source: Embedding type (string)
+            optimizer: An optimizer type.
+            embedding_source: Embedding type.
         """
         super().__init__()
         self.optimizer = optimizer
@@ -296,12 +296,37 @@ class RNN(Model):
         random_state: An optional int, setting the random state.
         learning_rate: A float indicating the learning rate for the model.
         vars: A dictionary to store all the network model variables.
-        init:
     """
     def __init__(self, formula, data, hidden_size=128, cell='biLSTM',
             rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
             learning_rate=0.001, rnn_pooling='last',
             embedding_source='glove', random_state=None):
+        """
+        Initializes model parameters for RNN.
+
+        Constructor to initialize model parameters to run
+        RNN models. 
+
+        Args:
+            formula: A string representing model formula.
+                Usually includes labels to use during training
+                and labels to use for prediction.
+            data: A Dataset object containing text, labels, and more.
+            hidden_size: The number of hidden units in the RNN layer(s).
+            cell: A string indicating what kind of cells to use.
+                Options are biLSTM, LSTM, and GRU.
+            rnn_dropout: The dropout rate for the RNN layer(s).
+            embedding_dropout: The dropout rate for embeddings.
+            optimizer: A string representing the optimizer used
+                during model runs. Options are adam, adagrad, momentum,
+                and rmsprop.
+            learning_rate: The step rate for training and testing.
+            rnn_pooling: A string indicating type of pooling. Options
+                are last, max, mean, or an int (this would include
+                attention layers).
+            embedding_source: The path to word embeddings.
+            random_state: An optional int, setting the random seed.
+        """
 
         Model.__init__(self, optimizer=optimizer,
                 embedding_source=embedding_source)
@@ -325,6 +350,19 @@ class RNN(Model):
         print("TODO")
 
     def __parse_formula(self, formula, data):
+        """
+        Parses formula string.
+
+        Parses the formula string, which indicates which labels
+        should be used for training and which labels should be
+        used for predicting, as well as feature extraction techniques
+        to use on the dataset.
+
+        Args:
+            formula: A string representing the model formula.
+            data: A Dataset object that includes text, labels,
+                and other information.
+        """
         lhs, rhs = [s.split("+") for s in formula.split('~')]
         for target in lhs:
             target = target.strip()
@@ -375,6 +413,17 @@ class RNN(Model):
                 raise ValueError("Could not parse {}".format(source))
 
     def build(self, data):
+        """
+        Builds RNN model.
+
+        Initializes and sets up RNN model for training,
+        validation, and testing based on model parameters
+        passed in to constructor. 
+
+        Args:
+            data: A Dataset object with text data, labels,
+            and other information.
+        """
         tf.reset_default_graph()
         self.vars["sequence_length"] = tf.placeholder(tf.int32, shape=[None],
                 name="SequenceLength")
@@ -442,7 +491,13 @@ class RNN(Model):
         self.init = tf.global_variables_initializer()
 
     def list_model_vars(self):
-        # return list of variable names that can be retrieved during inference
+        """
+        Lists model variables.
+
+        Returns:
+            List of model variable names and values
+            that can be retrieved during inference.
+        """
         vs = [v for v in self.vars if v.startswith("loss-")]
         vs.append("hidden_states")
         if isinstance(self.rnn_pooling, int):
@@ -451,6 +506,23 @@ class RNN(Model):
 
     def __build_rnn(self,
             inputs, hidden_size, cell_type, bi, sequences, peephole=False):
+        """
+        Builds RNN layers.
+
+        Initializes and sets up RNN layers for model.
+
+        Args:
+            inputs:
+            hidden_size:
+            cell_type:
+            bi: A boolean indicating whether to initialize biLSTM cells.
+            sequences:
+            peephole: A boolean indicating whether to use a peephole LSTM unit.
+        
+        Returns:
+            Last layer, reduced tensor based on a maximum of elements in hidden_states,
+            or a reduced tensor based on an average of elements in hidden_states.
+        """
         if cell_type == 'LSTM':
             if bi:
                 fw_cell = tf.nn.rnn_cell.LSTMCell(num_units=hidden_size,
@@ -491,6 +563,19 @@ class RNN(Model):
             return tf.reduce_mean(hidden_states, axis=1)
 
     def __attention(self, inputs, att_size):
+        """
+        Initializes attention layers.
+
+        Initializes and sets up attention layers
+        for RNN model.
+
+        Args:
+            inputs: The input tensor.
+            att_size: Attention size.
+
+        Returns:
+            Returns a tensor of the sum of elements in inputs.
+        """
         hidden_size = inputs.shape[2].value
         w_omega = tf.Variable(tf.random_normal([hidden_size, att_size],
             stddev=0.1))
