@@ -17,7 +17,9 @@ class CV_Results:
             cv_df.index.name = target
             cv_df.drop(columns=["Target"], inplace=True)
             means = [cv_df[col].mean() for col in cv_df.columns]
+            std_devs = [cv_df[col].std() for col in cv_df.columns]
             cv_df.loc["Mean", :] = means
+            cv_df.loc["Std",:] = std_devs
             self.dfs.append(cv_df)
     
     def summary(self):
