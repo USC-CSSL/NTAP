@@ -79,7 +79,7 @@ def write_file(data, path):
         data.to_pickle(path)
 
 class Dataset:
-    def __init__(self, source, glove_path=None, mallet_path=None, tokenizer='wordpunct', vocab_size=5000,
+    def __init__(self, source, glove_path=None, tokenizer='wordpunct', vocab_size=5000,
             embed='glove', min_token=5, stopwords=None, stem=False, max_df=1.0,
             lower=True, max_len=512, include_nums=False,
             include_symbols=False, num_topics=100, lda_max_iter=500):
@@ -95,7 +95,6 @@ class Dataset:
                 return
 
         print("Loaded file with {} documents".format(len(self.data)))
-        self.mallet_path = mallet_path
         self.glove_path = glove_path
         self.min_token = min_token
         self.embed_source = embed
@@ -240,8 +239,6 @@ class Dataset:
             self.lda_max_iter = kwargs["lda_max_iter"]
         if "dictionary" in kwargs:
             self.dictionary = kwargs["dictionary"]
-        if "mallet_path" in kwargs:
-            self.mallet_path = kwargs['mallet_path']
         if "glove_path" in kwargs:
             self.glove_path = kwargs['glove_path']
 
