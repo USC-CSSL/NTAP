@@ -1,7 +1,5 @@
 import sys
 
-sys.path.append('.')
-
 from ntap.data import Dataset
 from ntap.RNN import RNN
 import pandas as pd
