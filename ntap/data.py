@@ -85,12 +85,15 @@ class Dataset:
             include_symbols=False, num_topics=100, lda_max_iter=500):
         if isinstance(source, Dataset):
             self = source.copy()
-            return
-        try:
-            self.data = read_file(source)
-        except Exception as e:
-            print("Exception:", e)
-            return
+        elif isinstance(source, pd.DataFrame):
+            self.data = source
+        else:
+            try:
+                self.data = read_file(source)
+            except Exception as e:
+                print("Exception:", e)
+                return
+
         print("Loaded file with {} documents".format(len(self.data)))
         self.glove_path = glove_path
         self.min_token = min_token
@@ -389,7 +392,7 @@ class Dataset:
             _padded_batch.append(np.append(doc, np.array([pad_idx for i in range(_max_len - len(doc))])))
         return np.array(_padded_batch)
 
-    def get_labels(self, idx, var=None):
+    def get_labels(self, idx=None, var=None):
         if var is None:
             var = list(self.targets.keys())[0]
         if var not in self.targets:
@@ -430,9 +433,16 @@ class Dataset:
         #self.feature_names["lda"] = model.get_topics()
         return
 
-    def ddr(self, column, dictionary, embed='glove', **kwargs):
+    def ddr(self, column, dictionary=None, embed='glove', **kwargs):
         # dictionary can b
-        if isinstance(dictionary, str):  # file name
+        if self.dictionary:
+            if isinstance(self.dictionary, str):
+                try:
+                    dictionary, name = open_dictionary(self.dictionary)
+                except Exception:
+                    print("Couldn't unpack dictionary")
+                    return
+        elif isinstance(dictionary, str):  # file name
             try:
                 dictionary, name = open_dictionary(dictionary)
             except ValueError as e:
@@ -445,6 +455,9 @@ class Dataset:
             except Exception:
                 print("Couldn't unpack dictionary")
                 return
+        else:
+            print("No dictionary found")
+            return
 
         if "vocab_size" in kwargs:
             self.__learn_vocab(column, vocab_size=kwargs["vocab_size"])  #TODO
@@ -479,7 +492,7 @@ class Dataset:
 
         features = pd.DataFrame(features)
         features, categories = features.values, list(features.columns)
-        self.features["ddr"] = features  # type numpy array
+        self.features["ddr"] = np.array(features)  # type numpy array
         self.feature_names["ddr"] = categories # list of strings
 
     def __embedding_of_doc(self, doc_string, embeddings, agg='mean', thresh=1):
