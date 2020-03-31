@@ -301,8 +301,7 @@ class RNN(Model):
             rnn_dropout=0.5, embedding_dropout=None, optimizer='adam',
             learning_rate=0.001, rnn_pooling='last',
             embedding_source='glove', random_state=None):
-        """
-        Initializes model parameters for RNN.
+        """Initializes model parameters for RNN.
 
         Constructor to initialize model parameters to run
         RNN models. 
@@ -350,8 +349,7 @@ class RNN(Model):
         print("TODO")
 
     def __parse_formula(self, formula, data):
-        """
-        Parses formula string.
+        """Parses formula string.
 
         Parses the formula string, which indicates which labels
         should be used for training and which labels should be
@@ -413,8 +411,7 @@ class RNN(Model):
                 raise ValueError("Could not parse {}".format(source))
 
     def build(self, data):
-        """
-        Builds RNN model.
+        """Builds RNN model.
 
         Initializes and sets up RNN model for training,
         validation, and testing based on model parameters
@@ -491,8 +488,7 @@ class RNN(Model):
         self.init = tf.global_variables_initializer()
 
     def list_model_vars(self):
-        """
-        Lists model variables.
+        """Lists model variables.
 
         Returns:
             List of model variable names and values
@@ -506,8 +502,7 @@ class RNN(Model):
 
     def __build_rnn(self,
             inputs, hidden_size, cell_type, bi, sequences, peephole=False):
-        """
-        Builds RNN layers.
+        """Builds RNN layers.
 
         Initializes and sets up RNN layers for model.
 
@@ -563,8 +558,7 @@ class RNN(Model):
             return tf.reduce_mean(hidden_states, axis=1)
 
     def __attention(self, inputs, att_size):
-        """
-        Initializes attention layers.
+        """Initializes attention layers.
 
         Initializes and sets up attention layers
         for RNN model.
@@ -592,10 +586,49 @@ class RNN(Model):
         return output
 
 
-class SVM:
+class SVM: 
+    """Support Vector Machine class.
+    
+    Support Vector Machine class that initiates and implements
+    support vector machine models.
+
+    Attributes:
+        C: Regularization parameter.
+        class_weight: Attribute indicating how to balance labels. Options
+            are None and balanced.
+        dual: A boolean indicating whether or not algorithm should
+            solve dual or primal optimization problem.
+        penalty: A string indicating which normalization to use in penalization.
+            Options are l1 or l2.
+        loss: A string specifying the loss function. Options are hinge
+            or squared_hinge.
+        tol: A float specifying the tolerance level for early stopping.
+        max_iter: An int indicating the maximum number of iterations to run.
+        random_state: An int indicating the random seed.
+    """
     def __init__(self, formula, data, C=1.0, class_weight=None, dual=False,
             penalty='l2', loss='squared_hinge', tol=0.0001, max_iter=1000,
             random_state=None):
+        """Initialize class attributes.
+
+        Constructor that initializes SVM model parameters.
+
+        Args:
+            formula: A string representing the model formula.
+            data: A Dataset object with text columns, target
+                columns, and more information.
+            C: The regularization parameter.
+            class_weight: Option for balancing labels.
+            dual: A boolean indicating whether algorithm
+                should solve dual or primal optimization problem.
+            penalty: A string indicating which normalization to use in
+                penalization.
+            loss: A string indicating which loss function to use.
+            tol: A float specifying the tolerance for stopping.
+            max_iter: An int specifying the maximum number of
+                iterations to run.
+            random_state: An int specifying the random seed to use.
+        """
 
         self.C = C
         self.class_weight = class_weight
@@ -614,6 +647,15 @@ class SVM:
                                # "C": [1.0]}  #np.arange(0.05, 1.0, 0.05)}
         '''
     def set_params(self, **kwargs):
+        """Sets model parameters.
+
+        Function that sets class attributes
+        (model params, in this case) using **kwargs.
+
+        Args:
+            **kwargs: Passed in named variables for
+                class attribute initialization.
+        """
         if "C" in kwargs:
             self.C = kwargs["C"]
         if "class_weight" in kwargs:
@@ -630,6 +672,23 @@ class SVM:
             self.max_iter = kwargs["max_iter"]
 
     def __parse_formula(self, formula, data):
+        """Parses formula string.
+
+        Parses the formula string, which indicates which labels
+        should be used for training and which labels should be
+        used for predicting, as well as feature extraction techniques
+        to use on the dataset.
+
+        Args:
+            formula: A string representing the model formula.
+            data: A Dataset object that includes text, labels,
+                and other information.
+
+        Raises:
+            ValueError if target can't be encoded, if specified
+            text_col isn't contained in data's columns, or the formulat
+            provided was not parseable.
+        """
         lhs, rhs = [s.split("+") for s in formula.split('~')]
         for target in lhs:
             target = target.strip()
@@ -669,6 +728,17 @@ class SVM:
                 raise ValueError("Could not parse {}".format(source))
 
     def __grid(self):
+        """Initializes namedtuple as grid.
+
+        Initializes and sets up a namedtuple
+        as a "grid" for grid search for
+        hyperparameter tuning during training
+        and testing of SVM model.
+
+        Yields:
+            Param_tuple: A namedtuple of all
+                the hyperparameters to be adjusted.
+        """
         Paramset = collections.namedtuple(
             'Paramset', 'C class_weight dual penalty loss tol max_iter')
 
@@ -686,6 +756,7 @@ class SVM:
             yield param_tuple
 
     def __get_X(self, data):
+        """Returns X."""
         inputs = list()
         for feat in data.features:
             inputs.append(data.features[feat])
