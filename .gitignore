@@ -2,4 +2,6 @@ venv/
 .idea/
 *.iml
 *.xml
+.vscode
+.DS_Store
 __pycache__

@@ -107,7 +107,7 @@ class RNN(Model):
                                                   name="RNNInput")
         self.vars["keep_ratio"] = tf.placeholder(tf.float32, name="KeepRatio")
         W = tf.Variable(tf.constant(0.0, shape=[len(data.vocab), data.embed_dim]), trainable=False, name="Embed")
-        self.vars["Embedding"] = tf.layers.dropout(tf.nn.embedding_lookup(W,
+        self.vars["Embedding"] = tf.nn.dropout(tf.nn.embedding_lookup(W,
                 self.vars["word_inputs"]), rate=self.vars["keep_ratio"], name="EmbDropout")
         self.vars["EmbeddingPlaceholder"] = tf.placeholder(tf.float32,
                 shape=[len(data.vocab), data.embed_dim])
@@ -117,7 +117,7 @@ class RNN(Model):
                 self.vars["sequence_length"])
 
         if self.rnn_dropout is not None:
-            self.vars["hidden_states"] = tf.layers.dropout(self.vars["states"],
+            self.vars["hidden_states"] = tf.nn.dropout(self.vars["states"],
                                                            rate=self.vars["keep_ratio"],
                                                            name="RNNDropout")
         else:
