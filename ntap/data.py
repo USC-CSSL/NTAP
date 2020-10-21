@@ -47,23 +47,54 @@ def read_file(path):
     elif ending == 'json':
         return pd.read_json(path)
 
+def _read_liwc_dictionary(liwc_file):
+    cates = {}
+    words = {}
+    percent_count = 0
+
+    for line in liwc_file:
+        line_stp = line.strip()
+        if line_stp:
+            parts = line_stp.split('\t')
+            if parts[0] == '%':
+                percent_count += 1
+            else:
+                if percent_count == 1:
+                    cates[parts[0]] = parts[1]
+                    words[parts[0]] = []
+                else:
+                    for cat_id in parts[1:]:
+                        words[cat_id].append(parts[0])
+    items = []
+    categories = []
+    for cat_id in cates:
+        categories.append(cates[cat_id])
+        items.append(words[cat_id])
+    return tuple(categories), tuple(items)
+
 def open_dictionary(dictionary_path):
     if not os.path.exists(dictionary_path):
         raise ValueError("Dictionary not found at {}".format(dictionary_path))
-        return
     if dictionary_path.endswith(".json"):
         try:
             with open(dictionary_path, 'r') as fo:
                 dictionary = json.load(fo)  # {category: words}
+                categories, items = zip(*sorted(dictionary.items(), key=lambda x:x[0]))
+                return categories, items
         except Exception:
             raise ValueError("Could not import json dictionary")
     elif dictionary_path.endswith(".dic"):  # traditional LIWC format
-        raise ValueError("Dictionary type .dic not supported")
-        return
+        
+        try:
+            with open(dictionary_path, 'r') as liwc_file:
+                categories, items = _read_liwc_dictionary(liwc_file)
+                return categories, items
+
+        except Exception:
+            raise ValueError("Cound not import liwc dictionary")
     else:
         raise ValueError("Dictionary type not supported")
-    categories, items = zip(*sorted(dictionary.items(), key=lambda x:x[0]))
-    return categories, items
+    
 
 def write_file(data, path):
 
@@ -214,6 +245,8 @@ class Dataset:
                 self.data[column] = self.data[column].apply(links)
         prev = len(self.data)
         self.data = self.data[self.data[column].apply(self.__good_doc)]
+        # save cleaned data
+        write_file(self.data, os.path.join(".", "cleaned_data.csv"))
         print("Removed {} docs after cleaning that didn't have enough valid tokens".format(prev - len(self.data)))
 
     def set_params(self, **kwargs):
