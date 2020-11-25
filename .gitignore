@@ -5,3 +5,4 @@ venv/
 .vscode
 .DS_Store
 __pycache__
+ntap.egg-info
