@@ -3,18 +3,11 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 # CV Results
-from ntap.helpers import CV_Results
-
+#from ntap.helpers import CV_Results
 import tempfile
 import numpy as np
 from abc import ABC, abstractmethod
 import os
-
-# disable tensorflow excessive warnings/logging
-#from tensorflow.compat.v1 import logging
-#logging.set_verbosity(logging.ERROR)
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
-import tensorflow as tf
 
 class Model(ABC):
     """Model class serves as parent class for all models.
@@ -27,32 +20,8 @@ class Model(ABC):
         in feature extraction.
     """
     def __init__(self, optimizer, embedding_source = 'glove'):
-        """Init function sets optimizer and embedding source.
-
-        Args:
-            optimizer: An optimizer type (string)
-            embedding_source: Embedding type (string)
-        """
-        super().__init__()
         self.optimizer = optimizer
         self.embedding_source = embedding_source
-
-    @abstractmethod
-    def build(self):
-        """Builds a model.
-
-        Abstract method that must be implemented by inheriting classes.
-        Builds and intializes a model, depending on model requirements.
-        """
-        pass
-    @abstractmethod
-    def set_params(self):
-        """Sets the parameters of class.
-
-        Abstract method that must be implemented by inheriting classes.
-        Sets the parameters of the inheriting class.
-        """
-        pass
 
     def CV(self, data, num_folds=10, num_epochs=30, comp='accuracy',
             model_dir=None, batch_size=256):
@@ -108,7 +77,6 @@ class Model(ABC):
             stats = self.evaluate(y, labels, num_classes)  # both dict objects
             results.append(stats)
         return CV_Results(results)
-        # param grid TODO
 
     def evaluate(self, predictions, labels, num_classes,
             metrics=["f1", "accuracy", "precision", "recall", "kappa"]):
@@ -206,49 +174,3 @@ class Model(ABC):
                     predictions[var_name] += outputs
         return predictions
 
-    def train(self, data, num_epochs=30, batch_size=256, train_indices=None,
-              test_indices=None, model_path=None):
-        """Trains instance of Model.
-
-        Trains Model object on data and saves the model to model_path.
-
-        Args:
-            data: A Dataset object containing the data to be trained on.
-            num_epochs: An int indicating the number of epochs to be run.
-            batch_size: An int indicating the size of each batch.
-            train_indices: Optional list of ints that specify the
-                indices of data to be used for training.
-            test_indices: Optional list of ints that specify the
-                indices of the data to be used for testing.
-            model_path: A string representing the path the model will be saved.
-        """
-        saver = tf.train.Saver()
-        with tf.Session() as self.sess:
-            self.sess.run(self.init)
-            _ = self.sess.run(self.vars["EmbeddingInit"],
-                feed_dict={self.vars["EmbeddingPlaceholder"]: data.embedding})
-            for epoch in range(num_epochs):
-                epoch_loss, train_accuracy, test_accuracy = 0.0, 0.0, 0.0
-                num_batches, test_batches = 0, 0
-                for i, feed in enumerate(data.batches(self.vars,
-                    batch_size, test=False, keep_ratio=self.rnn_dropout,
-                    idx=train_indices)):
-                    _, loss_val, acc = self.sess.run([self.vars["training_op"],
-                        self.vars["joint_loss"], self.vars["joint_accuracy"]],
-                                                     feed_dict=feed)
-                    epoch_loss += loss_val
-                    train_accuracy += acc
-                    num_batches += 1
-                for i, feed in enumerate(data.batches(self.vars,
-                    batch_size, test=False, keep_ratio=self.rnn_dropout,
-                    idx=test_indices)):
-                    acc = self.sess.run(self.vars["joint_accuracy"], feed_dict=feed)
-                    test_accuracy += acc
-                    test_batches += 1
-
-                print("Epoch {}: Loss = {:.3}, Train Accuracy = {:.3}, Test Accuracy = {:.3}"
-                      .format(epoch, epoch_loss/num_batches, train_accuracy/num_batches,
-                              test_accuracy/test_batches))
-            if model_path is not None:
-                saver.save(self.sess, model_path)
-        return
