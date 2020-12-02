@@ -35,16 +35,11 @@ class Dictionary:
         """ Initialize regexes for word searching """
         return
 
-# chain preprocessing functions 
-
-# language: 'en'
-# remove_rules (list of functions or strings)
-# defaults: [all_punc, stopwords, numbers]
-
-word_regex = re.compile(r'[\w\_]{2,15}')
+_word_regex = re.compile(r'[\w\_]{2,20}')
 class DocTerm:
 
-    tokenizers = {'regex': lambda x: word_regex.findall(x)}
+    tokenizers = {'regex': lambda x: _word_regex.findall(x),
+                  'basic': lambda x: x.split()}
 
     def __init__(self, corpus, tokenizer='regex', vocab_size=10000, 
                  max_df=0.5, lang='english', **kwargs):

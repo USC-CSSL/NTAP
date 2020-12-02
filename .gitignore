@@ -10,3 +10,5 @@ dist
 build
 local_ntap*
 datasets/*
+*swp
+test.py

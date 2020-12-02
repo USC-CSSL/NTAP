@@ -8,30 +8,26 @@ from gensim.parsing.preprocessing import remove_stopwords
 class TextPreprocessor:
 
     op_strs = {'all': ['hashtags', 'mentions', 'links', 'punc', 
-                       'dates', 'digits', 'stopwords', 'stem', 'lowercase', 'ngrams'],
+                       'dates', 'digits', 'stopwords', 'stem', 'contractions', 
+                       'lowercase', 'ngrams'],
                'clean': ['hashtags', 'mentions', 'links', 'punc', 'dates', 'digits'],
-               'transform': ['stem', 'lowercase', 'ngrams', 'stopwords'],
+               'transform': ['stem', 'lowercase', 'ngrams', 'contractions', 'stopwords'],
                'hashtags': ['hashtags'],
                'mentions': ['mentions'], 
                'links': ['links'], 
-               'numbers': ['dates', 'digits', 'currency'],
+               'numbers': ['dates', 'digits'],
                'digits': ['digits'],
                'dates': ['dates'],
-               'currency': ['currency'],
                'stem': ['stem'],
                'ngrams': ['ngrams'],
+               'contractions': ['contractions'],
+               'stopwords': ['stopwords'],
                'lowercase': ['lowercase']}
 
     def __init__(self, f='clean'):
 
         self.formula = self.__parse_formula(f)
 
-    @property
-    def formula(self):
-        return self._formula
-    @formula.setter
-    def formula(self, f_dict):
-        self._formula = f_dict
 
     def transform(self, X, update_formula=None):
         """ Apply stored cleaning and transformation operations to data """
@@ -40,21 +36,29 @@ class TextPreprocessor:
 
         ops = list()
         for op_str in self.formula:
-            if 'ngrams' == op_str:
-                phraser = self.__get_phrase_model(X)
-                ops.append(PreprocessOP(op_str, phrase_model=phraser))
-            else:
-                ops.append(PreprocessOP(op_str))
+            ops.append(PreprocessOP(op_str))
+        ops.sort()
 
         if isinstance(X, pd.Series):
             for op in ops:
-                X = X.apply(op.func)
+                if op.name == 'ngrams':
+                    pm = self.__get_phrase_model(X)
+                    X = X.apply(lambda x: op.func(x, pm=pm))
+                else:
+                    X = X.apply(op.func)
         elif isinstance(data, list):
             for op in ops:
-                X = [op.func(x) for x in X]
+                if op.name == 'ngrams':
+                    pm = self.__get_phrase_model(X)
+                    X = [op.func(x, pm=pm) for x in X]
+                else:
+                    X = [op.func(x) for x in X]
         elif isinstance(data, str):
             for op in ops:
-                X = op.func(X)
+                if op.name == 'ngrams':
+                    pass
+                else:
+                    X = op.func(X)
         return X
 
     def __parse_formula(self, formula_str):
@@ -97,19 +101,18 @@ class TextPreprocessor:
         if isinstance(corpus, pd.Series):
             corpus = corpus.values.tolist()
         corpus = [doc.split() for doc in corpus]
-        #tqdm.pandas(desc="Bigrams")
-        #bigrammed_docs = tokenized_docs.progress_apply(lambda tokens_: phraser[tokens_])
-
         phrase_model = Phrases(corpus)
         return phrase_model
 
 
 punc_strs = string.punctuation
-punc_strs = punc_strs.replace("-", "") # don't remove hyphens
+punc_strs = punc_strs.replace("-", "")
+punc_strs = punc_strs.replace("'", "")
 
 class PreprocessOP:
 
     trans_fns = {'lowercase': lambda x: x.lower(), 
+                 'contractions': lambda x: x.replace('\'', ''),
                  'stopwords': remove_stopwords} #contractions, POS
     clean_patterns =  {'links': re.compile(r"(http(s)?[^\s]*)|(pic\.[s]*)"),
                        'punc': re.compile(r'[{}]'.format(punc_strs)),
@@ -119,14 +122,18 @@ class PreprocessOP:
                        'digits': re.compile(r'(?:\$)?(?:\d+|[0-9\-\']{2,})')}
 
 
-    def __init__(self, op_name, lang='english', phrase_model=None):
+    op_order = ['links', 'hashtags', 'mentions', 
+                'dates', 'digits', 'contractions', 'punc', 'lowercase', 
+                'stem', 'ngrams', 'stopwords']
 
+
+    def __init__(self, op_name, lang='english'):
+
+        self.order = self.op_order.index(op_name)
+        self.name = op_name
         #stemmer = SnowballStemmer(lang)
         self.trans_fns['stem'] = lambda x: x  # TODO
-        if op_name == 'ngrams':
-            if phrase_model is None:
-                raise ValueError("Whoops!")
-            self.trans_fns['ngrams'] = lambda x: " ".join(phrase_model[x.split()])
+        self.trans_fns['ngrams'] = lambda x, pm: " ".join(pm[x.split()])
 
         if op_name not in self.clean_patterns and op_name not in self.trans_fns:
             raise ValueError("{} not in list of defined operations".format(op_name))
@@ -156,3 +163,8 @@ class PreprocessOP:
             self._func = lambda x: self.pattern.sub('', x)
         else:
             self._func = self.trans_fns[op_name]
+
+    def __lt__(self, other):
+        return self.order < other.order
+    def __str__(self):
+        return "{} {}".format(self.name,self.order)
