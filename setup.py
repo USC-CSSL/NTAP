@@ -5,16 +5,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="ntap",
-    version="1.0.14",
     author="Brendan Kennedy",
     author_email="btkenned@usc.edu",
-    description="The Neural Text Analysis Pipeline (ntap) provides high-level access to cutting-edge NLP methods for text analysis.",
+    description="The Neural Text Analysis Pipeline (NTAP) provides high-level access to cutting-edge NLP methods for text analysis.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/USC-CSSL/NTAP",
     packages=setuptools.find_packages(),
-    install_requires = ['gensim', 'nltk', 'numpy', 'pandas', 'scikit-learn', 'tensorflow'],
+    install_requires = ['gensim', 'numpy', 'pandas', 'scikit-learn'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

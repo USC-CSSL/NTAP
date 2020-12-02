@@ -4,8 +4,6 @@ import string
 import pandas as pd
 from gensim.models.phrases import Phrases
 from gensim.parsing.preprocessing import remove_stopwords
-from data import DocTerm, LDA, DDR
-from feature_based import TextRegressor
 
 class TextPreprocessor:
 
@@ -158,15 +156,3 @@ class PreprocessOP:
             self._func = lambda x: self.pattern.sub('', x)
         else:
             self._func = self.trans_fns[op_name]
-
-
-if __name__ == '__main__':
-
-    df = pd.read_csv("~/PycharmProjects/HateAnnotations/ghc_with_users.tsv", '\t')
-    df.body = TextPreprocessor('all-ngrams').transform(df.body)
-    baseline = TextRegressor(formula='Hate~betrayal+(tfidf|body)', data=df)
-    print(baseline.single_fit.coef_)
-    #dt = DocTerm(df.body)
-    #print(dt)
-    #lda_m = LDA(df.body, method='mallet', mallet_path="~/mallet-2.0.8/bin/mallet")
-    #print(lda_m.model)

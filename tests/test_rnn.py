@@ -1,7 +1,4 @@
 import sys
-
-sys.path.append('.')
-
 from ntap.data import Dataset
 from ntap.models import RNN
 import pandas as pd
@@ -46,10 +43,6 @@ def predict(model, new_data, data, task):
     pd.DataFrame.from_dict(predictions).to_csv(task + "_predictions.csv")
 
 if __name__== '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data")
-    parser.add_argument("--task")
-    args = parser.parse_args()
 
     data = initialize_dataset(args.data)
     model = initialize_model(data, args.task)

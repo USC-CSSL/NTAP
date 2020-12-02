@@ -1,4 +1,7 @@
 
+## Demonstration of new ntap API
+
+```
 #from transformers import BERT
 
 from ntap.supervised import TextClassifier
@@ -38,4 +41,5 @@ bert_ft = TextClassifier(formula='Harm ~ encode(text)',
                           features=[pretrained_bert_model],
                           family='finetune',  # extra **params
                           data=ghc_df)
+```
 

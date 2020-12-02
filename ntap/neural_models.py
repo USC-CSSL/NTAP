@@ -1,4 +1,5 @@
 
+"""
 from feature_models import TFIDF, LDA, EmbedAvg, DDR
 
 class FeatureSet:
@@ -33,8 +34,7 @@ class FeatureSet:
 
             self.feature_model_set[feature_model_str] = feature_model
 
-    #def load(self, text_source):
-
+"""
 
 class NeuralModel:
     def __init__(self, optimizer='adam', learning_rate=0.001, dropout=0.25, hidden_size=64):

@@ -8,3 +8,5 @@ __pycache__
 ntap.egg-info
 dist
 build
+local_ntap*
+datasets/*
