@@ -3,37 +3,53 @@
 
 # ntap: Neural Text Analysis Pipeline
 
-`ntap` is a python package built on top of `tensorflow`, `sklearn`, `pandas`, `gensim`, `nltk`, and other libraries to facilitate the core functionalities of text analysis using modern methods from NLP. 
+`ntap` provides a human-readable API for text analysis using modern methods from NLP. 
 
-## Data loading and Text featurization
+## Data input
+
+NTAP tries to enable flexible data input/output, working with `pandas` DataFrames/Series objects as well as python dictionaries and lists. 
+
+```
+dataset = pd.DataFrame({'text': ['how now brown cow',
+                                 'the tea in Nepal is very hot',
+                                 'but the coffee in Peru is much hotter'],
+                        'author': ['brendan', 'erin', 'kevin']})
+```
+
+## Text cleaning
 
 All `ntap` functionalities use the Dataset object class, which is responsible for loading datasets from file, cleaning text, transforming text into features, and saving results to file. 
 
-## ntap.data.Dataset
-```
-Dataset(source, tokenizer="wordpunct", vocab_size=5000, embed="glove",
-		min_token=5, stopwords=None, stem=False, lower=True, max_len=100,
-		include_nums=False, include_symbols=False, num_topics=100, 
-		lda_max_iter=500)
-```
-### Parameters
+#### ntap.parse.TextPreprocessor
 
-* `source`: _str_, path to single data file. Supported formats: newline-delimited `.json`, `.csv`, `.tsv`, saved Pandas DataFrame as `.pkl` file
-* `tokenizer`: _str_, select which tokenizer to use. if `None`, will tokenize based on white-space. Options are based on `nltk` word tokenizers: "wordpunct", ... (others not currently supported)
-* `vocab_size`: _int_, keep the top `vocab_size` types, by frequency. Used in bag-of-words features, as well as neural methods. If `None`, use all of vocabulary.
-* `embed`: _str_, select which word embedding to use for initialization of embedding layer. Currently only `glove` is supported
-* `min_token`: _int_, indicates the minimum size, by number of tokens, for a document to be included after calling `clean`. 
-* `stopwords`: _iterable_ or _str_, set of words to exclude. Default is `None`, which excludes no words. Options include lists/sets, as well as strings indicating the use of a saved list: `nltk` is the only currently supported option, and indicates the default `nltk` English list
-* `stem`: _bool_ or _str_, if `False` then do not stem/lemmatize, otherwise follow the stemming procedure named by `stem`. Options are `snowball`
-* `lower`: _bool_, if `True` then cast all alpha characters to lowercase
-* `max_len`: _int_, maximum length, by number of valid tokens, for a document to be included during modeling. `None` will result in the maximum length being calculated by the existing document set
+Processing scripts are handled by the TextPreprocessor object, which uses formulas to specify cleaning operations
+
+```
+proc = TextProcessor('clean-digits')
+dataset['text_clean'] = proc.transform(dataset.text)
+
+```
 * `include_nums`: _bool_, if `True`, then do not discard tokens which contain numeric characters. Examples of this include dates, figures, and other numeric datatypes.
 * `include_symbols`: _bool_, if `True`, then do not discard tokens which contain non-alphanumeric symbols
+
+#### ntap.bagofwords
+
+```
+from ntap.bagofwords import DocTerm, TFIDF, LDA
+docterm = DocTerm(dataset.clean_text, tokenizer='basic')
+
+### Parameters
+
+* `tokenizer`: _str_, default 'regex' (\w{2,20})
+* `vocab_size`: _int_, keep the top vocabulary terms by frequency
+* `max_len`: _int_, maximum length, by number of valid tokens, for a document to be included during modeling. `None` will result in the maximum length being calculated by the existing document set
 * `num_topics`: _int_, sets default number of topics to use if `lda` method is called at a later point. 
 * `lda_max_iter`: _int_, sets default number of iterations of Gibbs sampling to run during LDA model fitting
 
 ### Methods
 
+* `min_token`: _int_, indicates the minimum size, by number of tokens, for a document to be included after calling `clean`. 
+* `embed`: _str_, select which word embedding to use for initialization of embedding layer. Currently only `glove` is supported
 The Dataset class has a number of methods for control over the internal functionality of the class, which are called by Method objects. The most important stand-alone methods are the following:
 
 * `Dataset.set_params(**kwargs)`:
@@ -200,61 +216,44 @@ RNN(formula, data, hidden_size=128, cell="biLSTM", rnn_dropout=0.5, embedding_dr
 	* Returns: dictionary with {variable_name: value_list}. Contents are predicted values for each target variable and any model variables that are given in `retrieve`.
 
 ```
-from ntap.data import Dataset
-from ntap.models import RNN
 
-data = Dataset("./my_data.csv")
-base_lstm = RNN("hate ~ seq(text)", data=data)
-attention_lstm = RNN("hate ~ seq(text)", data=data, rnn_pooling=100) # attention
-context_lstm = RNN("hate ~ seq(text) + speaker_party", data=data) # categorical variable
-base_model.set_params({"hidden"=[200, 50], lr=[0.01, 0.05]}) # enable grid search during CV
+## Demonstration of new ntap API
 
-# Grid search and print results from best parameters
-base_results = base_model.CV()
-base_results.summary()
+```
+#from transformers import BERT
 
-# Train model and save. 
-attention_lstm.train(data, model_path="./trained_model")
-# Generate preditions for a new dataset
-new_data = Dataset("./new_data.csv")
-predictions = attention_lstm.predict(new_data, data, column="text", model_path="./trained_model",
-							indices=[0,1,2,3,4,5], retrieve=["rnn_alphas"])
-for alphas in predictions["rnn_alphas"]:
-	print(alphas)  # prints list of floats, each the weight of a word in the ith document
+from ntap.supervised import TextClassifier
+
+from ntap.preprocess import TextPreprocessor
+from ntap.embeddings import embed_reader, embed_sequences
+from ntap.embeddings.ddr import DDR
+from ntap.bagofwords import TFIDF, LDA
+
+glove_vecs = embed_reader.glove_from_txt("~/Data/glove.6B/glove.6B.100d.txt")
+
+glove_sequences = embed_sequences(vector_matrix=glove_vecs, max_seq=100)
+ddr_mfd2 = DDR(vector_matrix=glove_vecs,
+               dic='~/Data/dictionaries/mfd2.dic')
+
+
+proc = TextPreprocessor()
+proc2 = TextPreprocessor('all-numbers') # default without removing numbers
+
+
+mftc['clean'] = TextPreprocessor.clean(mftc_df['Tweet'])
+
+# multinomial NB and TFIDF (default params)
+# syntax: [X+Y] separate models, X+Y multitask
+default = TextClassifier(formula='[Harm+Care]~T(text) + speaker.party', data=mftc_df)
+
+svm = TextClassifier(Harm ~ (tfidf|text)', presets={'tfidf':tfidf}, family='svm')
+bilstm = TextClassifier(formula='Harm ~ encode(text) + speaker.party'},
+                        features=[glove_sequences],
+                        family='bilstm',  # or ntap.models.bilstm(hidden=[24, 48], ...)
+                        data=mftc_df)
+
+bert_ft = TextClassifier(formula='Harm ~ (bert|text)',
+                         family='finetune',  # extra **params
+                         data=ghc_df)
 ```
 
-# Coming soon...
-
-`MIL(formula, data, ...)`
-- not implemented
-- 
-`HAN(formula, data, ...)`
-- not implemented
-
-`CNN()`
-- not implemented
-
-## `NTAP.data.Tagme`
-Not implemented
-`Tagme(token="system", p=0.15, tweet=False)`
-* `token` (`str`): Personal `Tagme` token. Users can retrieve token by  [Creating Account](https://sobigdata.d4science.org/home?p_p_id=58&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=2&saveLastPath=false&_58_struts_action=%2Flogin%2Fcreate_account). Default behavior ("system") assumes `Tagme` token has been set during installation of `NTAP`.
-Members:
-* get_tags(list-like of strings)
-	* Stores `abstracts` and `categories` as member variables 
-* reset()
-* `abstracts`: dictionary of {`entity_id`: `abstract text ...`}
-* `categories`: dictionary of {`entity_id`: `[category1, category2, `}
-```
-data = Dataset("path.csv")
-data.tokenize(tokenizer='tweettokenize')
-abstracts, categories = data.get_tagme(tagme_token=ntap.tagme_token, p=0.15, tweet=False)
-# tagme saved as data object at data.entities
-data.background_features(method='pointwise-mi', ...)  # assumes data.tagme is set; creates features
-saves features at data.background
-
-background_mod = RNN("purity ~ seq(words) + background", data=data)
-background_mod.CV(kfolds=10)
-```
-## `NTAP.data.TACIT`
-not implemented. Wrapper around TACIT instance
-`TACIT(path_to_tacit_directory, params to create tacit session)`

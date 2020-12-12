@@ -1,3 +1,4 @@
+import zipfile
 
 """
 if not os.path.exists(dictionary_path):
@@ -11,6 +12,24 @@ if dictionary_path.endswith(".json"):
     except Exception:
         raise ValueError("Could not import json dictionary")
 """
+
+def load_glove(p):
+    pass
+
+def load_fasttext(p):
+    pass
+
+def load_imdb(file_name):
+    d = {'pos': list(), 'neg': list()}
+    zf = zipfile.ZipFile(file_name, 'r')
+    for name in zf.namelist():
+        if name.startswith('pos') and name.endswith('txt'):
+            data = zf.read(name)
+            d['pos'].append(data.strip())
+        if name.startswith('neg') and name.endswith('txt'):
+            data = zf.read(name)
+            d['neg'].append(data.strip())
+    return d
 
 
 
