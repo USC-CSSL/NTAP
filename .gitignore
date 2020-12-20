@@ -9,7 +9,7 @@ ntap.egg-info
 dist
 build
 local_ntap*
-datasets/*
 *swp
 test.py
 test2.py
+tester.db

@@ -5,7 +5,7 @@ import pandas as pd
 from gensim.models.phrases import Phrases
 from gensim.parsing.preprocessing import remove_stopwords
 
-class TextPreprocessor:
+class Preprocessor:
 
     op_strs = {'all': ['hashtags', 'mentions', 'links', 'punc', 
                        'digits', 'stopwords', 'stem', 'contractions', 

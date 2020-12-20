@@ -1,5 +1,6 @@
 import os
 import abc
+#from typing import int, 
 
 # 3rd party imports
 import numpy as np
@@ -7,13 +8,22 @@ import pandas as pd
 from sklearn import linear_model
 from sklearn import svm
 from sklearn import ensemble
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn import metrics
+from patsy import ModelDesc, dmatrices, dmatrix
+from patsy import EvalEnvironment, EvalFactor
+from patsy.state import stateful_transform
+from scipy.sparse import spmatrix, hstack
+from scipy import stats
+import optuna
 
 # local imports
-from ntap.bagofwords import TFIDF
+from ntap.bagofwords import TFIDF, LDA
+#from ntap.formula import build_design_matrices
 #from ntap import neural_models # import LSTM, BiLSTM, FineTune
 
 class TextModel(abc.ABC):
-    """ Abstract class for classifier and regressor
+    """ Base class for supervised models
     optional parameters: - alpha - l1_ratio - tol - max_iter
     Examples of formulae:
         - Harm ~ (bilstm|text_col)
@@ -21,87 +31,79 @@ class TextModel(abc.ABC):
     Optional attributes:
            optimizer: An optimizer to be used during training.
            hidden_size: The default hidden layer size. 
-           cell_type: A string indicating the type of RNN cell.
            dropout: The default dropout rate for all dropout layers.
            learning_rate: A float indicating the learning rate for the model.
     """
 
-    model_types = {'feature_models': ['least_squares', 'ridge', 'lasso', 'elasticnet',
-                                      'poisson', 'svm', 'boosting_trees', 'mlp'],
-                   'sequence_models': ['lstm', 'bilstm', 'finetune']}
+    model_types = {'feature': ['least_squares', 'ridge', 'lasso', 'elasticnet',
+                                      'poisson', 'svm', 'boosting_trees'],
+                   'neural': ['lstm', 'bilstm', 'finetune']}
 
-    def __init__(self, formula, model):
-        self.formula = self.__parse_formula(formula_str=formula)
-        self.build_model(model_family=model)
+    def __init__(self, formula, model_family):
+
+        self.model_family = model_family
+        self.formula = ModelDesc.from_formula(formula)
+        self.formula.rhs_termlist = [t for t in self.formula.rhs_termlist if len(t.factors) != 0]
+        self.backend = 'sklearn' if model_family in self.model_types['feature'] else 'pytorch'
+        #self.obj = self.set_objective(model_family=model_family)
+
 
     @abc.abstractmethod
-    def build_model(self, model_family):
+    def set_analyzer(self):
+        """ Set analyzer function(s) and objects necessary for each modeler class """
+        # idea is: method objects implement functions that return important functions
+        # example: feature analysis, bias measurement, etc
         pass
 
-    def __parse_formula(self, formula_str):
-        _formula = dict()
-        try:
-            lhs, rhs = formula_str.split('~')
-        except ValueError:
-            raise ValueError("Bad formula ({}): No ~ found".format(formula))
-        lhs, rhs = [t.strip() for t in lhs.split('+')], [t.strip() for t in rhs.split('+')]
-        _formula['targets'] = lhs
-        _formula['predictors'] = [t for t in rhs if not t.startswith('(')]
-        _formula['reps'] = [t for t in rhs if t.startswith('(')]
 
-        #features = FeatureSet(formula['reps'])
-        return _formula
+    def set_cross_val_objective(self, scoring='f1', **kwargs):
 
+        if self.backend == 'sklearn':
+            # extract X and y
+            if 'X' in kwargs and 'y' in kwargs:
+                X = kwargs['X']
+                y = kwargs['y']
+            else:
+                raise RunTimeError("Attempting to set objective for sklearn estimator; "
+                                   "X and y must be given as arguments")
+        else:
+            raise NotImplementedError("Only sklearn estimators supported")
 
-    def fit(self, data, **kwargs):
-        try:
-            if isinstance(data, pd.DataFrame) or isinstance(data, pd.SparseDataFrame):
-                Y = data.loc[:, self.formula['targets']].values
-            elif isinstance(data, dict):
-                Y = np.array([data[k] for k in self.formula['targets']]).T
-        except KeyError:
-            raise ValueError("\'data\' missing target(s): ",
-                             "{}".format(self.formula['targets']))
+        def _objective(trial):
+            params = dict() #if params is None else params
+            if self.model_family == 'svm':
+                params['C'] = trial.suggest_float("{}_C".format(self.model_family),
+                                                  0.001, 1.0)
+                weighting_param = trial.suggest_float("class_weight_proportion",
+                                                      0.5, 0.999)
+                params['class_weight'] = {0: 1-weighting_param, 1: weighting_param}
+                learner = svm.LinearSVC(**params)
 
-        try:
-            for rep_str in self.formula['reps']:
-                rep_str = rep_str.strip('(').strip(')')
-                transform_model, source_col = rep_str.split('|')
-                text = data[source_col]
-                if transform_model == 'tfidf':
-                    X = TFIDF(text).X.transpose()
-            #if isinstance(data, pd.DataFrame) or isinstance(data, pd.SparseDataFrame):
-        except KeyError:
-            raise ValueError("\'data\' missing text input(s): ",
-                             "{}".format(self.formula['targets']))
-            if len(self.formula['predictors']) > 0:
-                try:
-                    X = data.loc[:, self.formula['predictors']]
-                except KeyError:
-                    raise ValueError("\'data\' missing predictors: "
-                                     "{}".format(' '.join(self.formula['predictors'])))
+            else:
+                raise NotImplementedError("Only SVM implemented")
+            score = cross_val_score(learner, X, y, n_jobs=-1, cv=10, scoring=scoring)
+            return score.mean()
 
-        if Y.shape[1] == 1:
-            Y = Y.reshape(Y.shape[0])
+        self.obj = _objective
 
-        self.model = self.model().fit(X, Y)
-        print(self.model.predict(X).mean())
+""" General Model Object for Text Classifiers """
+class Classifier(TextModel):
 
-
-class TextClassifier(TextModel):
-    """ General Model Object for Text Classifiers """
     def __init__(self, formula, model_family='least_squares', **params):
-        super().__init__(formula=formula, model=model_family)
+        super().__init__(formula=formula, model_family=model_family)
+
 
     def build_model(self, model_family):
         if model_family == 'least_squares':
-            self.model = linear_model.LogisticRegression
+            pass
+            #self.obj = linear_model.LogisticRegression()
         elif model_family == 'svm':
-            self.model = svm.LinearSVC
+            self.obj = self.__build_objective(model_family)
         elif model_family == 'boosting_trees':
-            self.model = ensemble.GradientBoostingClassifier
+            pass
+            #self.model_obj = ensemble.GradientBoostingClassifier()
 
-class TextRegressor(TextModel):
+class Regressor(TextModel):
     """ General Model Object for Text Regressors """
 
     def __init__(self, formula, model_family='least_squares', **kwargs):
@@ -109,19 +111,19 @@ class TextRegressor(TextModel):
 
     def build_model(self, model_family):
         if model_family == 'least_squares':
-            self.model = linear_model.LinearRegression
+            self.model_obj = linear_model.LinearRegression()
         elif model_family == 'ridge':
-            self.model = linear_model.RidgeRegression
+            self.model_obj = linear_model.RidgeRegression()
         elif model_family == 'lasso':
-            self.model = linear_model.Lasso
+            self.model_obj = linear_model.Lasso()
         elif model_family == 'elasticnet':
-            self.model = linear_model.ElasticNet
+            self.model_obj = linear_model.ElasticNet()
         elif model_family == 'poisson':
-            self.model = linear_model.PoissonRegressor
+            self.model_obj = linear_model.PoissonRegressor()
         elif model_family == 'svm':
-            self.model = svm.SVR
+            self.model_obj = svm.SVR()
         elif model_family == 'boosting_trees':
-            self.model = ensemble.GradientBoostingRegressor
+            self.model_obj = ensemble.GradientBoostingRegressor()
         """
         elif model_family == 'mlp':
             self.model = neural_models.MLP
@@ -130,4 +132,70 @@ class TextRegressor(TextModel):
         elif model_family == 'finetune':
             self.model = neural_models.FineTune
         """
+
+class ValidatedModel:
+    def __init__(self, cv_result=None, val_set_result=None, task='classify'):
+        # define metrics
+        pass
+
+    def get_all_runs(self) -> pd.DataFrame:
+        pass
+
+    def print_confusion_matrix(self):
+        if self.task != 'classify':
+            raise RunTimeError("Confusion matrix unavailable for regression problems")
+
+
+def fit(model: TextModel,
+        data: pd.DataFrame,
+        eval_method: str = 'cross_validate', # options: validation_set, bootstrap
+        seed: int = 729) -> ValidatedModel:
+    """ Fit & Evaluate Model """
+
+    #print(model.formula)
+    #tfidf = stateful_transform(lambda body, **kwargs: TFIDF(**kwargs).transform(body))
+    tfidf = lambda text_col, **kwargs: TFIDF(**kwargs).transform(text_col)
+    def lda(text_col, **kwargs):
+        lda_obj = LDA(**kwargs).fit(text_col) 
+        return lda_obj.transform(text_col)
+
+    sparse_matrices = dict()
+    column_vecs = dict()
+
+    for term in model.formula.rhs_termlist:
+        for e in term.factors:
+            state = {}
+            eval_env = EvalEnvironment.capture(0)
+            passes = e.memorize_passes_needed(state, eval_env)
+            mat = e.eval(state, data)
+            if isinstance(mat, spmatrix):
+                sparse_matrices[e.code] = mat
+            elif isinstance(mat, (np.ndarray, pd.Series)):
+                if isinstance(mat, pd.Series):
+                    mat = mat.values
+                column_vecs[e.code] = np.reshape(mat, (mat.shape[0], 1))
+
+    X = hstack(list(sparse_matrices.values()) + list(column_vecs.values()))
+    y, _ = dmatrices(ModelDesc(model.formula.lhs_termlist, list()) , data)
+    y = np.ravel(y)
+    y = np.array(y)
+
+    print(X)
+    print(y)
+
+    if eval_method == 'cross_validate':
+        model.set_cross_val_objective(scoring='f1', X=X, y=y)
+        study = optuna.create_study(direction='maximize', storage="sqlite:///tester.db")
+        study.optimize(model.obj, n_trials=100)
+    elif eval_method == 'fit':
+        model.fit(X, y)
+
+def predict(model: TextModel, data: pd.DataFrame):
+    """ Given trained model (with formula specified), predicts labels """
+
+    pass
+    # if LHS is non-null, return score
+
+    #y, y_hat = labels, predictions
+
 

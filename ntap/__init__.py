@@ -1,8 +1,7 @@
 name = "ntap"
-from . import parse
-from . import supervised #import TextClassifier, TextRegressor
-from .ops import cross_validate, train, predict
-from . import bagofwords #import DocTerm, LDA
-from . import embedding #import GloVe
+from ntap.parse import Preprocessor
+from ntap.supervised import Classifier, Regressor, fit, predict
+from ntap.bagofwords import DocTerm, LDA, TFIDF, Dictionary
+from ntap.embedding import EmbedCorpus, DDR
 
-#__all__ = ["TextPreprocessor","TextClassifier","TextRegressor","DocTerm", "LDA", "Glove", "cv", "train", "predict", 'supervised']
+__all__ = ["Preprocessor","Classifier","Regressor","DocTerm", "TFIDF", "LDA", "Dictionary"]

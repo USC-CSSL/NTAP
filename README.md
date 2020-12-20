@@ -5,6 +5,17 @@
 
 `ntap` provides a human-readable API for text analysis using modern methods from NLP. 
 
+The goals of `ntap` are:
+
+1. Reduce user interaction with lower-level ML libraries, such as PyTorch or sciki-learn, instead relying on a few high-level interfaces (similarly to R/S)
+2. Provide reproducible pipelines for text analyses
+3. Define a human-readable grammar/syntax for defining analysis pipelines, using R/S-style formulas
+4. Dynamic integration of interpretability research from ML/NLP via `analysis` module
+
+## Pipelines
+
+Instantiate a new analysis via existing template pipelines (LIWC, topic modeling, fine tuning) or load a previous analysis from configuration/model files
+
 ## Data input
 
 NTAP tries to enable flexible data input/output, working with `pandas` DataFrames/Series objects as well as python dictionaries and lists. 
@@ -16,11 +27,9 @@ dataset = pd.DataFrame({'text': ['how now brown cow',
                         'author': ['brendan', 'erin', 'kevin']})
 ```
 
-## Text cleaning
+## Text cleaning/tokenization -> Implicit
 
-All `ntap` functionalities use the Dataset object class, which is responsible for loading datasets from file, cleaning text, transforming text into features, and saving results to file. 
-
-#### ntap.parse.TextPreprocessor
+### ntap.parse.TextPreprocessor
 
 Processing scripts are handled by the TextPreprocessor object, which uses formulas to specify cleaning operations
 

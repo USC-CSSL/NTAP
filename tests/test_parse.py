@@ -6,25 +6,6 @@ import pandas as pd
 from ntap.parse import TextPreprocessor
 from ntap.utils import load_imdb
 
-"""
-FIXTURE_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    'test_files',
-    )
-
-LABEL_DATASETS = {'imdb': os.path.join(FIXTURE_DIR, 
-                                       'imdb_sentiment_train.zip'),
-                  'reviews': os.path.join(FIXTURE_DIR, 
-                                          'review_polarity.tar.gz')}
-
-@pytest.mark.datafiles(LABEL_DATASETS['imdb'])
-def test_load_imdb(datafiles):
-    for fn in datafiles.listdir():
-        data = load_imdb(fn)
-        assert len(data['pos']) == 12500
-        assert len(data['neg']) == 12500
-"""
-
 
 def test_process_lower():
     in_ = 'Lorem ipsum dolor sit amet, consectetur Adipisicing elit'
