@@ -16,6 +16,7 @@ from patsy.state import stateful_transform
 from scipy.sparse import spmatrix, hstack
 from scipy import stats
 import optuna
+optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 # local imports
 from ntap.bagofwords import TFIDF, LDA
@@ -48,12 +49,14 @@ class TextModel(abc.ABC):
         #self.obj = self.set_objective(model_family=model_family)
 
 
+    """
     @abc.abstractmethod
     def set_analyzer(self):
-        """ Set analyzer function(s) and objects necessary for each modeler class """
+        #Set analyzer function(s) and objects necessary for each modeler class
         # idea is: method objects implement functions that return important functions
         # example: feature analysis, bias measurement, etc
         pass
+    """
 
 
     def set_cross_val_objective(self, scoring='f1', **kwargs):
@@ -161,6 +164,7 @@ def fit(model: TextModel,
 
     sparse_matrices = dict()
     column_vecs = dict()
+    matrices = dict()
 
     for term in model.formula.rhs_termlist:
         for e in term.factors:
@@ -170,24 +174,45 @@ def fit(model: TextModel,
             mat = e.eval(state, data)
             if isinstance(mat, spmatrix):
                 sparse_matrices[e.code] = mat
-            elif isinstance(mat, (np.ndarray, pd.Series)):
+            elif isinstance(mat, (np.ndarray, pd.Series)) and mat.shape[1] <= 1:
+                # column vec
                 if isinstance(mat, pd.Series):
                     mat = mat.values
                 column_vecs[e.code] = np.reshape(mat, (mat.shape[0], 1))
+            elif isinstance(mat, np.ndarray):
+                matrices[e.code] = mat
+            else:
+                raise RunTimeError("Unsupported data format: {}".format(type(mat)))
 
-    X = hstack(list(sparse_matrices.values()) + list(column_vecs.values()))
+
+    list_of_mats = list(sparse_matrices.values()) + list(column_vecs.values())+ list(matrices.values())
+    if len(list_of_mats) == 1:
+        X = list_of_mats[0]
+    elif len(list_of_mats) > 1:
+        X = hstack(list_of_mats)
+    else:
+        raise RunTimeError("No features found")
     y, _ = dmatrices(ModelDesc(model.formula.lhs_termlist, list()) , data)
     y = np.ravel(y)
     y = np.array(y)
 
-    print(X)
-    print(y)
-
     if eval_method == 'cross_validate':
-        model.set_cross_val_objective(scoring='f1', X=X, y=y)
+        scoring_metric = 'f1'
+        model.set_cross_val_objective(scoring=scoring_metric, X=X, y=y)
         study = optuna.create_study(direction='maximize', storage="sqlite:///tester.db")
         study.optimize(model.obj, n_trials=100)
+
+        best_params = study.best_params.items()
+        best_params = ['{}: {:.2f}'.format(k, v) if isinstance(v, float)
+                       else '{}: {}'.format(k, v) for k, v in best_params]
+
+        print("Run {} trials\n"
+              "Best {} ({:.3f}) with params:\n"
+              "{}".format(len(study.trials), scoring_metric, study.best_value, 
+                          '\n'.join(best_params)))
+
     elif eval_method == 'fit':
+        print("Not tested")
         model.fit(X, y)
 
 def predict(model: TextModel, data: pd.DataFrame):

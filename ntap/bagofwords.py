@@ -11,12 +11,11 @@ import liwc
 import numpy as np
 import pandas as pd
 from gensim.corpora import Dictionary as DictGensim
-from gensim.models.wrappers import LdaMallet
-from gensim.models import LdaModel, TfidfModel
-from gensim.models.wrappers.ldamallet import malletmodel2ldamodel
+from gensim.models import TfidfModel
 from gensim.matutils import corpus2csc
 from scipy.spatial.distance import cosine
 from scipy.sparse import csr_matrix
+import tomotopy as tpy
 
 _WORD_RE = re.compile(r'[\w\_]{2,20}')
 _TOKENIZERS = {'regex': lambda x: _WORD_RE.findall(x),
@@ -131,16 +130,15 @@ class TFIDF:
 
 
 class LDA:
-    def __init__(self, method='online', num_topics=50, num_iterations=500,
+    def __init__(self, method='vanilla', k=50, num_iterations=50,
                  optimize_interval=10, tokenizer='regex', **kwargs):
         self.__dict__.update(kwargs)
         self.method = method
-        self.num_topics = num_topics
+        self.k = k
         self.num_iterations = num_iterations
         self.optimize_interval = optimize_interval  # hyperparameters
 
         self.tokenizer = _TOKENIZERS[tokenizer]
-        #self.model = self.__fit_lda_model()
 
     @property
     def model(self):
@@ -174,46 +172,46 @@ class LDA:
         if not hasattr(dt, 'bow'):  # not fit object
             dt.fit(corpus)
 
-        self.vocab = dt.vocab
+        #self.vocab = dt.vocab
+        #if self.method == 'vanilla':
+        #else:
+        #raise ValueError("Invalid LDA method: {}".format(self.method))
+        topic_mdl = tpy.LDAModel(k=self.k)
+        for doc in dt.tokenized.values:
+            if len(doc) == 0:
+                continue
+            topic_mdl.add_doc(doc)
 
-        if self.method == 'online':
-            model = LdaModel(corpus=dt.bow,
-                             num_topics=self.num_topics,
-                             iterations=self.num_iterations,
-                             id2word=dt.vocab)
+        for i in range(0, self.num_iterations, 10):
+            topic_mdl.train(i)
+            logger.info(f'Iteration: {i}\tLog-likelihood: {topic_mdl.ll_per_word}')
 
-        elif self.method == 'gibbs':
-            if 'mallet_path' not in self.__dict__:
-                raise ValueError("Cannot gibbs sampling without setting \'mallet_path\'")
-            try:
-                model = LdaMallet(mallet_path=self.mallet_path,
-                                  #prefix=prefix,
-                                  corpus=dt.bow,
-                                  id2word=dt.vocab,
-                                  iterations=self.num_iterations,
-                                  num_topics=self.num_topics,
-                                  optimize_interval=self.optimize_interval)
-            except subprocess.CalledProcessError:
-                raise ValueError(f'Bad mallet_path argument ({self.mallet_path})')
-            model = malletmodel2ldamodel(model)
-        else:
-            raise ValueError("Invalid LDA method: {}".format(self.method))
-        self.model = model
+        """
+        for k in range(topic_mdl.k):
+            print('Top 10 words of topic #{}'.format(k))
+            print(topic_mdl.get_topic_words(k, top_n=10))
+        """
+
+        self.mdl = topic_mdl
 
         return self
 
     def transform(self, corpus):
         if isinstance(corpus, pd.Series):
-            tokenized = corpus.apply(self.tokenizer)
-            dt = tokenized.apply(lambda tokens: self.model[self.vocab.doc2bow(tokens)])
-            return corpus2csc(dt.values.tolist(), 
-                              num_terms=self.num_topics, 
-                              num_docs=len(dt)).T
+            tokenized = corpus.apply(self.tokenizer).values
         else:
             tokenized = [self.tokenizer(doc) for doc in corpus]
-            bow = [self.vocab.doc2bow(doc) for doc in tokenized]
-            return [self.model[doc] for doc in bow]
 
+        inferred = np.zeros((len(tokenized), self.k))
+        docs = list()
+        for toks in tokenized:
+            if len(toks) == 0:
+                docs.append(self.mdl.make_doc(tokenized[0]))
+            else:
+                docs.append(self.mdl.make_doc(toks))
+        dist, ll = self.mdl.infer(docs)
+        dist = np.array(dist)
+        return dist
 
 class Dictionary(DocTerm):
 

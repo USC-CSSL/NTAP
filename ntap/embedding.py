@@ -6,71 +6,73 @@ import pandas as pd
 import gensim.downloader as api
 
 from ntap.bagofwords import Dictionary, DocTerm
-from ntap.utils import load_glove, load_fasttext
+from ntap.utils import open_embed
 
-class EmbedCorpus:
+class Embedding:
 
-    model_list = ['fasttext-wiki-news-subwords-300',
-                  'glove-twitter-100',
-                  'glove-twitter-200',
-                  'glove-twitter-25',
-                  'glove-twitter-50',
-                  'glove-wiki-gigaword-100',
-                  'glove-wiki-gigaword-200',
-                  'glove-wiki-gigaword-300',
-                  'glove-wiki-gigaword-50',
-                  'word2vec-google-news-300']
+    def __init__(self, embedding_name='glove-wiki-gigaword-300', **kwargs):
 
-
-    def __init__(self, corpus, embedding_name='glove-wiki-gigaword-300', 
-                 is_tokenized=False, **kwargs):
-        if not is_tokenized:
-            self.dtm = DocTerm(corpus, **kwargs)
         self.embed_name = embedding_name
-        self.is_tokenized = is_tokenized
         if embedding_name in self.model_list:
-            self.E = api.load(embedding_name)
+            self.vectors = api.load(embedding_name)
         else:
             raise ValueError("{} embedding not recognized by gensim API",
                              "Options: {}".format(embedding_name,
                                                   " ".join(self.model_list)))
-        self.X = self.fit_transform(corpus)
+        #self.X = self.fit_transform(corpus)
+        self.__dict__.update(kwargs)
 
-    def fit_transform(self, data, min_words=0):
-        if isinstance(data, pd.Series):
-            data = data.values.tolist()
+    def _load(self, name, local_file_name=None):
+
+        if local_file_name is not None:
+            print("Read from local file")
+            return # if successful
+        open_embed(name)
+
+    def transform(self, corpus, min_words=0, convert_to_nan=True):
+
+        if not isinstance(corpus, DocTerm):
+
+            #_verify_corpus(corpus)
+            docterm_params = {k: v for k, v in self.__dict__.items() 
+                              if k in {'vocab_size', 'max_df'}}
+            dt = DocTerm(**docterm_params)
+        else:
+            dt = corpus
+
+        if not hasattr(dt, 'bow'):  # not fit object
+            dt.fit(corpus)
 
         self.empty_indices = list()
         self.found_words = set()
         self.missing_words = set()
-        if self.is_tokenized:
-            tokens = data
-        else:
-            tokens = self.dtm.get_tokenized(data)  # list of token-lists
-        embedded_docs = np.zeros((len(self.dtm), self.E.vector_size))
 
-        for i, doc_tokenized in enumerate(tokens):
+        embedded_docs = np.zeros((len(dt), self.vectors.vector_size))
+
+        for i, doc_tokenized in enumerate(dt.tokenized):
             c = 0
             for t in doc_tokenized:
-                if t in self.E:
-                    embedded_docs[i, :] += self.E[t]
+                if t in self.vectors:
+                    embedded_docs[i, :] += self.vectors[t]
                     c += 1
                     self.found_words.add(t)
                 else:
                     self.missing_words.add(t)
             if c == 0:
-                warnings.warn('Empty doc in embedding corpus', RuntimeWarning)
+                warnings.warn('Empty doc found while computing embedding', RuntimeWarning)
                 self.empty_indices.append(i)
             else:
                 embedded_docs[i, :] /= c
+
+        if convert_to_nan:
+            embedded_docs[self.empty_indices, :] = np.NaN
+
         return embedded_docs
 
-    def __len__(self):
-        return len(self.dtm)
-
+    """
     def __str__(self):
         top_missing = sorted(self.missing_words)
-        return ("EmbedCorpus Object (documents: {})\n"
+        return ("Embedding Object (documents: {})\n"
                 "Embedding File Used: {}\n"
                 "Unique Embeddings found: {}\n"
                 "Missing Words ({}): {}...\n"
@@ -80,6 +82,7 @@ class EmbedCorpus:
                                                    len(top_missing),
                                                    " ".join(top_missing[:10]),
                                                    len(self.empty_indices))
+    """
 
 def _cosine_matrix(X, Y):
     X_norm = np.linalg.norm(X, axis=1)
@@ -104,18 +107,20 @@ class _Dic_Centers:
 
 class DDR:
 
-    def __init__(self, corpus, dic, **kwargs):
+    def __init__(self, dic, **kwargs):
 
-        self.emb_corpus = EmbedCorpus(corpus, **kwargs)
+        self.__dict__.update(kwargs)
+
+        self.emb_corpus = Embedding(**kwargs)
 
         if not isinstance(dic, Dictionary) and isinstance(dic, str):
             self.dic = Dictionary(dic_path=dic)
         elif isinstance(dic, Dictionary):
             self.dic = dic
 
-        self.emb_dic = _Dic_Centers(self.emb_corpus.E, self.dic)
+        self.emb_dic = _Dic_Centers(self.emb_corpus.vectors, self.dic)
 
-        self.X = self.fit()
+        #self.X = self.fit()
 
     def fit(self, **kwargs):
         #doc_avgs[~np.isnan(doc_avgs).any(axis=1)]
