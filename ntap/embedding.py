@@ -3,31 +3,26 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import gensim.downloader as api
 
 from ntap.bagofwords import Dictionary, DocTerm
 from ntap.utils import open_embed
 
 class Embedding:
 
-    def __init__(self, embedding_name='glove-wiki-gigaword-300', **kwargs):
+    def __init__(self, name='glove-wiki', **kwargs):
 
-        self.embed_name = embedding_name
-        if embedding_name in self.model_list:
-            self.vectors = api.load(embedding_name)
-        else:
-            raise ValueError("{} embedding not recognized by gensim API",
-                             "Options: {}".format(embedding_name,
-                                                  " ".join(self.model_list)))
-        #self.X = self.fit_transform(corpus)
         self.__dict__.update(kwargs)
 
-    def _load(self, name, local_file_name=None):
+        self.embed_name = name
+        self.load_from_ntap_dir(name)
+        #self.X = self.fit_transform(corpus)
 
-        if local_file_name is not None:
-            print("Read from local file")
-            return # if successful
-        open_embed(name)
+    def load_from_ntap_dir(self, name):
+
+        if 'vec_size' in self.__dict__:
+            self.vocab, self.vecs = open_embed(name, vec_size=self.vec_size)
+        else:
+            self.vocab, self.vecs = open_embed(name)
 
     def transform(self, corpus, min_words=0, convert_to_nan=True):
 
