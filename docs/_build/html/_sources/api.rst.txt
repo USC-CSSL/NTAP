@@ -1,0 +1,24 @@
+
+The ntap API reference
+======================
+.. automodule:: ntap
+   :members:
+
+The Embedding module
+====================
+.. module:: ntap.embed
+
+.. autoclass:: Embedding
+   :members:
+
+
+The Dictionary module
+=====================
+.. automodule:: ntap.dic
+   :members:
+
+.. autoclass:: Dictionary
+   :members:
+
+.. autoclass:: DDR
+   :members:

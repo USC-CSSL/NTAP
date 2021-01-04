@@ -1,0 +1,340 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Embedding module &mdash; ntap 0.1.0 documentation</title>
+  
+	
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+	
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="ntap 0.1.0 documentation" href="index.html"/>
+        <link rel="next" title="The Supervised module" href="supervised.html"/>
+        <link rel="prev" title="The Dictionary module" href="embed.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> ntap
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="embed.html">The Dictionary module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Embedding module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervised.html">The Supervised module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ntap</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>The Embedding module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-ntap.embed">
+<span id="the-embedding-module"></span><h1>The Embedding module<a class="headerlink" href="#module-ntap.embed" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="ntap.embed.Embedding">
+<em class="property">class </em><code class="sig-prename descclassname">ntap.embed.</code><code class="sig-name descname">Embedding</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'glove-wiki'</span></em>, <em class="sig-param"><span class="n">vec_size</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">base_dir</span><span class="o">=</span><span class="default_value">'~/ntap_data'</span></em>, <em class="sig-param"><span class="n">local_dir</span><span class="o">=</span><span class="default_value">'./output'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.embed.Embedding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Background class for managing static word embeddings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – One of “{glove|fasttext}-{wiki|cc}”, e.g., glove-wiki</p></li>
+<li><p><strong>vec_size</strong> (<em>int</em>) – Only defined for name=glove-wiki, else ignored.
+Options: 50, 100, 200, 300</p></li>
+<li><p><strong>base_dir</strong> (<em>str</em>) – Will attempt to download and load full embedding files
+from this directory. The default base_dir (~/ntap_data),
+which routes to the user’s <em>home</em> directory, can be
+overridden by passing a different directory as <cite>base_dir</cite>,
+or alternatively as an environment variable <code class="docutils literal notranslate"><span class="pre">NTAP_BASE_DIR</span></code>.</p></li>
+<li><p><strong>local_dir</strong> (<em>str</em>) – Embedding files will be saved and optionally loaded from
+this directory.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt>
+<code class="sig-name descname">load:</code></dt>
+<dd><p>Reads embedding data from file, executing download if not found.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">save:</code></dt>
+<dd><p>Save to file. Use after <code class="docutils literal notranslate"><span class="pre">update_vocab</span></code> to save a smaller, local
+version of embedding for a given project.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">update_vocab:</code></dt>
+<dd><p>Given a corpus, shrink vocab (and embedding matrix). This saves
+memory and makes lookups more efficient.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt>
+<code class="sig-name descname">transform:</code></dt>
+<dd><p>Given a set of documents, encode them to averaged embeddings</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="ntap.embed.Embedding.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prefer_local</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.embed.Embedding.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to load from local_dir then from base_dir</p>
+<p>If no <code class="docutils literal notranslate"><span class="pre">vocab.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">vecs.npy</span></code> files are found in
+<code class="docutils literal notranslate"><span class="pre">self.local_dir/self.embed_name/self.vec_size/</span></code>, will
+attempt to instead load from <code class="docutils literal notranslate"><span class="pre">self.base_dir</span></code>. If <code class="docutils literal notranslate"><span class="pre">vocab.txt</span></code>
+and <code class="docutils literal notranslate"><span class="pre">vecs.npy</span></code> are not found there, will download and
+convert files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>prefer_local</strong> (<em>bool</em>) – Whether or not to check local project directory (set
+in <code class="docutils literal notranslate"><span class="pre">__init__</span></code>) before loading full embedding files
+from base directory (~/ntap_data)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="ntap.embed.Embedding.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ntap.embed.Embedding.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save vocab and vector file (.npy) to self.local_dir</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="ntap.embed.Embedding.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">docs</span></em>, <em class="sig-param"><span class="n">min_words</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">is_tokenized</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.embed.Embedding.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map a list of docs to their avg word embedding</p>
+<p>Primarily for use by methods like DDR and as a feature baseline
+for supervised models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>docs</strong> (<em>list-like</em>) – List of strings (if not is_tokenized) or lists</p></li>
+<li><p><strong>min_words</strong> (<em>int</em>) – Docs with fewer than min_words tokens in embedding
+(self.vocab) are replaced with NaN</p></li>
+<li><p><strong>is_tokenized</strong> – If True, docs is expected to contain token-lists rather
+than str</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>A matrix size N x self.vec_size, where N is length of docs</p>
+<p>Missing docs (see <code class="docutils literal notranslate"><span class="pre">min_words</span></code>) consistent of a row of NaN</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="ntap.embed.Embedding.update_vocab">
+<code class="sig-name descname">update_vocab</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corpus</span></em>, <em class="sig-param"><span class="n">vocab_size</span><span class="o">=</span><span class="default_value">10000</span></em>, <em class="sig-param"><span class="n">max_df</span><span class="o">=</span><span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">save_after</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.embed.Embedding.update_vocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shrink vocab to corpus and prune unused embeddings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>corpus</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code> of <code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – An iterable of documents in string form</p></li>
+<li><p><strong>vocab_size</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>) – The most frequent <code class="docutils literal notranslate"><span class="pre">vocab_size</span></code> from corpus are kept.</p></li>
+<li><p><strong>max_df</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Words that occur in more than max_df (ratio 0–1) are pruned</p></li>
+<li><p><strong>save_after</strong> (<em>bool</em>) – If True, will automatically save updated vocab and vectors
+to <code class="docutils literal notranslate"><span class="pre">self.local_dir</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="supervised.html" class="btn btn-neutral float-right" title="The Supervised module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="embed.html" class="btn btn-neutral" title="The Dictionary module" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Brendan Kennedy.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

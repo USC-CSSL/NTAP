@@ -31,6 +31,19 @@ class Embedding:
         Embedding files will be saved and optionally loaded from 
         this directory. 
 
+    Methods
+    -------
+    load:
+        Reads embedding data from file, executing download if not found.
+    save:
+        Save to file. Use after ``update_vocab`` to save a smaller, local
+        version of embedding for a given project.
+    update_vocab:
+        Given a corpus, shrink vocab (and embedding matrix). This saves 
+        memory and makes lookups more efficient.
+    transform:
+        Given a set of documents, encode them to averaged embeddings
+
     """
 
     def __init__(self, name='glove-wiki', vec_size=300, 

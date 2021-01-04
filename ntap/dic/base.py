@@ -50,6 +50,7 @@ class Dictionary:
         (links, mentions, etc.) and transforming to lowercase. See
         ntap.parse.Preprocess for more.
 
+
     """
 
     def __init__(self,
@@ -67,7 +68,11 @@ class Dictionary:
         self.load()
 
     def load(self, local_dic_path=None):
-        """ Read from a .dic file in base_dir or from local file 
+        """ Read from a .dic file in base_dir or from local file
+
+        Read dictionary file from a .dic format. With default behavior, 
+        attempts to locate file from ``self.base_dir`` directory, and 
+        downloading if file is available.
 
         Parameters
         ----------
@@ -100,7 +105,10 @@ class Dictionary:
 
     def transform(self,
                   corpus):
-        """ Apply dictionary to corpus by pattern matching/counting
+        """ Apply dictionary to corpus by counting pattern matches
+
+        Apply the stored dictionary to a new corpus of documents, returning a 
+        sparse array in compressed sparse row (csr) format. 
 
         Parameters
         ----------
@@ -192,8 +200,8 @@ class DDR:
     embedding : str
         Embedding to use. Corresponds to available embeddings via
         the Embedding class. By default, embedding files are loaded
-        from the ``~/ntap_data'' directory. This can be overriden via
-        additional parameters (see **kwargs below)
+        from the ``~/ntap_data`` directory. This can be overriden via
+        \*\*kwargs.
     preprocessor : str
         How new documents are processed before tokenization. Defaults 
         to full set of ``clean`` operations (see Preprocessor class 
@@ -226,8 +234,13 @@ class DDR:
         self.names, self.centers = self.embedded_dic.get_centers()
 
     def transform(self, data, **kwargs):
-        """ Compute similarities between docs and dictionaries """
+        """ Compute similarities between docs and dictionaries
 
+        Apply stored dictionary and word embeddings to new documents, 
+        generating cosine similarities between dictionary centers and
+        document centers for each document.
+
+        """
         cleaned = self.preprocessor.transform(data)
         tokenized = self.tokenizer.transform(cleaned)
 

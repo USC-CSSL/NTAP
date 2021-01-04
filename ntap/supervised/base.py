@@ -12,7 +12,7 @@ from sklearn import ensemble
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn import metrics
 from scipy import sparse
-import optuna
+#import optuna
 #optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 # local imports
@@ -123,6 +123,7 @@ class TextModel:
         * Harm ~ bilstm(text_col)
     **kwargs :
         optional arguments for specification and estimation
+
     """
 
 
@@ -149,7 +150,14 @@ class TextModel:
             na_action: str = 'remove',
             with_optuna: bool = False,
             seed: int = 729):
-        """ Fit & Evaluate Model """
+        """ Fit & Evaluate Model
+
+        Fit model to data. Default behavior will perform grid search 
+        (using cross validation) to find best hyperparameters. 
+        Hyperparameters to search over are defined in ntap and can be 
+        accessed via the ``set_grid`` and ``get_grid`` methods (TODO). 
+
+        """
 
         #validator = Validation(eval_method)
 
@@ -206,7 +214,12 @@ class TextModel:
         return self
 
     def predict(self, data: pd.DataFrame):
-        """ Predicts labels for a trained model """
+        """ Predicts labels for a trained model
+
+        Generate predictions from data. Data is an Iterable over strings.
+
+        TODO
+        """
 
         pass
         # if LHS is non-null, return score

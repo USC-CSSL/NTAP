@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Dictionary module &mdash; ntap 0.1.0 documentation</title>
+  
+	
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+	
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="ntap 0.1.0 documentation" href="index.html"/>
+        <link rel="next" title="The Embedding module" href="dic.html"/>
+        <link rel="prev" title="Welcome to ntap’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> ntap
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Dictionary module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dic.html">The Embedding module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervised.html">The Supervised module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ntap</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>The Dictionary module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-ntap.dic">
+<span id="the-dictionary-module"></span><h1>The Dictionary module<a class="headerlink" href="#module-ntap.dic" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="ntap.dic.Dictionary">
+<em class="property">class </em><code class="sig-prename descclassname">ntap.dic.</code><code class="sig-name descname">Dictionary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">base_dir</span><span class="o">=</span><span class="default_value">'~/ntap_data'</span></em>, <em class="sig-param"><span class="n">tokenizer</span><span class="o">=</span><span class="default_value">'word'</span></em>, <em class="sig-param"><span class="n">preprocess</span><span class="o">=</span><span class="default_value">'clean+lowercase+contractions'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.dic.Dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Supports lexicon-approaches such as word counting</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">liwc</span></code> package, reads liwc-style dictionaries from
+file (ending in <code class="docutils literal notranslate"><span class="pre">.dic</span></code>). The LIWC dictionaries are
+proprietary, and can be purchased from &lt;<a class="reference external" href="https://liwc.wpengine.com/">https://liwc.wpengine.com/</a>&gt;.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – <p>The name of the dictionary, used to either download (based on
+a preset list of options from NTAP), load from local file, or
+both download and load.</p>
+<p>Currently supported options:</p>
+<ul>
+<li><p>mfd: Maps to the Moral Foundations Dictionary (MFD)</p></li>
+<li><p>More to come!</p></li>
+</ul>
+<p>If reading dictionary from a (previously downloaded) local file,
+name is simply used for print-outs and logging. See
+<code class="docutils literal notranslate"><span class="pre">local_dic_path</span></code> in the <code class="docutils literal notranslate"><span class="pre">load</span></code> function, below.</p>
+</p></li>
+<li><p><strong>base_dir</strong> (<em>str</em>) – Which local directory to download files to, and from which to
+load dictionary files. Defaults to <code class="docutils literal notranslate"><span class="pre">ntap_data</span></code> in the user’s
+home directory</p></li>
+<li><p><strong>tokenizer</strong> (<em>str</em>) – Function descriptor of tokenization to perform when applying
+Dictionary to text. Defaults to basic word-based tokenizer
+(see ntap.parse.Tokenizer)</p></li>
+<li><p><strong>preprocess</strong> (<em>str</em>) – Function descriptor of text cleaning, used similarly to
+tokenization argument. Defaults to removing non-words
+(links, mentions, etc.) and transforming to lowercase. See
+ntap.parse.Preprocess for more.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="ntap.dic.Dictionary.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">local_dic_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.dic.Dictionary.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read from a .dic file in base_dir or from local file</p>
+<p>Read dictionary file from a .dic format. With default behavior,
+attempts to locate file from <code class="docutils literal notranslate"><span class="pre">self.base_dir</span></code> directory, and
+downloading if file is available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>local_dic_path</strong> (<em>str</em>) – If not None, local path of a .dic file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="ntap.dic.Dictionary.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">corpus</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.dic.Dictionary.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply dictionary to corpus by counting pattern matches</p>
+<p>Apply the stored dictionary to a new corpus of documents, returning a
+sparse array in compressed sparse row (csr) format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>corpus</strong> (<em>Union</em><em>[</em><em>Iterable</em><em>[</em><em>str</em><em>]</em><em>, </em><em>pd.Series</em><em>]</em>) – List-like object with strings.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Resulting dictionary counts in compressed sparse row
+format. To convert to dense (producing lots of zeros in
+matrix), you can call <code class="docutils literal notranslate"><span class="pre">.todense</span></code> on the object. See
+documentation in scipy.sparse</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>scipy.sparse.csr_matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="ntap.dic.DDR">
+<em class="property">class </em><code class="sig-prename descclassname">ntap.dic.</code><code class="sig-name descname">DDR</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dic</span></em>, <em class="sig-param"><span class="n">embedding</span><span class="o">=</span><span class="default_value">'glove-wiki'</span></em>, <em class="sig-param"><span class="n">preprocessor</span><span class="o">=</span><span class="default_value">'clean+lowercase'</span></em>, <em class="sig-param"><span class="n">tokenizer</span><span class="o">=</span><span class="default_value">'word'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.dic.DDR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distributed Dictionary Representations</p>
+<p>Implements Garten et al. (2018). Dictionary words are mapped to
+word embeddings, and subsequently each dictionary category is
+represented by the average of the mapped word embeddings.</p>
+<p>Implements a <code class="docutils literal notranslate"><span class="pre">transform</span></code> method that computes the geometric
+similarity of a document’s word embeddings to each dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dic</strong> (<em>str</em>) – Name of a dictionary or path to a dictionary file (.dic)</p></li>
+<li><p><strong>embedding</strong> (<em>str</em>) – Embedding to use. Corresponds to available embeddings via
+the Embedding class. By default, embedding files are loaded
+from the <code class="docutils literal notranslate"><span class="pre">~/ntap_data</span></code> directory. This can be overriden via
+**kwargs.</p></li>
+<li><p><strong>preprocessor</strong> (<em>str</em>) – How new documents are processed before tokenization. Defaults
+to full set of <code class="docutils literal notranslate"><span class="pre">clean</span></code> operations (see Preprocessor class
+in ntap.parse)</p></li>
+<li><p><strong>tokenizer</strong> (<em>str</em>) – How words in new documents are tokenized. Defaults to simple
+word regex (see Tokenizer class in ntap.parse)</p></li>
+<li><p><strong>**kwargs</strong> – Optional arbitrary named parameters. Accepts parameters for
+Embedding and Dictionary constructors</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="ntap.dic.DDR.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.dic.DDR.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute similarities between docs and dictionaries</p>
+<p>Apply stored dictionary and word embeddings to new documents,
+generating cosine similarities between dictionary centers and
+document centers for each document.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="dic.html" class="btn btn-neutral float-right" title="The Embedding module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to ntap’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Brendan Kennedy.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
