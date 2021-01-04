@@ -5,6 +5,48 @@ import pandas as pd
 from gensim.models.phrases import Phrases
 from gensim.parsing.preprocessing import remove_stopwords
 
+_WORD_RE = re.compile(r'[\w\_]{2,20}')
+
+class Tokenizer:
+
+    tokenizers = {'word': lambda x: _WORD_RE.findall(x),
+                  'whitespace': lambda x: x.split()}
+
+    def __init__(self, name='word'):
+
+        if name not in self.tokenizers:
+            raise ValueError(f"Tokenizer {name} not found. Options are: "
+                             f"{', '.join(list(self.tokenizers.keys()))}")
+
+        self.name = name
+        self.tokenizer = self.tokenizers[name]
+
+    def transform(self, docs):
+        """ Return list of tokens for each doc in docs 
+
+        Parameters
+        ----------
+        docs : list-like
+            Iterable over string documents. Can be list, 
+            numpy ndarray, or pandas Series
+
+        Returns
+        -------
+        list-like (list, array, Series)
+            Iterable of token-lists. Type will match input
+
+        """
+
+        if isinstance(docs, pd.Series):
+            return docs.apply(self.tokenizer)
+        elif isinstance(docs, list):
+            return [self.tokenizer(doc) for doc in docs]
+        elif isinstance(docs, np.ndarray):
+            return np.array([self.tokenizer(doc) for doc in docs])
+        else:
+            raise RunTimeError("Type of input not recognized. Must be "
+                               "list, ndarray, or Series")
+
 class Preprocessor:
 
     op_strs = {'all': ['hashtags', 'mentions', 'links', 'punc', 
@@ -16,7 +58,6 @@ class Preprocessor:
                'mentions': ['mentions'], 
                'links': ['links'], 
                'digits': ['digits'],
-               'dates': ['dates'],
                'stem': ['stem'],
                'punc': ['punc'],
                'ngrams': ['ngrams'],

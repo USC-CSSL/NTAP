@@ -5,23 +5,22 @@ import os
 import logging
 import subprocess
 from collections import Counter
+from typing import Iterable, Union
 
 # 3rd party imports
 import liwc
 import numpy as np
 import pandas as pd
-from gensim.corpora import Dictionary as DictGensim
+from gensim.corpora import Dictionary
 from gensim.models import TfidfModel
 from gensim.matutils import corpus2csc
 from scipy.spatial.distance import cosine
 from scipy.sparse import csr_matrix
 import tomotopy as tpy
 
-_WORD_RE = re.compile(r'[\w\_]{2,20}')
-_TOKENIZERS = {'regex': lambda x: _WORD_RE.findall(x),
-              'whitespace': lambda x: x.split()}
+from ntap.parse import Preprocessor, Tokenizer
 
-__all__ = ['DocTerm', 'TFIDF', 'LDA', 'Dictionary']
+__all__ = ['DocTerm', 'TFIDF', 'LDA']
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +42,12 @@ def _verify_params(tokenizer, vocab_size, max_df):
 
 class DocTerm:
 
-    def __init__(self, tokenizer='regex', vocab_size=10000, max_df=0.5, **kwargs):
-        """ corpus is list-like; contains str documents """
+    def __init__(self, tokenizer='word', preprocessor='all', 
+                 vocab_size=10000, max_df=0.5, **kwargs):
 
-        _verify_params(tokenizer, vocab_size, max_df)
-        self.tokenizer = _TOKENIZERS[tokenizer]
+        #_verify_params(tokenizer, vocab_size, max_df)
+        self.tokenizer = Tokenizer(tokenizer)
+        self.preprocessor = Preprocessor(preprocessor)
         self.vocab_size = vocab_size
         self.max_df = max_df
 
@@ -65,27 +65,35 @@ class DocTerm:
         vocab_by_freq, _ = zip(*sorted_vocab)
         return [str(a) for a in list(vocab_by_freq)[:k]]
 
-
-    def get_tokenized(self, corpus):
-        if isinstance(corpus, pd.Series):
-            return corpus.apply(self.tokenizer)
-        else:
-            return [self.tokenizer(doc) for doc in corpus]
-
     def fit(self, corpus):
 
         _verify_corpus(corpus)
-        tokens = self.get_tokenized(corpus)
-        vocab = DictGensim(tokens)
+        self.N = len(corpus)
+
+        cleaned = self.preprocessor.transform(corpus)
+        tokens = self.tokenizer.transform(cleaned)
+
+        vocab = Dictionary(tokens)
         vocab.filter_extremes(no_above=self.max_df, keep_n=self.vocab_size)
         vocab.compactify()
-
         self.vocab = vocab
-        self.tokenized = tokens
-        self.bow = [self.vocab.doc2bow(doc) for doc in self.tokenized]
 
+        self.bow = [self.vocab.doc2bow(doc) for doc in tokens]
         self.lengths = [len(d) for d in self.bow]
-        self.N = len(self.bow)
+
+    def transform(self, corpus):
+
+        _verify_corpus(corpus)
+
+        if 'bow' not in self.__dict__:
+            self.fit(corpus)
+            bow = self.bow
+        else:
+            cleaned = self.preprocessor.transform(corpus)
+            tokens = self.tokenizer.transform(cleaned)
+            bow = [self.vocab.doc2bow(doc) for doc in tokens]
+
+        return corpus2csc(bow, num_terms=len(self.vocab)).T
 
     def __len__(self):
         return self.N
@@ -103,146 +111,126 @@ class DocTerm:
                     " ".join(self.top_vocab()))
 
 
-class TFIDF:
-    def __init__(self, **kwargs):
+class TFIDF(DocTerm):
 
+    def __init__(self, tokenizer='word', preprocessor='all',
+                 vocab_size=10000, max_df=0.5, **kwargs):
+        super().__init__(tokenizer=tokenizer, preprocessor=preprocessor,
+                         vocab_size=vocab_size, max_df=max_df)
+
+        # TODO: make tfidf args explicit
         self.__dict__.update(kwargs)
 
-    def transform(self, corpus):
-
-        if not isinstance(corpus, DocTerm):
-
-            _verify_corpus(corpus)
-            docterm_params = {k: v for k, v in self.__dict__.items() 
-                              if k in {'vocab_size', 'max_df'}}
-            dt = DocTerm(**docterm_params)
-        else:
-            dt = corpus
-
-        if not hasattr(dt, 'bow'):  # not fit object
-            dt.fit(corpus)
-
-        self.vocab = dt.vocab
-
-        self.model = TfidfModel(dt.bow, id2word=self.vocab)
-        docs = [self.model.__getitem__(doc) for doc in dt.bow]
-        return corpus2csc(docs, num_terms=len(self.vocab)).T
-
-
-class LDA:
-    def __init__(self, method='vanilla', k=50, num_iterations=50,
-                 optimize_interval=10, tokenizer='regex', **kwargs):
-        self.__dict__.update(kwargs)
-        self.method = method
-        self.k = k
-        self.num_iterations = num_iterations
-        self.optimize_interval = optimize_interval  # hyperparameters
-
-        self.tokenizer = _TOKENIZERS[tokenizer]
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        if type(model) == str:
-            if os.path.exists(model):
-                self._model = utils.SaveLoad.load(model)
-        else:
-            self._model = model
-
-    def get_docterm_params(self):
-        """ Return param dict for docterm param set """
-
-        valid_params = {'vocab_size', 'max_df'}
-        return {k: v for k, v in self.__dict__.items() if k in valid_params}
 
     def fit(self, corpus):
 
-        if not isinstance(corpus, DocTerm):
+        _verify_corpus(corpus)
+        self.N = len(corpus)
 
-            _verify_corpus(corpus)
-            docterm_params = self.get_docterm_params()
+        cleaned = self.preprocessor.transform(corpus)
+        tokens = self.tokenizer.transform(cleaned)
 
-            dt = DocTerm(**docterm_params)
-        else:
-            dt = corpus
+        vocab = Dictionary(tokens)
+        vocab.filter_extremes(no_above=self.max_df, keep_n=self.vocab_size)
+        vocab.compactify()
+        self.vocab = vocab
 
-        if not hasattr(dt, 'bow'):  # not fit object
-            dt.fit(corpus)
+        self.bow = [self.vocab.doc2bow(doc) for doc in tokens]
+        self.lengths = [len(d) for d in self.bow]
 
-        #self.vocab = dt.vocab
-        #if self.method == 'vanilla':
-        #else:
-        #raise ValueError("Invalid LDA method: {}".format(self.method))
-        topic_mdl = tpy.LDAModel(k=self.k)
-        for doc in dt.tokenized.values:
-            if len(doc) == 0:
-                continue
-            topic_mdl.add_doc(doc)
-
-        for i in range(0, self.num_iterations, 10):
-            topic_mdl.train(i)
-            logger.info(f'Iteration: {i}\tLog-likelihood: {topic_mdl.ll_per_word}')
-
-        """
-        for k in range(topic_mdl.k):
-            print('Top 10 words of topic #{}'.format(k))
-            print(topic_mdl.get_topic_words(k, top_n=10))
-        """
-
-        self.mdl = topic_mdl
+        self.tfidf_model = TfidfModel(self.bow, id2word=self.vocab)
 
         return self
-
-    def transform(self, corpus):
-        if isinstance(corpus, pd.Series):
-            tokenized = corpus.apply(self.tokenizer).values
-        else:
-            tokenized = [self.tokenizer(doc) for doc in corpus]
-
-        inferred = np.zeros((len(tokenized), self.k))
-        docs = list()
-        for toks in tokenized:
-            if len(toks) == 0:
-                docs.append(self.mdl.make_doc(tokenized[0]))
-            else:
-                docs.append(self.mdl.make_doc(toks))
-        dist, ll = self.mdl.infer(docs)
-        dist = np.array(dist)
-        return dist
-
-class Dictionary(DocTerm):
-
-    def __init__(self, dic_path):
-        super().__init__()
-
-        self.dic_path = dic_path
-        if not os.path.exists(dic_path):
-            logger.exception(f'Could not load .dic file: {dic_path}')
-
-        self.dic_parser, self.names = liwc.load_token_parser(dic_path)
-        #self.dic_items = [[ngram.replace(' ', '_') for ngram in l] for l in self.dic_items]
 
     def transform(self, corpus):
 
         _verify_corpus(corpus)
 
-        self.tokenized = self.get_tokenized(corpus)
-        dic_docs = list()
-        self.lengths = list()
-        for doc in self.tokenized:
-            counts = dict(Counter(cat for token in doc for cat in self.dic_parser(token)))
-            N = len(doc)
-            for liwc_cat in self.names:
-                if liwc_cat not in counts:
-                    counts[liwc_cat]= 0
-                if N > 0:
-                    counts[liwc_cat] /= N
-            dic_docs.append(counts)
-            self.lengths.append(N)
-        dic_docs = pd.DataFrame(dic_docs)
-        self.names = list(dic_docs.columns)
-        return csr_matrix(dic_docs.values)
+        if 'tfidf_model' not in self.__dict__:
+            self.fit(corpus)
+            bow = self.bow
+        else:
+            cleaned = self.preprocessor.transform(corpus)
+            tokens = self.tokenizer.transform(cleaned)
+            bow = [self.vocab.doc2bow(doc) for doc in tokens]
+
+        docs = [self.tfidf_model.__getitem__(doc) for doc in bow]
+
+        return corpus2csc(docs, num_terms=len(self.vocab)).T
+
+class LDA(DocTerm):
+    def __init__(self, method='vanilla', k=50, num_iterations=50,
+                 tokenizer='regex', **kwargs):
+        super().__init__(**kwargs)
+        self.method = method
+        self.k = k
+        self.num_iterations = num_iterations
+
+
+    def __load_docs(self, 
+                    data: Union[str, Iterable[str]]):
+        """ Returns na_mask and list of documents """
+
+        cleaned = self.preprocessor.transform(data)
+        tokens = self.tokenizer.transform(cleaned)
+
+        self.curr_corpus = tokens
+
+        na_mask = [len(doc) > 0 for doc in tokens]
+        for doc in tokens.values:
+            if len(doc) > 0:
+                self.mdl.add_doc(doc)
+        return na_mask
+
+    def fit(self, corpus):
+
+        self.mdl = tpy.LDAModel(k=self.k)
+        self.na_mask = self.__load_docs(corpus)
+
+        for i in range(0, self.num_iterations, 10):
+            self.mdl.train(i)
+            logger.info(f'Iteration: {i}\tLog-likelihood: {self.mdl.ll_per_word}')
+
+        return self
+
+    def print_topics(self):
+
+        for k in range(self.mdl.k):
+            print('Top 10 words of topic #{}'.format(k))
+            print(self.mdl.get_topic_words(k, top_n=10))
+
+    def transform(self, data=None, return_training_docs=True):
+
+        if not return_training_docs:
+            assert data is not None, "Missing new data argument"
+
+            na_mask = self.__load_docs(data)
+            infer_docs = [None] * sum(na_mask)
+            i = 0
+            for doc in tokens:
+                if len(doc) > 0:
+                    infer_docs[i] = self.mdl.make_doc(words=doc)
+                    i += 1
+
+            logger.info("Inferring doc probabilities for LDA")
+            dists, lls = self.mdl.infer(infer_docs)
+
+        else:  # extract topic dist from model object
+            dists = np.zeros((len(self.mdl.docs), self.k))
+            for i, doc in enumerate(self.mdl.docs):
+                dists[i, :] = np.array(doc.get_topic_dist())
+            na_mask = self.na_mask
+            data = self.curr_corpus
+
+        stitched_docs = np.zeros((len(data), self.k))
+        inferred_doc_index = 0
+        for i in range(len(data)):
+            not_na = na_mask[i]
+            if not_na:
+                stitched_docs[i, :] = np.array(dists[inferred_doc_index])
+                inferred_doc_index += 1
+            else:
+                stitched_docs[i, :] = np.NaN
+
+        return stitched_docs
 

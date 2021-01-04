@@ -1,5 +1,36 @@
+from patsy import dmatrices, ModelDesc
 
 # TODO: write "builders" that instantiate an object and call "fit" in appropriate cases
+
+def _parse_formula(formula_str, include_intercept=False):
+    """ Wrap some extra functionality into Patsy formula parse """
+
+    _form = ModelDesc.from_formula(formula_str)
+
+    # patsy (by default) includes intercept. Discard this on RHS
+    if not include_intercept:
+        _form.rhs_termlist = [t for t in _form.rhs_termlist 
+                              if len(t.factors) != 0]
+
+    #print(_form.lhs_termlist)
+    #_categoricals = [t for t in _form.lhs_termlist 
+                    #if t.startswith("C(") and t.endswith(")")]
+    #_task = 'classify' if len(categoricals) > 0 else 'regress'
+
+    #if len(_categoricals) != len(_form.lhs_termlist):
+        #raise ValueError(f"Mixed targets detected in {formula_str}. "
+                         #"Specify all categoricals "
+                         #"using the C(...) syntax or all continuous.")
+
+    #_num_classes = None if _task == 'classify' else len(_form.lhs_termlist)
+    _num_classes = 2
+    _task = 'classify'
+
+    return _form, _task, _num_classes
+
+
+
+
 
 #def tfidf(x, min_df):
     #return TFIDF(min_df=min_df).transform(x).todense().T
