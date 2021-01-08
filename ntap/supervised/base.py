@@ -19,14 +19,12 @@ from scipy import sparse
 from ntap.bagofwords import TFIDF, LDA
 from ntap.dic import Dictionary, DDR
 from ._build import _build_design_matrix, _build_targets
-from ntap.formula import _parse_formula
+from ._formula import _parse_formula
 from ._summary import SupervisedSummary
 #from ntap.supervised import summarize
 #from ntap import neural_models # import LSTM, BiLSTM, FineTune
 
 logger = logging.getLogger(__name__)
-
-
 
 class MethodInfo:
     method_list = {
@@ -93,11 +91,11 @@ class MethodInfo:
 
     def __check_classifier(self):
         if self.model is None:
-            raise RuntimeError(f"{self.method_desc} has no classifier implemented")
+            raise NotImplementedError(f"{self.method_desc} has no classifier implemented")
 
     def __check_regressor(self):
         if self.model is None:
-            raise RuntimeError(f"{self.method_desc} has no regressor implemented")
+            raise NotImplementedError(f"{self.method_desc} has no regressor implemented")
 
     def __repr__(self):
         from pprint import pformat
@@ -109,20 +107,34 @@ class MethodInfo:
 class TextModel:
     """ Base class for supervised models
 
-    TextModel instances are constructed first with a formula, and 
-    optionally with a method descriptor. 
-
-    optional parameters: - alpha - l1_ratio - tol - max_iter
-
     Parameters
     ----------
     formula : str
+        Specifies model using R model syntax. A formula for a 
+        supervised model contains at least one tilde (``~``), with the 
+        left-hand side the target variables (dependent variables) and the
+        right-hand side the predictors. 
 
-        Examples of formulae:
+        NTAP defines a formula syntax for easily specifying feature, 
+        embedding loading, and fine-tuning. An operation such as TFIDF
+        feature extraction, LDA topic modeling, or embedding lookup is 
+        performed by passing a lowercase function call, from one of the 
+        following options:
 
-        * Harm ~ bilstm(text_col)
-    **kwargs :
-        optional arguments for specification and estimation
+        * tfidf(text_column)
+        * lda(text_column)
+        * ddr(text_column)
+
+    method : str
+        Specifies the method for fitting to data. Supported options are via 
+        the scikit-learn package (with other PyTorch models to come!)
+
+        * "svm"
+        * "svm-lin" (linear SVM)
+        * "least_squares" (linear regression/logistic regression)
+        * "tree-ensemble"
+    **kwargs
+        Optional arguments to scikit-learn constructors, such as "C" (SVM classes)
 
     """
 
@@ -157,6 +169,26 @@ class TextModel:
         Hyperparameters to search over are defined in ntap and can be 
         accessed via the ``set_grid`` and ``get_grid`` methods (TODO). 
 
+        Parameters
+        ----------
+        data : Union[dict, pd.DataFrame]
+            Object containing text data as well as any variables referenced in 
+            the formula, accessible via lookup (i.e., data['my_var'])
+        eval_method : {'cross_validate', 'validation_set', 'bootstrap'}
+            Strategy for evaluation and hyperparameter optimization.
+        scoring_metric : {'f1', 'precision', 'recall', 'accuracy', 'r2', 'mse', 'rmse'}
+            Scoring metric to use during fitting and parameter selection. Note
+            that metrics not used here can still be specified later when compiling
+            summaries of fitted models. 
+        na_action : {'remove', 'warn', 'ignore'}
+            If NaNs are detected either in the rows of ``data`` or after 
+            applying feature extraction, specifies the approach to take. 
+        with_optuna : bool
+            If True, will attempt to use optuna for hyperparameter optimization. 
+            If optuna is not installed, will raise warning and use default 
+            (native scikit-learn or implemented methods)
+        seed : int
+            Seed for controlling reproducibility
         """
 
         #validator = Validation(eval_method)

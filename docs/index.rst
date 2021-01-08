@@ -10,6 +10,7 @@ Welcome to ntap's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   home
    embed
    dic
    supervised

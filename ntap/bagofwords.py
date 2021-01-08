@@ -18,7 +18,7 @@ from scipy.spatial.distance import cosine
 from scipy.sparse import csr_matrix
 import tomotopy as tpy
 
-from ntap.parse import Preprocessor, Tokenizer
+from ntap.parse import Preprocessor #, Tokenizer
 
 __all__ = ['DocTerm', 'TFIDF', 'LDA']
 

@@ -84,6 +84,7 @@
             
                 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="home.html">The Neural Text Analysis Pipeline</a></li>
 <li class="toctree-l1"><a class="reference internal" href="embed.html">The Dictionary module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dic.html">The Embedding module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Supervised module</a></li>
@@ -150,22 +151,39 @@
             
   <div class="section" id="module-ntap.supervised">
 <span id="the-supervised-module"></span><h1>The Supervised module<a class="headerlink" href="#module-ntap.supervised" title="Permalink to this headline">¶</a></h1>
+<p>Module for performing classification and regression on text</p>
 <dl class="py class">
 <dt id="ntap.supervised.TextModel">
 <em class="property">class </em><code class="sig-prename descclassname">ntap.supervised.</code><code class="sig-name descname">TextModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">formula</span></em>, <em class="sig-param"><span class="n">method</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntap.supervised.TextModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for supervised models</p>
-<p>TextModel instances are constructed first with a formula, and
-optionally with a method descriptor.</p>
-<p>optional parameters: - alpha - l1_ratio - tol - max_iter</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>formula</strong> (<em>str</em>) – <p>Examples of formulae:</p>
+<li><p><strong>formula</strong> (<em>str</em>) – <p>Specifies model using R model syntax. A formula for a
+supervised model contains at least one tilde (<code class="docutils literal notranslate"><span class="pre">~</span></code>), with the
+left-hand side the target variables (dependent variables) and the
+right-hand side the predictors.</p>
+<p>NTAP defines a formula syntax for easily specifying feature,
+embedding loading, and fine-tuning. An operation such as TFIDF
+feature extraction, LDA topic modeling, or embedding lookup is
+performed by passing a lowercase function call, from one of the
+following options:</p>
 <ul>
-<li><p>Harm ~ bilstm(text_col)</p></li>
+<li><p>tfidf(text_column)</p></li>
+<li><p>lda(text_column)</p></li>
+<li><p>ddr(text_column)</p></li>
 </ul>
 </p></li>
-<li><p><strong>**kwargs</strong> – optional arguments for specification and estimation</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – <p>Specifies the method for fitting to data. Supported options are via
+the scikit-learn package (with other PyTorch models to come!)</p>
+<ul>
+<li><p>”svm”</p></li>
+<li><p>”svm-lin” (linear SVM)</p></li>
+<li><p>”least_squares” (linear regression/logistic regression)</p></li>
+<li><p>”tree-ensemble”</p></li>
+</ul>
+</p></li>
+<li><p><strong>**kwargs</strong> – Optional arguments to scikit-learn constructors, such as “C” (SVM classes)</p></li>
 </ul>
 </dd>
 </dl>
@@ -177,6 +195,24 @@ optionally with a method descriptor.</p>
 (using cross validation) to find best hyperparameters.
 Hyperparameters to search over are defined in ntap and can be
 accessed via the <code class="docutils literal notranslate"><span class="pre">set_grid</span></code> and <code class="docutils literal notranslate"><span class="pre">get_grid</span></code> methods (TODO).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>Union</em><em>[</em><em>dict</em><em>, </em><em>pd.DataFrame</em><em>]</em>) – Object containing text data as well as any variables referenced in
+the formula, accessible via lookup (i.e., data[‘my_var’])</p></li>
+<li><p><strong>eval_method</strong> (<em>{'cross_validate'</em><em>, </em><em>'validation_set'</em><em>, </em><em>'bootstrap'}</em>) – Strategy for evaluation and hyperparameter optimization.</p></li>
+<li><p><strong>scoring_metric</strong> (<em>{'f1'</em><em>, </em><em>'precision'</em><em>, </em><em>'recall'</em><em>, </em><em>'accuracy'</em><em>, </em><em>'r2'</em><em>, </em><em>'mse'</em><em>, </em><em>'rmse'}</em>) – Scoring metric to use during fitting and parameter selection. Note
+that metrics not used here can still be specified later when compiling
+summaries of fitted models.</p></li>
+<li><p><strong>na_action</strong> (<em>{'remove'</em><em>, </em><em>'warn'</em><em>, </em><em>'ignore'}</em>) – If NaNs are detected either in the rows of <code class="docutils literal notranslate"><span class="pre">data</span></code> or after
+applying feature extraction, specifies the approach to take.</p></li>
+<li><p><strong>with_optuna</strong> (<em>bool</em>) – If True, will attempt to use optuna for hyperparameter optimization.
+If optuna is not installed, will raise warning and use default
+(native scikit-learn or implemented methods)</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Seed for controlling reproducibility</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

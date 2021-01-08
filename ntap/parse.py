@@ -2,85 +2,138 @@ import abc
 import re
 import string
 import pandas as pd
+from patsy.desc import Term
+from patsy import EvalFactor, EvalEnvironment
 from gensim.models.phrases import Phrases
 from gensim.parsing.preprocessing import remove_stopwords
 
-_WORD_RE = re.compile(r'[\w\_]{2,20}')
+from ._formula import parse_formula
 
-class Tokenizer:
+punc_strs = string.punctuation + "\\\\"
 
-    tokenizers = {'word': lambda x: _WORD_RE.findall(x),
-                  'whitespace': lambda x: x.split()}
 
-    def __init__(self, name='word'):
+# regexes for cleaning
+_LINKS_RE = re.compile(r"(:?http(s)?|pic\.)[^\s]+")
+_PUNC_RE  = re.compile(r'[{}]'.format(punc_strs))
+_HASHTAG_RE = re.compile(r'\B#[a-zA-Z0-9_]+')
+_MENTIONS_RE = re.compile(r"\B[@]+[a-zA-Z0-9_]+")
+_DIGITS_RE = re.compile(r'(?:\$)?(?:\d+|[0-9\-\']{2,})')
 
-        if name not in self.tokenizers:
-            raise ValueError(f"Tokenizer {name} not found. Options are: "
-                             f"{', '.join(list(self.tokenizers.keys()))}")
 
-        self.name = name
-        self.tokenizer = self.tokenizers[name]
+# regexes for tokenization
+_WORD_RE = re.compile(r'[\w]{2,20}')
+_WHITESPACE_RE = re.compile(r'[^\s]+')
 
-    def transform(self, docs):
-        """ Return list of tokens for each doc in docs 
+word = lambda text: _WORD_RE.findall(text)
+whitespace = lambda text: _WHITESPACE_RE.findall(text)
+shrink_whitespace = lambda text: " ".join(text.split())
 
-        Parameters
-        ----------
-        docs : list-like
-            Iterable over string documents. Can be list, 
-            numpy ndarray, or pandas Series
+#if name not in self.tokenizers:
+    #raise ValueError(f"Tokenizer {name} not found. Options are: "
+                     #f"{', '.join(list(self.tokenizers.keys()))}")
 
-        Returns
-        -------
-        list-like (list, array, Series)
-            Iterable of token-lists. Type will match input
+def transform(self, docs):
+    """ Return list of tokens for each doc in docs 
 
-        """
+    Parameters
+    ----------
+    docs : list-like
+        Iterable over string documents. Can be list, 
+        numpy ndarray, or pandas Series
 
-        if isinstance(docs, pd.Series):
-            return docs.apply(self.tokenizer)
-        elif isinstance(docs, list):
-            return [self.tokenizer(doc) for doc in docs]
-        elif isinstance(docs, np.ndarray):
-            return np.array([self.tokenizer(doc) for doc in docs])
-        else:
-            raise RunTimeError("Type of input not recognized. Must be "
-                               "list, ndarray, or Series")
+    Returns
+    -------
+    list-like (list, array, Series)
+        Iterable of token-lists. Type will match input
+
+    """
+
+    if isinstance(docs, pd.Series):
+        return docs.apply(self.tokenizer)
+    elif isinstance(docs, list):
+        return [self.tokenizer(doc) for doc in docs]
+    elif isinstance(docs, np.ndarray):
+        return np.array([self.tokenizer(doc) for doc in docs])
+    else:
+        raise RunTimeError("Type of input not recognized. Must be "
+                           "list, ndarray, or Series")
+
+
+class Clean:
+
+    """ Namespace for text cleaning functions """
+
+    @staticmethod
+    def links(text):
+        """ Removes hyperlinks (starting with www, http) """
+        return _LINKS_RE.sub('', text)
+
+    @staticmethod
+    def punc(text):
+        """ Removes all punctuation """
+        return _PUNC_RE.sub('', text)
+
+    @staticmethod
+    def hashtags(text):
+        """ Removes tokens starting with \"#\" """
+        return _HASHTAG_RE.sub('', text)
+
+    @staticmethod
+    def mentions(text):
+        """ Removes tokens starting with at least one \"@\" """
+        return _MENTIONS_RE.sub('', text)
+
+    @staticmethod
+    def digits(text):
+        """ Removes numeric digits, including currency and dates """
+        return _DIGITS_RE.sub('', text)
+
+    @staticmethod
+    def lowercase(text):
+        return text.lower()
+
+    def ngrams(self, text):
+        #ops.sort()
+
+        if not hasattr("collocations"):
+            self.fit_collocations(data)
 
 class Preprocessor:
 
-    op_strs = {'all': ['hashtags', 'mentions', 'links', 'punc', 
-                       'digits', 'stopwords', 'stem', 'contractions', 
-                       'lowercase', 'ngrams'],
-               'clean': ['hashtags', 'mentions', 'links', 'punc', 'digits'],
-               'transform': ['stem', 'lowercase', 'ngrams', 'contractions', 'stopwords'],
-               'hashtags': ['hashtags'],
-               'mentions': ['mentions'], 
-               'links': ['links'], 
-               'digits': ['digits'],
-               'stem': ['stem'],
-               'punc': ['punc'],
-               'ngrams': ['ngrams'],
-               'contractions': ['contractions'],
-               'stopwords': ['stopwords'],
-               'lowercase': ['lowercase']}
+    def __init__(self, formula='hashtags+mentions+links+digits+punc+lowercase'):
 
+        self.tokenize_instr, self.preprocess_instr = parse_formula(formula)
 
-    def __init__(self, f='clean'):
+        print(self.tokenize_instr)
+        print(self.preprocess_instr)
+        #self.__build_transformer()
 
-        self.formula = self.__parse_formula(f)
-        self.formula.append('shrink_whitespace')
+    def transform(self, data):
 
+        print(data)
+        data_is_pandas = isinstance(data, pd.Series)
 
-    def transform(self, X, update_formula=None):
-        """ Apply stored cleaning and transformation operations to data """
-        if update_formula is not None:
-            self.formula = self.__parse_formula(formula)
+        if data_is_pandas:
+            updater = lambda fn, l: l.apply(fn) 
+        else:
+            updater = lambda fn, l: [fn(i) for i in l]
 
-        ops = list()
-        for op_str in self.formula:
-            ops.append(PreprocessOP(op_str))
-        ops.sort()
+        funcs = list()
+        for term in self.preprocess_instr:
+            for e in term.factors:
+
+                eval_str = e.code
+                op = getattr(Clean, eval_str)
+                data = updater(op, data)
+                #state = {}
+                #eval_env = EvalEnvironment.capture(0)
+                #passes = e.memorize_passes_needed(state, eval_env)
+                #returned = eval_env.eval(e.code, inner_namespace=vars(Clean))
+                #mat = e.eval(state, data)
+                #print(returned)
+
+        print(data)
+        exit(1)
 
         if isinstance(X, pd.Series):
             for op in ops:
@@ -89,93 +142,45 @@ class Preprocessor:
                     X = X.apply(lambda x: op.func(x, pm=pm))
                 else:
                     X = X.apply(op.func)
-        elif isinstance(X, list):
+        elif isinstance(X, (np.ndarray, list)):
             for op in ops:
                 if op.name == 'ngrams':
                     pm = self.__get_phrase_model(X)
                     X = [op.func(x, pm=pm) for x in X]
                 else:
                     X = [op.func(x) for x in X]
-        elif isinstance(X, str):
-            for op in ops:
-                if op.name == 'ngrams':
-                    pass
-                else:
-                    X = op.func(X)
         return X
 
-    def __parse_formula(self, formula_str):
-        if not hasattr(self, "formula"):
-            self.formula = list()
-        if formula_str.strip() == '':  # is empty
-            return self.formula
-        else:
-            idx = 0
-            sign = '+'
-            buffer = ""
-            neg_ops = list()
-            add_ops = list()
-            for idx in range(len(formula_str)):
-                char = formula_str[idx]
-                if char == '+' or char == '-':  # terminate
-                    if sign == '+':
-                        add_ops.append(buffer)
-                    if sign == '-':
-                        neg_ops.append(buffer)
-                    sign = char
-                    buffer = ''
-                else:
-                    buffer += char
-            if len(buffer) > 0:
-                if sign == '+':
-                    add_ops.append(buffer)
-                else:
-                    neg_ops.append(buffer)
+    def fit_collocations(self, data):
+        """ Fit Gensim collocation model. 
 
-            for t in add_ops:
-                self.formula.extend(self.op_strs[t])
-            self.formula = list(set(self.formula))
-            for t in neg_ops:
-                self.formula = list(set(self.formula) - set(self.op_strs[t]))
+        TODO: Remove gensim dependency, add options 
 
-            return self.formula
+        """
 
-    def __get_phrase_model(self, corpus):
-        if isinstance(corpus, pd.Series):
+        if isinstance(data, pd.Series):
             corpus = corpus.values.tolist()
+        else:
+            corpus = data
         corpus = [doc.split() for doc in corpus]
-        phrase_model = Phrases(corpus)
-        return phrase_model
-
-
-punc_strs = string.punctuation + "\\\\"
-#punc_strs = punc_strs.replace("-", "")
-#punc_strs = punc_strs.replace("'", "")
+        self.phrase_model = Phrases(corpus)
 
 class PreprocessOP:
 
-    trans_fns = {'lowercase': lambda x: x.lower(), 
-                 'contractions': lambda x: x.replace('\'', ''),
-                 'stopwords': remove_stopwords}
-    clean_patterns =  {'links': re.compile(r"(:?http(s)?|pic\.)[^\s]+"),
-                       'punc': re.compile(r'[{}]'.format(punc_strs)),
-                       'hashtags': re.compile(r'\B#[a-zA-Z0-9_]+'),
-                       'mentions': re.compile(r"\B[@]+[a-zA-Z0-9_]+"),
-                       'digits': re.compile(r'(?:\$)?(?:\d+|[0-9\-\']{2,})')}
+    funcs = {'lowercase': lambda x: x.lower(), 
+             'contractions': lambda x: x.replace('\'', ''),
+             'stopwords': remove_stopwords}
 
 
     op_order = ['links', 'hashtags', 'mentions', 
                 'digits', 'contractions', 'punc', 'lowercase', 
-                'stem', 'ngrams', 'stopwords', 'shrink_whitespace']
+                'ngrams', 'stopwords', 'shrink_whitespace']
 
-    _WHITESPACE_RE = re.compile(r'[\s]+')
 
     def __init__(self, op_name, lang='english'):
 
         self.order = self.op_order.index(op_name)
         self.name = op_name
-        #stemmer = SnowballStemmer(lang)
-        self.trans_fns['stem'] = lambda x: x  # TODO
         self.trans_fns['ngrams'] = lambda x, pm: " ".join(pm[x.split()])
 
         self.trans_fns['shrink_whitespace'] = lambda x: self._WHITESPACE_RE.sub(' ', x).strip()
@@ -184,28 +189,6 @@ class PreprocessOP:
             raise ValueError("{} not in list of defined operations".format(op_name))
         self.pattern = op_name
         self.func = op_name
-
-    @property
-    def pattern(self):
-        return self._pattern
-
-    @pattern.setter
-    def pattern(self, key):
-        try:
-            self._pattern = self.clean_patterns[key]
-        except KeyError:
-            self._pattern = None
-
-    @property
-    def func(self):
-        return self._func
-
-    @func.setter
-    def func(self, op_name):
-        if self.pattern is not None:
-            self._func = lambda x: self.pattern.sub('', x)
-        else:
-            self._func = self.trans_fns[op_name]
 
     def __lt__(self, other):
         return self.order < other.order

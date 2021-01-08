@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 
 from ._utils import DictionaryLoader
-from ntap.parse import Tokenizer, Preprocessor
+from ntap.parse import Preprocessor
 from ntap.embed import Embedding
 
 logger = logging.getLogger(__name__)
