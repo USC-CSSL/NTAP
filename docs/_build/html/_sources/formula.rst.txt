@@ -1,0 +1,4 @@
+Formulas in NTAP
+=====================
+.. automodule:: ntap.formula
+   :members:

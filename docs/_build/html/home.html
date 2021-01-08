@@ -1,0 +1,250 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Neural Text Analysis Pipeline &mdash; ntap 0.1.0 documentation</title>
+  
+	
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+	
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="ntap 0.1.0 documentation" href="index.html"/>
+        <link rel="next" title="Formulas in NTAP" href="formula.html"/>
+        <link rel="prev" title="Welcome to ntap’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> ntap
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Neural Text Analysis Pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="formula.html">Formulas in NTAP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="embed.html">The Dictionary module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dic.html">The Embedding module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervised.html">The Supervised module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ntap</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>The Neural Text Analysis Pipeline</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-ntap">
+<span id="the-neural-text-analysis-pipeline"></span><h1>The Neural Text Analysis Pipeline<a class="headerlink" href="#module-ntap" title="Permalink to this headline">¶</a></h1>
+<p>The Neural Text Analysis Pipeline</p>
+<p>NTAP is a high-level interface for text analysis, with a focus on
+interpreting the outputs of models for inferential purposes. The main
+features of NTAP include:</p>
+<ul class="simple">
+<li><p>Specify models, preprocessing, and feature extraction via
+human-readable formulas (similarly to formulas in R)</p></li>
+<li><p>Prioritization of interpretation over prediction through the
+<code class="docutils literal notranslate"><span class="pre">analyze</span></code> module</p></li>
+<li><p>Integration with a variety of machine learning and Natural Language
+Processing packages, such as pandas, transformers, optuna, and tomotopy</p></li>
+<li><p>Easy learning curve for new Python users, in order to increase
+accessibility</p></li>
+</ul>
+<p>We note that NTAP is in an <strong>alpha</strong> stage of development, and that bugs
+are surely to emerge as usage of the package increases.</p>
+<p>Highest-priority features that are to be added:</p>
+<ul class="simple">
+<li><p>Integration of more interpretability/explainability research for easy
+access in the <code class="docutils literal notranslate"><span class="pre">analyze</span></code> module</p></li>
+<li><p>Integration of plotting interface (probably matplotlib) for analysis
+and prediction</p></li>
+<li><p>Methods for measuring and mitigating unfair and biased models</p></li>
+</ul>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="formula.html" class="btn btn-neutral float-right" title="Formulas in NTAP" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to ntap’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Brendan Kennedy.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
