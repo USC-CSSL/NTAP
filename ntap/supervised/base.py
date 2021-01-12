@@ -18,7 +18,7 @@ from scipy import sparse
 # local imports
 from ntap.bagofwords import TFIDF, LDA
 from ntap.dic import Dictionary, DDR
-from ._build import _build_design_matrix, _build_targets
+from ._build import FeatureGrid, _build_targets
 from ._formula import _parse_formula
 from ._summary import SupervisedSummary
 #from ntap.supervised import summarize
@@ -31,17 +31,22 @@ class MethodInfo:
         'least_squares': {
             'backend': 'sklearn',
             'classifier': linear_model.LogisticRegression(),
-            'regressor': linear_model.LinearRegression()
+            'regressor': linear_model.LinearRegression(),
+            'params': {'C': 10.0 ** np.arange(-3, 3, 1)}
         },
         'svm-lin': {
             'backend': 'sklearn',
-            'classifier': svm.LinearSVC(),
-            'regressor': svm.LinearSVR()
+            'classifier': svm.LinearSVC(max_iter=1000),
+            'regressor': svm.LinearSVR(max_iter=1000),
+            'params': {'C': 10.0 ** np.arange(-3, 3, 1)}
         },
         'svm': {
             'backend': 'sklearn',
             'classifier': svm.SVC(),
-            'regressor': svm.SVR()
+            'regressor': svm.SVR(),
+            'params': {'C': 10.0 ** np.arange(-3, 3, 1),
+                       'kernel': ['poly', 'rbf', 'linear'],
+                       'gamma': 10.0 ** np.arange(-2, 3)}
         },
         'tree-ensemble': {
             'backend': 'sklearn',
@@ -88,6 +93,13 @@ class MethodInfo:
             self.__check_regressor()
         else:
             raise ValueError(f"Could not identify task parameter `{task}`")
+        self.task = task
+
+    def get_param_grid(self):
+        grid = self.method_list[self.method_desc]['params']
+        if self.task == 'classify':
+            grid['class_weight'] = [None, 'balanced']
+        return grid
 
     def __check_classifier(self):
         if self.model is None:
@@ -143,6 +155,7 @@ class TextModel:
 
         self.formula, self.task, self.num_classes = _parse_formula(formula)
         self.model_info = MethodInfo(method, self.task, self.num_classes)
+        self.feature_models = FeatureGrid(self.formula.rhs_termlist)
 
         self.is_sklearn = (self.model_info.backend == 'sklearn')
 
@@ -191,17 +204,12 @@ class TextModel:
             Seed for controlling reproducibility
         """
 
-        #validator = Validation(eval_method)
-
-        # Validation implements methods like set_cross_val_objective
-        # offers optuna functionality
-
         Validator = GridSearchCV
         #validator = OptunaStudy if with_optuna else GridSearchCV
 
         if self.is_sklearn:
 
-            X = _build_design_matrix(self.formula, data)
+            X = self.feature_models.transform(data)
             y = _build_targets(self.formula, data)
 
             if na_action == 'remove':
@@ -225,15 +233,15 @@ class TextModel:
             else:
                 raise ValueError(f"Did not recognize na_action given: {na_action}")
 
-
-            params = {'C': [0.001, 0.01, 0.1, 0.5, 0.9, 1.0]}
+            params = self.model_info.get_param_grid()
             validator = Validator(estimator=self.model_info.model,
-                                  scoring='f1',
+                                  scoring=scoring_metric,
                                   param_grid=params).fit(X=X, y=y)
+            print(validator.cv_results_)
             cv_result = SupervisedSummary(validator.cv_results_,
                                           task=self.task,
                                           params=params,
-                                          scoring_metric='f1', 
+                                          scoring_metric=scoring_metric,
                                           model_info=self.model_info)
             return cv_result
 

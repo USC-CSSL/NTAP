@@ -18,7 +18,7 @@ from scipy.spatial.distance import cosine
 from scipy.sparse import csr_matrix
 import tomotopy as tpy
 
-from ntap.parse import Preprocessor #, Tokenizer
+from .utils import Preprocessor
 
 __all__ = ['DocTerm', 'TFIDF', 'LDA']
 
@@ -42,11 +42,11 @@ def _verify_params(tokenizer, vocab_size, max_df):
 
 class DocTerm:
 
-    def __init__(self, tokenizer='word', preprocessor='all', 
+    def __init__(self,
+                 preprocessor='words~links+hashtags+mentions+lowercase',
                  vocab_size=10000, max_df=0.5, **kwargs):
 
         #_verify_params(tokenizer, vocab_size, max_df)
-        self.tokenizer = Tokenizer(tokenizer)
         self.preprocessor = Preprocessor(preprocessor)
         self.vocab_size = vocab_size
         self.max_df = max_df
@@ -70,8 +70,7 @@ class DocTerm:
         _verify_corpus(corpus)
         self.N = len(corpus)
 
-        cleaned = self.preprocessor.transform(corpus)
-        tokens = self.tokenizer.transform(cleaned)
+        tokens = self.preprocessor.transform(corpus)
 
         vocab = Dictionary(tokens)
         vocab.filter_extremes(no_above=self.max_df, keep_n=self.vocab_size)
@@ -89,8 +88,7 @@ class DocTerm:
             self.fit(corpus)
             bow = self.bow
         else:
-            cleaned = self.preprocessor.transform(corpus)
-            tokens = self.tokenizer.transform(cleaned)
+            tokens = self.preprocessor.transform(corpus)
             bow = [self.vocab.doc2bow(doc) for doc in tokens]
 
         return corpus2csc(bow, num_terms=len(self.vocab)).T
@@ -113,9 +111,9 @@ class DocTerm:
 
 class TFIDF(DocTerm):
 
-    def __init__(self, tokenizer='word', preprocessor='all',
+    def __init__(self, preprocessor='stopwords~links+hashtags+mentions+lowercase',
                  vocab_size=10000, max_df=0.5, **kwargs):
-        super().__init__(tokenizer=tokenizer, preprocessor=preprocessor,
+        super().__init__(preprocessor=preprocessor,
                          vocab_size=vocab_size, max_df=max_df)
 
         # TODO: make tfidf args explicit
@@ -127,8 +125,7 @@ class TFIDF(DocTerm):
         _verify_corpus(corpus)
         self.N = len(corpus)
 
-        cleaned = self.preprocessor.transform(corpus)
-        tokens = self.tokenizer.transform(cleaned)
+        tokens = self.preprocessor.transform(corpus)
 
         vocab = Dictionary(tokens)
         vocab.filter_extremes(no_above=self.max_df, keep_n=self.vocab_size)
@@ -150,8 +147,7 @@ class TFIDF(DocTerm):
             self.fit(corpus)
             bow = self.bow
         else:
-            cleaned = self.preprocessor.transform(corpus)
-            tokens = self.tokenizer.transform(cleaned)
+            tokens = self.preprocessor.transform(corpus)
             bow = [self.vocab.doc2bow(doc) for doc in tokens]
 
         docs = [self.tfidf_model.__getitem__(doc) for doc in bow]
@@ -159,20 +155,19 @@ class TFIDF(DocTerm):
         return corpus2csc(docs, num_terms=len(self.vocab)).T
 
 class LDA(DocTerm):
-    def __init__(self, method='vanilla', k=50, num_iterations=50,
-                 tokenizer='regex', **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, method='vanilla', 
+                 preprocessor='stopwords+collocations~links+mentions+hashtags+lowercase',
+                 k=50, iters=50, **kwargs):
+        super().__init__(preprocessor=preprocessor, **kwargs)
         self.method = method
         self.k = k
-        self.num_iterations = num_iterations
-
+        self.iters = iters
 
     def __load_docs(self, 
                     data: Union[str, Iterable[str]]):
         """ Returns na_mask and list of documents """
 
-        cleaned = self.preprocessor.transform(data)
-        tokens = self.tokenizer.transform(cleaned)
+        tokens = self.preprocessor.transform(data)
 
         self.curr_corpus = tokens
 
@@ -187,17 +182,16 @@ class LDA(DocTerm):
         self.mdl = tpy.LDAModel(k=self.k)
         self.na_mask = self.__load_docs(corpus)
 
-        for i in range(0, self.num_iterations, 10):
+        for i in range(0, self.iters, 10):
             self.mdl.train(i)
             logger.info(f'Iteration: {i}\tLog-likelihood: {self.mdl.ll_per_word}')
 
+        self.print_topics()
         return self
 
     def print_topics(self):
 
-        for k in range(self.mdl.k):
-            print('Top 10 words of topic #{}'.format(k))
-            print(self.mdl.get_topic_words(k, top_n=10))
+        self.mdl.summary(initial_hp=False, params=False, topic_word_top_n=15)
 
     def transform(self, data=None, return_training_docs=True):
 

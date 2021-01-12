@@ -9,52 +9,84 @@ from patsy import EvalEnvironment, EvalFactor
 from ntap.bagofwords import TFIDF, LDA
 from ntap.dic import Dictionary, DDR
 
+class FeatureGrid:
 
-def _build_design_matrix(formula, data):
+    def __init__(self, formula_rhs, init_objects=dict()):
+        """ Initializes and maintains feature objects """
 
-    def tfidf(text, **kwargs):
-        # todo: add arg to fittable transformers (refit=False) 
-        # to disable .fit method for saved models
-        tfidf_obj = TFIDF(**kwargs).fit(text)
-        return tfidf_obj.transform(text)
+        self.termlist = formula_rhs
+        self.feature_models = init_objects
+        self.feature_fns = {'tfidf': getattr(self, 'tfidf'),
+                            'lda': getattr(self, 'lda'),
+                            'ddr': getattr(self, 'ddr')}
 
-    def lda(text, **kwargs):
-        lda_obj = LDA(**kwargs).fit(text)
-        return lda_obj.transform(text)
+    def transform(self, data):
 
-    def ddr(text, dic, **kwargs):
+        vectors = dict()
+        matrices = dict()
+
+        for term in self.termlist:
+            for e in term.factors:
+                state = {}
+                eval_env = EvalEnvironment.capture(0)
+                eval_env = eval_env.with_outer_namespace(self.feature_fns)
+                passes = e.memorize_passes_needed(state, eval_env)
+                mat = e.eval(state, data)
+
+                is_var = len(mat.shape) == 1
+                if is_var:
+                    if isinstance(mat, pd.Series):
+                        mat = mat.values
+                    vectors[e.code] = np.reshape(mat, (mat.shape[0], 1))
+                    #vectors[e.code] = mat
+                elif isinstance(mat, (np.ndarray, spmatrix)):
+                    matrices[e.code] = mat
+                else:
+                    raise RuntimeError("Unsupported data format: {}".format(type(mat)))
+
+        list_of_mats = list(vectors.values()) + list(matrices.values())
+
+        num_sparse = len([l for l in list_of_mats if isinstance(l, spmatrix)])
+
+        if num_sparse == 0:
+            if len(list_of_mats) == 1:
+                return list_of_mats[0]
+            else:
+                return np.concatenate(list_of_mats, axis=1)
+        elif len(list_of_mats) >= 1:  # at least one sparse
+            return hstack(list_of_mats, format='csr')
+        else:
+            print(list_of_mats)
+            raise RuntimeError("No features found")
+            return
+
+    def lda(self, text, **kwargs):
+        if 'lda' in self.feature_models:
+            model = self.feature_models['lda']
+        else:
+            model = LDA(**kwargs)
+
+        if not hasattr(model, 'mdl'):
+            model.fit(text)
+            self.feature_models['lda'] = model
+
+        return model.transform(text)
+
+    def tfidf(self, text, **kwargs):
+        if 'tfidf' in self.feature_models:
+            model = self.feature_models['tfidf']
+        else:
+            model = TFIDF(**kwargs)
+
+        if not hasattr(model, 'tfidf_model'):
+            model.fit(text)
+            self.feature_models['tfidf'] = model
+
+        return model.transform(text)
+
+    def ddr(self, text, dic, **kwargs):
         ddr_obj = DDR(dic, **kwargs)
         return ddr_obj.transform(text)
-
-    vectors = dict()
-    matrices = dict()
-
-    for term in formula.rhs_termlist:
-        for e in term.factors:
-            state = {}
-            eval_env = EvalEnvironment.capture(0)
-            passes = e.memorize_passes_needed(state, eval_env)
-            mat = e.eval(state, data)
-
-
-            if isinstance(mat, (np.ndarray, pd.Series)) and mat.shape[1] <= 1:
-                if isinstance(mat, pd.Series):
-                    mat = mat.values
-                vectors[e.code] = np.reshape(mat, (mat.shape[0], 1))
-            elif isinstance(mat, (np.ndarray, spmatrix)):
-                matrices[e.code] = mat
-            else:
-                raise RuntimeError("Unsupported data format: {}".format(type(mat)))
-
-    list_of_mats = list(vectors.values()) + list(matrices.values())
-    if len(list_of_mats) == 1:
-        X = list_of_mats[0]
-    elif len(list_of_mats) > 1:
-        X = hstack(list_of_mats)
-    else:
-        raise RuntimeError("No features found")
-
-    return X
 
 def _build_targets(formula, data):
 

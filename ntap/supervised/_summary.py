@@ -12,12 +12,14 @@ class SupervisedSummary:
         self.scoring_metric = scoring_metric
         self.model_info = model_info
 
+        self.best_idx = np.argmin(results['rank_test_score'])
+        self.best_score = results['mean_test_score'][self.best_idx]
 
     def __repr__(self):
 
         return (f"{self.model_info.backend} model trained "
                 f"to maximize {self.scoring_metric}\n"
-                f"Achieved {self.results['mean_test_score'].mean():.2f}")
+                f"Achieved {self.best_score:.2f}")
 
 
 #class _ModelGrid:

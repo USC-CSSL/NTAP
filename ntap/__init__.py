@@ -28,7 +28,6 @@ Highest-priority features that are to be added:
 
 name = "ntap"
 
-import ntap.parse 
 import ntap.supervised 
 import ntap.bagofwords 
 import ntap.dic

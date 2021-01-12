@@ -29,15 +29,6 @@ def _parse_formula(formula_str, include_intercept=False):
     return _form, _task, _num_classes
 
 
-#def tfidf(x, min_df):
-    #return TFIDF(min_df=min_df).transform(x).todense().T
-#return dmatrices('hd ~ tfidf(body, 0.1)', data, return_type='dataframe')
-    """
-    for term in patsy_formula.rhs_termlist:
-        if len(term.factors) == 0:  # intercept term has no meaning for ntap models
-            continue
-    """
-
 """
 try:
     if isinstance(data, pd.DataFrame):
