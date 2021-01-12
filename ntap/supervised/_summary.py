@@ -5,22 +5,41 @@ import numpy as np
 
 class SupervisedSummary:
 
-    def __init__(self, results, task, params, scoring_metric, model_info):
-        self.results = results
+    metric_list = ['f1', 'precision', 'recall', 'accuracy', 'r2', 'mse',
+                   'rmse']
+
+    def __init__(self, formula: str, task: str, params: dict, scoring_metric: str):
+
+        self.formula = formula
+        print(self.formula)
         self.task = task
         self.params = params
         self.scoring_metric = scoring_metric
-        self.model_info = model_info
+        #self.model_info = model_info
 
-        self.best_idx = np.argmin(results['rank_test_score'])
-        self.best_score = results['mean_test_score'][self.best_idx]
+    def load_sklearn_validator(self, gridcv_dict):
+
+        best_idx = np.argmin(gridcv_dict[f'rank_test_{self.scoring_metric}'])
+
+        self.best_score = gridcv_dict[f'mean_test_{self.scoring_metric}'][best_idx]
+        self.best_params = gridcv_dict['params'][best_idx]
+
+        self.scores = dict()
+
+        for metric in self.metric_list:
+            #if metric == self.scoring_metric:
+                #continue
+            metric_name = f'mean_test_{metric}'
+            if metric_name in gridcv_dict:
+                self.scores[metric] = gridcv_dict[metric_name][best_idx]
+
+        for score, value in self.scores.items():
+            print(f'{score:<10} {value:>10.3f}')
 
     def __repr__(self):
 
-        return (f"{self.model_info.backend} model trained "
-                f"to maximize {self.scoring_metric}\n"
+        return (f"Model trained to maximize {self.scoring_metric}\n"
                 f"Achieved {self.best_score:.2f}")
-
 
 #class _ModelGrid:
 

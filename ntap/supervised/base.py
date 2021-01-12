@@ -235,15 +235,28 @@ class TextModel:
 
             params = self.model_info.get_param_grid()
             validator = Validator(estimator=self.model_info.model,
-                                  scoring=scoring_metric,
+                                  scoring=['f1', 'precision', 'recall',
+                                           'accuracy'],
+                                  refit='f1',
                                   param_grid=params).fit(X=X, y=y)
-            print(validator.cv_results_)
-            cv_result = SupervisedSummary(validator.cv_results_,
-                                          task=self.task,
-                                          params=params,
-                                          scoring_metric=scoring_metric,
-                                          model_info=self.model_info)
-            return cv_result
+
+            readable_formula = " + ".join([term.name() for term in
+                                           self.formula.lhs_termlist])
+            if readable_formula:
+                readable_formula += " ~ "
+            else:
+                readable_formula += "~ "
+
+            readable_formula += " + ".join([term.name() for term in
+                                           self.formula.rhs_termlist])
+            summ = SupervisedSummary(readable_formula,
+                                     task=self.task, params=params,
+                                     scoring_metric=scoring_metric)
+            if self.is_sklearn:
+                summ.load_sklearn_validator(validator.cv_results_)
+            else:
+                raise NotImplementedError("Only sklearn GridSearchCV implemented")
+            return summ
 
         #self.set_cross_val_objective(scoring=scoring_metric, X=X, y=y)
         #study = optuna.create_study(direction='maximize', storage="sqlite:///tester.db")
