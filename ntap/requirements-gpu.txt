@@ -33,5 +33,5 @@ sklearn==0.0
 smart-open==1.7.1
 tensorflow-gpu==1.4.1
 tensorflow-tensorboard==0.4.0
-urllib3==1.24.1
+urllib3==1.26.5
 Werkzeug==0.14.1
