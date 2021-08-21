@@ -9,11 +9,14 @@ from scipy.sparse import csr_matrix
 
 from ._utils import DictionaryLoader
 from ntap.utils import Preprocessor
+from ntap.bagofwords import DocTerm
 from ntap.embed import Embedding
+from ntap.summarize import _TableMakerMixin
+from ntap.validation import _CheckParamsMixin
 
 logger = logging.getLogger(__name__)
 
-class Dictionary:
+class Dictionary(_CheckParamsMixin, _TableMakerMixin):
 
     """ Supports lexicon-approaches such as word counting
 
@@ -56,14 +59,11 @@ class Dictionary:
     def __init__(self,
                  name,
                  base_dir="~/ntap_data",
-                 tokenizer='word',
-                 preprocess='clean+lowercase+contractions'):
+                 preprocess='social+lowercase'):
 
         self.name = name
         self.base_dir = base_dir
-
-        self.preprocessor = Preprocessor(preprocess)
-        self.tokenizer = Tokenizer(tokenizer)
+        self.docterm = DocTerm(preprocess=preprocess)
 
         self.load()
 
@@ -103,8 +103,46 @@ class Dictionary:
         p_vars = {k: v for k, v in vars(self).items() if k not in {'parser', 'base_dir'}}
         return pformat(p_vars, compact=True)
 
-    def transform(self,
-                  corpus):
+    def _make_main_table_elements(self):
+        data, _ = self.docterm._make_main_table_elements()
+        uniq_terms = set(term for sublist in self.lexicon.values() for term in sublist)
+        covered_vocab = self.docterm._terms_covered_by_vocab(uniq_terms)
+
+        newdata = {
+            'Dictionary': [f'{self.name} ({len(self.categories)} '
+                           f'categories, {len(uniq_terms)} terms)'],
+            'Read from': [self.source],
+            'Categories': [', '.join(self.categories[:3]) + '...']
+        }
+
+        #for category, words in self.lexicon.items():
+            #data[f'{category} ({len(words)})'] = [', '.join(words[:3]) + '...']
+
+        return newdata, None
+
+    def _make_content_table_elements(self):
+
+        prevdata, _ = self.docterm._make_content_table_elements()
+        newdata = dict()
+        uniq_terms = set(term for sublist in self.lexicon.values() for term in sublist)
+        covered_vocab = self.docterm._terms_covered_by_vocab(uniq_terms)
+
+        # note for later: should have one-liner functionality to do
+        # traditional liwc analysis (regression table)
+        newdata['DocTerm'] = prevdata['DocTerm']
+        newdata['Sparsity'] = prevdata['Sparsity']
+        newdata['Covered by lexicon'] = [f'{len(covered_vocab)/len(uniq_terms):.2%}']
+
+        return newdata, None
+
+    def fit(self, corpus):
+
+        self.docterm.fit(corpus)
+        self.corpus_as_counts = self.transform(corpus)
+
+        return self
+
+    def transform(self, corpus):
         """ Apply dictionary to corpus by counting pattern matches
 
         Apply the stored dictionary to a new corpus of documents, returning a 
@@ -124,13 +162,10 @@ class Dictionary:
             documentation in scipy.sparse
 
         """
-        #_verify_corpus(corpus)
 
-        cleaned = self.preprocessor.transform(corpus)
-        tokenized = self.tokenizer.transform(cleaned)
         dic_docs = list()
         lengths = list()
-        for doc in tokenized:
+        for doc in self.docterm.corpus_as_tokens:
             counts = dict(Counter(cat for token in doc for cat in self.parser(token)))
             N = len(doc)
             for cat in self.categories:
@@ -139,9 +174,7 @@ class Dictionary:
                 if N > 0:
                     counts[cat] /= N
             dic_docs.append(counts)
-            #self.lengths.append(N)
         dic_docs = pd.DataFrame(dic_docs)
-        #self.categories = list(dic_docs.columns)
         return csr_matrix(dic_docs.values)
 
 def _cosine_matrix(X, Y):
@@ -241,9 +274,7 @@ class DDR:
         document centers for each document.
 
         """
-        cleaned = self.preprocessor.transform(data)
-        tokenized = self.tokenizer.transform(cleaned)
-
+        tokenized = self.preprocessor.transform(data)
         embed_docs = self.embed.transform(tokenized)
 
         return _cosine_matrix(embed_docs, self.centers)

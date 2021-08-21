@@ -1,4 +1,4 @@
-from patsy import dmatrices, ModelDesc
+from patsy import dmatrices, ModelDesc, INTERCEPT
 
 # TODO: write "builders" that instantiate an object and call "fit" in appropriate cases
 
@@ -10,7 +10,7 @@ def _parse_formula(formula_str, include_intercept=False):
     # patsy (by default) includes intercept. Discard this on RHS
     if not include_intercept:
         _form.rhs_termlist = [t for t in _form.rhs_termlist 
-                              if len(t.factors) != 0]
+                              if len(t.factors) != INTERCEPT]
 
     #print(_form.lhs_termlist)
     #_categoricals = [t for t in _form.lhs_termlist 

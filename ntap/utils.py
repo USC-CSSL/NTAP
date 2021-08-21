@@ -35,7 +35,7 @@ def download_file(url, local_dest):
     #return d
 
 
-_VALID_TOKENIZERS = ['words', 'words_nopunc']
+_VALID_TOKENIZERS = ['words', 'words_nopunc', 'whitespace']
 _DEFAULT_TOKENIZER = 'words'
 
 def parse_formula(f_str):
@@ -76,13 +76,21 @@ _DIGITS_RE = re.compile(r'(?:\$)?(?:\d+|[0-9\-\']{2,})')
 
 
 # regexes for tokenization
-_WORD_RE = re.compile(r"(?:[a-zA-Z]|['\-a-zA-Z]){2,20}")
+_WORD_RE = re.compile(r"[a-zA-Z]{2,20}(?:[\-'][a-zA-Z]{1,20})?")
 _WORD_NOPUNC_RE = re.compile(r"[a-zA-Z]{2,20}")
 _WHITESPACE_RE = re.compile(r'[^\s]+')
 
 class Clean:
 
     """ Namespace for text cleaning functions """
+
+    @staticmethod
+    def social(text):
+        """ Remove links, hashtags, and mentions """
+        sub1 = _LINKS_RE.sub('', text)
+        sub2 = _MENTIONS_RE.sub('', sub1)
+        return _HASHTAG_RE.sub('', sub2)
+
 
     @staticmethod
     def links(text):
@@ -148,9 +156,16 @@ class Tokenize:
 
 class Preprocessor:
 
-    def __init__(self, formula='hashtags+mentions+links+digits+punc+lowercase'):
+    def __init__(self, formula='words~hashtags+mentions+links+lowercase'):
 
         self.tokenize_instr, self.preprocess_instr = parse_formula(formula)
+
+        readable_formula = " + ".join([term.name() for term in
+                                       self.tokenize_instr])
+        readable_formula += " ~ "
+        readable_formula += " + ".join([term.name() for term in
+                                       self.preprocess_instr])
+        self.description = readable_formula
 
     def transform(self, data):
         """ Applies stored transforms on a list-like object (str)
@@ -208,14 +223,11 @@ class Preprocessor:
         else:
             return Phrases(tokenized_data)
 
-class PreprocessOP:
+#class PreprocessOP:
 
-    funcs = {'contractions': lambda x: x.replace('\'', ''),
-             'stopwords': remove_stopwords}
+    #op_order = ['links', 'hashtags', 'mentions', 
+                #'digits', 'contractions', 'punc', 'lowercase', 
+                #'ngrams', 'stopwords', 'shrink_whitespace']
 
-    op_order = ['links', 'hashtags', 'mentions', 
-                'digits', 'contractions', 'punc', 'lowercase', 
-                'ngrams', 'stopwords', 'shrink_whitespace']
-
-    def __lt__(self, other):
-        return self.order < other.order
+    #def __lt__(self, other):
+        #return self.order < other.order

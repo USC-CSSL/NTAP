@@ -1,117 +1,30 @@
 import os
 import abc
 import logging
+import warnings
 from typing import Optional, Union
 
 # 3rd party imports
 import numpy as np
 import pandas as pd
-from sklearn import linear_model
-from sklearn import svm
-from sklearn import ensemble
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn import metrics
+from sklearn.exceptions import (ConvergenceWarning,
+                                UndefinedMetricWarning)
 from scipy import sparse
 #import optuna
 #optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 # local imports
-from ntap.bagofwords import TFIDF, LDA
+from ntap.bagofwords import TFIDF, TopicModel
 from ntap.dic import Dictionary, DDR
 from ._build import FeatureGrid, _build_targets
 from ._formula import _parse_formula
-from ._summary import SupervisedSummary
+from ._summary import SupervisedSummary, MethodInfo
 #from ntap.supervised import summarize
 #from ntap import neural_models # import LSTM, BiLSTM, FineTune
 
 logger = logging.getLogger(__name__)
-
-class MethodInfo:
-    method_list = {
-        'least_squares': {
-            'backend': 'sklearn',
-            'classifier': linear_model.LogisticRegression(),
-            'regressor': linear_model.LinearRegression(),
-            'params': {'C': 10.0 ** np.arange(-3, 3, 1)}
-        },
-        'svm-lin': {
-            'backend': 'sklearn',
-            'classifier': svm.LinearSVC(max_iter=1000),
-            'regressor': svm.LinearSVR(max_iter=1000),
-            'params': {'C': 10.0 ** np.arange(-3, 3, 1)}
-        },
-        'svm': {
-            'backend': 'sklearn',
-            'classifier': svm.SVC(),
-            'regressor': svm.SVR(),
-            'params': {'C': 10.0 ** np.arange(-3, 3, 1),
-                       'kernel': ['poly', 'rbf', 'linear'],
-                       'gamma': 10.0 ** np.arange(-2, 3)}
-        },
-        'tree-ensemble': {
-            'backend': 'sklearn',
-            'classifier': ensemble.GradientBoostingClassifier(),
-            'regressor': ensemble.GradientBoostingRegressor()
-        },
-        'naive-bayes': {
-            'backend': 'sklearn',
-            'classifier': None
-        },
-        'lstm': {
-            'backend': 'pytorch',
-            'classifier': None,
-            'regressor': None
-        },
-        'finetune': {
-            'backend': 'transformers',
-            'classifier': None,
-            'regressor': None}
-   #'sequence': ['finetune']}
-    }
-
-    def __init__(self, method_desc, task, num_classes=None):
-        self.method_desc = method_desc
-
-        if method_desc not in self.method_list:
-            #TODO: fuzzy str matching
-            raise ValueError(f"{method_desc} not available. Options: "
-                             f"{' '.join(list(self.method_list.keys()))}")
-            return
-
-        self.backend = self.method_list[method_desc]['backend']
-
-        if task == 'classify':
-            self.model = self.method_list[method_desc]['classifier']
-            self.__check_classifier()
-            if num_classes is None:
-                raise ValueError("`num_classes` cannot be None when task "
-                                 "is `classify`")
-            else:
-                self.num_classes = num_classes
-        elif task == 'regress':
-            self.model = self.method_list[method_desc]['regressor']
-            self.__check_regressor()
-        else:
-            raise ValueError(f"Could not identify task parameter `{task}`")
-        self.task = task
-
-    def get_param_grid(self):
-        grid = self.method_list[self.method_desc]['params']
-        if self.task == 'classify':
-            grid['class_weight'] = [None, 'balanced']
-        return grid
-
-    def __check_classifier(self):
-        if self.model is None:
-            raise NotImplementedError(f"{self.method_desc} has no classifier implemented")
-
-    def __check_regressor(self):
-        if self.model is None:
-            raise NotImplementedError(f"{self.method_desc} has no regressor implemented")
-
-    def __repr__(self):
-        from pprint import pformat
-        return pformat(vars(self), compact=True)
 
 #elif model_family == 'svm':
 #self.obj = self.__build_objective(model_family)
@@ -154,10 +67,10 @@ class TextModel:
     def __init__(self, formula, method=None):
 
         self.formula, self.task, self.num_classes = _parse_formula(formula)
-        self.model_info = MethodInfo(method, self.task, self.num_classes)
+        self.method_info = MethodInfo(method, self.task, self.num_classes)
         self.feature_models = FeatureGrid(self.formula.rhs_termlist)
 
-        self.is_sklearn = (self.model_info.backend == 'sklearn')
+        self.is_sklearn = (self.method_info.backend.startswith('sklearn'))
 
     """
     @abc.abstractmethod
@@ -233,12 +146,23 @@ class TextModel:
             else:
                 raise ValueError(f"Did not recognize na_action given: {na_action}")
 
-            params = self.model_info.get_param_grid()
-            validator = Validator(estimator=self.model_info.model,
-                                  scoring=['f1', 'precision', 'recall',
-                                           'accuracy'],
-                                  refit='f1',
-                                  param_grid=params).fit(X=X, y=y)
+            params = self.method_info.get_param_grid()
+
+            scorers = {'f1': metrics.make_scorer(metrics.f1_score,
+                                                 zero_division=0),
+                       'precision':
+                       metrics.make_scorer(metrics.precision_score,
+                                           zero_division=0),
+                       'recall': metrics.make_scorer(metrics.recall_score),
+                       'accuracy': metrics.make_scorer(metrics.accuracy_score)}
+
+            fitting_warnings = list()
+            with warnings.catch_warnings(record=True) as w:
+                validator = Validator(estimator=self.method_info.model,
+                                      scoring=scorers,
+                                      refit='f1',
+                                      param_grid=params).fit(X=X, y=y)
+                self.fitting_warnings = w
 
             readable_formula = " + ".join([term.name() for term in
                                            self.formula.lhs_termlist])
@@ -250,12 +174,16 @@ class TextModel:
             readable_formula += " + ".join([term.name() for term in
                                            self.formula.rhs_termlist])
             summ = SupervisedSummary(readable_formula,
-                                     task=self.task, params=params,
-                                     scoring_metric=scoring_metric)
+                                     task=self.task,
+                                     method_info=self.method_info,
+                                     params=params,
+                                     scoring_metric=scoring_metric,
+                                     warnings=self.fitting_warnings)
             if self.is_sklearn:
-                summ.load_sklearn_validator(validator.cv_results_)
+                summ.load_sklearn_validator(validator)
             else:
                 raise NotImplementedError("Only sklearn GridSearchCV implemented")
+            summ.add_feature_models(self.feature_models)
             return summ
 
         #self.set_cross_val_objective(scoring=scoring_metric, X=X, y=y)

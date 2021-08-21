@@ -6,7 +6,7 @@ from patsy import EvalEnvironment, EvalFactor
 #from patsy import ModelDesc, dmatrices, dmatrix
 #from patsy.state import stateful_transform
 
-from ntap.bagofwords import TFIDF, LDA
+from ntap.bagofwords import TFIDF, TopicModel
 from ntap.dic import Dictionary, DDR
 
 class FeatureGrid:
@@ -87,6 +87,9 @@ class FeatureGrid:
     def ddr(self, text, dic, **kwargs):
         ddr_obj = DDR(dic, **kwargs)
         return ddr_obj.transform(text)
+
+    def __len__(self):
+        return len(self.feature_models)
 
 def _build_targets(formula, data):
 
